@@ -45,11 +45,13 @@ ControlDispatch::ControlDispatch() :
     { "QueryNodeInfo", &ControlDispatch::QueryNodeInfo },
     { "RemovePeer", &ControlDispatch::RemovePeer },
     { "SetIgnoredNetInterfaces", &ControlDispatch::SetNetworkIgnoreList },
-    { "SetLoggingLevel", &ControlDispatch::SetLogLevel },
+    { "ConfigureLogging", &ControlDispatch::ConfigureLogging },
   };
 }
 ControlDispatch::~ControlDispatch()
-{}
+{
+  LogMessage::RemoveLogToStream(log_sink_.get());
+}
 
 void
 ControlDispatch::operator () (TincanControl & control)
@@ -320,50 +322,80 @@ ControlDispatch::RemovePeer(
   control.SetResponse(msg, status);
   ctrl_link_->Deliver(control);
 }
-
 void
-ControlDispatch::SetLogLevel(
+ControlDispatch::ConfigureLogging(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest();
+  string log_lvl = req["Level"].asString();
+  string msg("Tincan logging successfully configured.");
   bool status = true;
-  string msg("The log level has been set to ");
-  string logging = req[TincanControl::LogLevel].asString();
-  msg.append(logging);
-  lock_guard<mutex> lg(disp_mutex_);
-  if(logging == "NONE")
+  try
   {
-    rtc::LogMessage::LogToDebug(rtc::LS_NONE);
-  }
-  else if(logging == "ERROR")
+    ostringstream oss;
+    std::transform(log_lvl.begin(), log_lvl.end(), log_lvl.begin(), ::tolower);
+    oss << "tstamp " << "thread " << log_lvl.c_str();
+    LogMessage::ConfigureLogging(oss.str().c_str());
+    LogMessage::LogToDebug(LS_WARNING);
+    LogMessage::SetLogToStderr(true);
+    if(req["Device"].asString() == "All" || req["Device"].asString() == "File")
+    {
+      LogMessage::SetLogToStderr(false);
+      string dir = req["Directory"].asString();
+      rtc::Pathname pn(dir);
+      if (!Filesystem::IsFolder(pn))
+        Filesystem::CreateFolder(pn);
+      string fn = req["Filename"].asString();
+      size_t max_sz = req["MaxFileSize"].asUInt64();
+      size_t num_fls = req["MaxArchives"].asUInt64();
+      log_sink_ = make_unique<FileRotatingLogSink>(dir, fn, max_sz, num_fls);
+      log_sink_->Init();
+      log_lvl = req["Level"].asString();
+      LogMessage::AddLogToStream(log_sink_.get(), GetLogLevel(log_lvl));
+    }
+    if(req["Device"].asString() == "All" ||
+      req["Device"].asString() == "Console")
+    {
+      if(req["ConsoleLevel"].asString().length() > 0)
+        log_lvl = req["ConsoleLevel"].asString();
+      LogMessage::LogToDebug(GetLogLevel(log_lvl));
+      LogMessage::SetLogToStderr(true);
+    }
+  } catch(exception &)
   {
-    rtc::LogMessage::LogToDebug(rtc::LS_ERROR);
-  }
-  else if(logging == "WARNING")
-  {
-    rtc::LogMessage::LogToDebug(rtc::LS_WARNING);
-  }
-  else if(logging == "INFO")
-  {
-    rtc::LogMessage::LogToDebug(rtc::LS_INFO);
-  }
-  else if(logging == "VERBOSE" || logging == "DEBUG")
-  {
-    rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
-  }
-  else if(logging == "SENSITIVE")
-  {
-    rtc::LogMessage::LogToDebug(rtc::LS_SENSITIVE);
-  }
-  else
-  {
-    msg = "The SetLogLevel operation failed. ";
-    LOG_F(LS_WARNING) << msg << ". Control Data=\n" <<
-      control.StyledString();
+    LogMessage::LogToDebug(LS_WARNING);
+    LogMessage::SetLogToStderr(true);
+    msg = "The configure logging operation failed. It defaults to Console/WARNING";
+    LOG(LS_WARNING) << msg;
     status = false;
   }
-  control.SetResponse(msg, status);
-  ctrl_link_->Deliver(control);
+    control.SetResponse(msg, status);
+    ctrl_link_->Deliver(control);
+}
+LoggingSeverity
+ControlDispatch::GetLogLevel(
+  const string & log_level)
+{
+  LoggingSeverity lv = LS_WARNING;
+  lock_guard<mutex> lg(disp_mutex_);
+  if(log_level == "NONE")
+    lv = rtc::LS_NONE;
+  else if(log_level == "ERROR")
+    lv = rtc::LS_ERROR;
+  else if(log_level == "WARNING")
+    lv = rtc::LS_WARNING;
+  else if(log_level == "INFO")
+    lv = rtc::LS_INFO;
+  else if(log_level == "VERBOSE" || log_level == "DEBUG")
+    lv = rtc::LS_VERBOSE;
+  else if(log_level == "SENSITIVE")
+    lv = rtc::LS_SENSITIVE;
+  else
+  {
+    string msg = "An invalid log level was specified =  ";
+    LOG_F(LS_WARNING) << msg << log_level << ". Defaulting to WARNING";
+  }
+  return lv;
 }
 
 void

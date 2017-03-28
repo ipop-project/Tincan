@@ -32,8 +32,9 @@
 #include "webrtc/base/sslfingerprint.h"
 #include "webrtc/base/thread.h"
 #include "webrtc/p2p/base/basicpacketsocketfactory.h"
-#include "webrtc/p2p/base/dtlstransport.h"
-#include "webrtc/p2p/base/p2ptransport.h"
+#include "webrtc/p2p/base/dtlstransportchannel.h"
+#include "webrtc/p2p/base/transportcontroller.h"
+#include "webrtc/p2p/base/packettransportinterface.h"
 #include "webrtc/p2p/base/p2ptransportchannel.h"
 #include "webrtc/p2p/client/basicportallocator.h"
 #pragma warning( pop )
@@ -43,7 +44,11 @@
 namespace tincan
 {
 using namespace rtc;
-using DtlsP2PTransport = cricket::DtlsTransport<cricket::P2PTransport>;
+using cricket::TransportController;
+using cricket::TransportChannelImpl;
+using cricket::TransportChannel;
+using cricket::ConnectionRole;
+using rtc::PacketTransportInterface;
 
 struct  VlinkDescriptor
 {
@@ -61,16 +66,18 @@ class VirtualLink :
 public:
   VirtualLink(
     unique_ptr<VlinkDescriptor> vlink_desc,
-    unique_ptr<PeerDescriptor> peer_desc);
+    unique_ptr<PeerDescriptor> peer_desc,
+    rtc::Thread* signaling_thread,
+    rtc::Thread* network_thread);
   ~VirtualLink();
 
   string Name();
 
   void Initialize(
-    const string & local_uid,
     BasicNetworkManager & network_manager,
-    scoped_ptr<SSLIdentity>sslid,
-    SSLFingerprint const & local_fingerprint);
+    unique_ptr<SSLIdentity>sslid,
+    SSLFingerprint const & local_fingerprint,
+    cricket::IceRole ice_role);
 
   PeerDescriptor& PeerInfo()
   {
@@ -99,22 +106,26 @@ public:
 private:
   void SetupTransport(
     BasicNetworkManager & network_manager,
-    scoped_ptr<SSLIdentity>sslid);
+    unique_ptr<SSLIdentity>sslid,
+    rtc::Thread* signaling_thread,
+    rtc::Thread* network_thread);
 
   void SetupTURN(
     const string & turn_server,
     const string & username,
     const std::string & password);
 
-  void OnCandidateGathered(
-    cricket::TransportChannelImpl * ch,
-    const cricket::Candidate & cnd);
+  void OnCandidatesGathered(
+    const std::string & transport_name,
+    const cricket::Candidates & candidates);
 
   void OnGatheringState(
-    cricket::TransportChannelImpl * channel);
+    cricket::IceGatheringState gather_state);
+  string Candidates(
+    const cricket::Candidates & candidates);
 
   void OnWriteableState(
-    cricket::TransportChannel * channel);
+    PacketTransportInterface * transport);
 
   void RegisterLinkEventHandlers();
 
@@ -122,29 +133,29 @@ private:
     const string & candidates);
 
   void SetupICE(
-    const string & local_uid,
+    cricket::IceRole ice_role,
     SSLFingerprint const & local_fingerprint);
 
   void OnReadPacket(
-    cricket::TransportChannel* channel,
+    PacketTransportInterface* transport,
     const char* data,
     size_t len,
     const PacketTime & ptime,
     int flags);
 
   void OnSentPacket(
-    cricket::TransportChannel * channel,
+    PacketTransportInterface * transport,
     const SentPacket & packet);
 
   unique_ptr<VlinkDescriptor> vlink_desc_;
   unique_ptr<PeerDescriptor> peer_desc_;
   BasicPacketSocketFactory packet_factory_;
   unique_ptr<cricket::BasicPortAllocator> port_allocator_;
-  unique_ptr<cricket::P2PTransport> transport_;
-  std::list<string> local_candidates_;
+  unique_ptr<cricket::TransportController> transport_ctlr_;
+  cricket::Candidates local_candidates_;
   const uint64_t tiebreaker_;
-  cricket::ConnectionRole ice_conn_role_;
-
+  ConnectionRole conn_role_;
+  TransportChannel * channel_;
   unique_ptr<cricket::TransportDescription> local_description_;
   unique_ptr<cricket::TransportDescription> remote_description_;
 
@@ -154,6 +165,8 @@ private:
 
   std::mutex cas_mutex_;
   bool cas_ready_;
+  rtc::Thread* signaling_thread_;
+  rtc::Thread* network_thread_;
 };
 } //namespace tincan
 #endif // !TINCAN_VIRTUAL_LINK_H_

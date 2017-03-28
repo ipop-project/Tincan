@@ -26,6 +26,9 @@
 #pragma warning( push )
 #pragma warning(disable:4996)
 #include "webrtc/base/logging.h"
+#include "webrtc/base/logsinks.h"
+#include "webrtc/base/fileutils.h"
+#include "webrtc/base/pathutils.h"
 #pragma warning(pop)
 #include <map>
 #include <memory>
@@ -35,6 +38,10 @@
 #include "tincan_control.h"
 namespace tincan
 {
+using rtc::FileRotatingLogSink;
+using rtc::LogMessage;
+using rtc::Filesystem;
+using rtc::Pathname;
 class ControlDispatch
 {
 public:
@@ -55,15 +62,17 @@ private:
   void QueryNodeInfo(TincanControl & control);
   void QueryStunCandidates(TincanControl & control);
   void RemovePeer(TincanControl & control);
-  void SetLogLevel(TincanControl & control);
+  void ConfigureLogging(TincanControl & control);
+  LoggingSeverity GetLogLevel(const string & log_level);
   void SetNetworkIgnoreList(TincanControl & control);
   void SendICC(TincanControl & control);
 
-  map<std::string, void (ControlDispatch::*)(TincanControl & control)>control_map_;
+  map<string, void (ControlDispatch::*)(TincanControl & control)>control_map_;
   DispatchToListenerInf * dtol_;
   TincanDispatchInterface * tincan_;
   shared_ptr<IpopControllerLink> ctrl_link_;
-  std::mutex disp_mutex_;
+  mutex disp_mutex_;
+  unique_ptr<FileRotatingLogSink> log_sink_;
   class DisconnectedControllerHandle : virtual public IpopControllerLink {
   public:
     DisconnectedControllerHandle() {

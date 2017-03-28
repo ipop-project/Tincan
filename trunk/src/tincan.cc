@@ -109,17 +109,11 @@ Tincan::CreateVlinkListener(
   VirtualNetwork & vn = VnetFromName(tap_name);
   shared_ptr<VirtualLink> vlink =
     vn.CreateVlinkEndpoint(move(peer_desc), move(vl_desc));
-  //Fixme: Potential but unlikely race condition of CAS update being ready before control is queued and the the call back registered.
-  if(vlink->Candidates().empty())
+  //if(vlink->Candidates().empty())
   {
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);
     inprogess_controls_.push_back(make_unique<TincanControl>(move(ctrl)));
     vlink->SignalLocalCasReady.connect(this, &Tincan::OnLocalCasUpdated);
-  }
-  else
-  {
-    ctrl.SetResponse(vlink->Candidates(), true);
-    ctrl_link_->Deliver(ctrl);
   }
 }
 

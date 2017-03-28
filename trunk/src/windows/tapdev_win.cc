@@ -25,7 +25,6 @@
 #pragma warning( push )
 #pragma warning(disable:4996)
 #include "windows/tapdev_win.h"
-#include "webrtc/base/systeminfo.h"
 #pragma warning(pop)
 #include <iphlpapi.h>
 #include <mstcpip.h>
@@ -98,10 +97,18 @@ TapDevWin::IoThreadDescriptor::IoCompletionThread(void * param)
   return rv;
 }
 
+uint8_t NumCpu()
+{
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo(&sysinfo);
+  return (uint8_t)sysinfo.dwNumberOfProcessors;
+}
+
 TapDevWin::TapDevWin() :
   cmpl_prt_handle_(0),
   dev_handle_(INVALID_HANDLE_VALUE),
-  media_status_(0)
+  media_status_(0),
+  io_thread_pool_(NumCpu())
 {}
 
 TapDevWin::~TapDevWin()
@@ -137,7 +144,7 @@ TapDevWin::Open(
       throw WINEXCEPT("The TAP open operation failed to create the device handle.");
     }
     cmpl_prt_handle_ = CreateIoCompletionPort(DeviceHandle(),
-      CompletionPortHandle(), (ULONG_PTR)this, 2 * rtc::SystemInfo::GetCurCpus());
+      CompletionPortHandle(), (ULONG_PTR)this, 2 * NumCpu());
     if(!cmpl_prt_handle_)
     {
       string emsg("The TAP IO completetion thread failed to create a handle "

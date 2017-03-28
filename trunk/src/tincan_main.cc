@@ -46,7 +46,6 @@ int main(int argc, char **argv)
         "-p=[num]   Specify tincan control port" << endl;
     }
     else {
-      rtc::LogMessage::LogToDebug(rtc::LS_INFO); //default, can be modified by contoller
       Tincan tc;
       tc.Run();
     }

@@ -7,7 +7,7 @@
 # define CPPTL_JSON_H_INCLUDED
 
 #if !defined(JSON_IS_AMALGAMATION)
-# include "third_party/jsoncpp/source/include/json/forwards.h"
+# include "forwards.h"
 #endif // if !defined(JSON_IS_AMALGAMATION)
 # include <string>
 # include <vector>
@@ -136,7 +136,7 @@ namespace Json {
       typedef Json::LargestUInt LargestUInt;
       typedef Json::ArrayIndex ArrayIndex;
 
-      static const Value& null;
+      static const Value null;
       /// Minimum signed integer value that can be stored in a Json::Value.
       static const LargestInt minLargestInt;
       /// Maximum signed integer value that can be stored in a Json::Value.
@@ -496,12 +496,10 @@ namespace Json {
 # endif
       } value_;
       ValueType type_ : 8;
-      // One-bit bitfields must be unsigned to allow storing 1.
-      // They must be 32-bits to share storage with ValueHolder.
-      unsigned int allocated_ : 1;
+      int allocated_ : 1;     // Notes: if declared as bool, bitfield is useless.
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
       unsigned int itemIsUsed_ : 1;      // used by the ValueInternalMap container.
-      unsigned int memberNameIsStatic_ : 1; // used by the ValueInternalMap container.
+      int memberNameIsStatic_ : 1;       // used by the ValueInternalMap container.
 # endif
       CommentInfo *comments_;
    };

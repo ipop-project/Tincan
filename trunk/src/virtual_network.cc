@@ -68,7 +68,8 @@ VirtualNetwork::Configure()
 void
 VirtualNetwork::Start()
 {
-  worker_.Start();
+  net_worker_.Start();
+  sig_worker_.Start();
   if(descriptor_->l2tunnel_enabled)
   {
     tdev_->read_completion_.connect(this, &VirtualNetwork::TapReadCompleteL2);
@@ -95,7 +96,7 @@ void
 VirtualNetwork::StartTunnel(
   VirtualLink & vlink)
 {
-  lock_guard<mutex> lg(vn_mtx);
+  lock_guard<mutex> lg(vn_mtx_);
   for(uint8_t i = 0; i < kLinkConcurrentAIO; i++)
   {
     unique_ptr<TapFrame> tf = make_unique<TapFrame>();
@@ -123,17 +124,18 @@ VirtualNetwork::UpdateRoute(
 unique_ptr<VirtualLink>
 VirtualNetwork::CreateVlink(
   unique_ptr<VlinkDescriptor> vlink_desc,
-  unique_ptr<PeerDescriptor> peer_desc)
+  unique_ptr<PeerDescriptor> peer_desc,
+  cricket::IceRole ice_role)
 {
   vlink_desc->stun_addr = descriptor_->stun_addr;
   vlink_desc->turn_addr = descriptor_->turn_addr;
   vlink_desc->turn_user = descriptor_->turn_user;
   vlink_desc->turn_pass = descriptor_->turn_pass;
   unique_ptr<VirtualLink> vl = make_unique<VirtualLink>(
-    move(vlink_desc), move(peer_desc));
-  scoped_ptr<SSLIdentity> sslid_copy(sslid_->GetReference());
-  vl->Initialize(descriptor_->uid, net_manager_, move(sslid_copy),
-    *local_fingerprint_.get());
+    move(vlink_desc), move(peer_desc), &sig_worker_, &net_worker_);
+  unique_ptr<SSLIdentity> sslid_copy(sslid_->GetReference());
+  vl->Initialize(net_manager_, move(sslid_copy), *local_fingerprint_.get(),
+    ice_role);
   if(descriptor_->l2tunnel_enabled)
   {
     vl->SignalMessageReceived.connect(this, &VirtualNetwork::VlinkReadCompleteL2);
@@ -163,17 +165,10 @@ VirtualNetwork::CreateVlinkEndpoint(
   }
   else
   {
-    // create vlink using the worker thread
-    CreateVlinkMsgData md;
-    md.peer_desc = move(peer_desc);
-    md.vlink_desc = move(vlink_desc);
-    worker_.Post(this, MSGID_CREATE_LINK, &md);
-    //block until it ready
-    md.msg_event.Wait(MessageQueue::kForever);
-    //grab it from the peer_network
-    if (peer_network_->IsAdjacent(mac))
-      vl = peer_network_->GetVlink(mac);
-    else throw TCEXCEPT("The CreateVlinkEndpoint operation failed.");
+    vl = CreateVlink(move(vlink_desc), move(peer_desc),
+      cricket::ICEROLE_CONTROLLED);
+    peer_network_->Add(vl);
+
   }
   return vl;
 }
@@ -193,20 +188,14 @@ VirtualNetwork::ConnectToPeer(
   }
   else
   {
-    // create vlink using the worker thread
-    CreateVlinkMsgData md;
-    md.peer_desc = move(peer_desc);
-    md.vlink_desc = move(vlink_desc);
-    worker_.Post(this, MSGID_CREATE_LINK, &md);
-    //block until it ready
-    md.msg_event.Wait(Event::kForever);
-    vl = peer_network_->GetVlink(mac);
+    vl = CreateVlink(move(vlink_desc), move(peer_desc),
+      cricket::ICEROLE_CONTROLLING);
+    peer_network_->Add(vl);
+
   }
   if(vl)
   {
-    VlinkMsgData * md = new VlinkMsgData;
-    md->vl = vl;
-    worker_.Post(this, MSGID_START_CONNECTION, md);
+    vl->StartConnections();
   }
   else throw TCEXCEPT("The ConnectToPeer operation failed, no virtual link was"
     " found in the peer network.");
@@ -219,9 +208,7 @@ void VirtualNetwork::RemovePeerConnection(
   StringToByteArray(peer_mac, mac.begin(), mac.end());
   if(peer_network_->IsAdjacent(mac))
   {
-    MacMsgData * md = new MacMsgData;
-    md->mac = mac;
-    worker_.Post(this, MSGID_END_CONNECTION, md);
+    peer_network_->Remove(mac);
   }
 }
 
@@ -276,7 +263,7 @@ void VirtualNetwork::QueryNodeInfo(
     {
       LinkStatsMsgData md;
       md.vl = vl;
-      worker_.Post(this, MSGID_QUERY_NODE_INFO, &md);
+      net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
       md.msg_event.Wait(Event::kForever);
       node_info[TincanControl::Stats].swap(md.stats);
       node_info[TincanControl::Status] = "online";
@@ -306,7 +293,7 @@ VirtualNetwork::SendIcc(
   MacAddressType mac;
   StringToByteArray(recipient_mac, mac.begin(), mac.end());
   md->vl = peer_network_->GetVlink(mac);
-  worker_.Post(this, MSGID_SEND_ICC, md);
+  net_worker_.Post(RTC_FROM_HERE, this, MSGID_SEND_ICC, md);
 }
 
 /*
@@ -351,7 +338,7 @@ VirtualNetwork::VlinkReadCompleteL2(
       TransmitMsgData *md = new TransmitMsgData;
       md->tf = move(frame);
       md->vl = vl;
-      worker_.Post(this, MSGID_FWD_FRAME, md);
+      net_worker_.Post(RTC_FROM_HERE, this, MSGID_FWD_FRAME, md);
     }
     else
     { //no route found, send to controller
@@ -423,7 +410,7 @@ VirtualNetwork::TapReadCompleteL2(
     TransmitMsgData *md = new TransmitMsgData;;
     md->tf.reset(frame);
     md->vl = vl;
-    worker_.Post(this, MSGID_TRANSMIT, md);
+    net_worker_.Post(RTC_FROM_HERE, this, MSGID_TRANSMIT, md);
   }
   else if(peer_network_->IsRouteExists(mac))
   {
@@ -432,7 +419,7 @@ VirtualNetwork::TapReadCompleteL2(
     TransmitMsgData *md = new TransmitMsgData;
     md->tf.reset(frame);
     md->vl = peer_network_->GetRoute(mac);
-    worker_.Post(this, MSGID_FWD_FRAME, md);
+    net_worker_.Post(RTC_FROM_HERE, this, MSGID_FWD_FRAME, md);
   }
   else
   {
@@ -481,25 +468,6 @@ void VirtualNetwork::OnMessage(Message * msg)
 {
   switch(msg->message_id)
   {
-  case MSGID_CREATE_LINK: //create vlink
-  {
-    unique_ptr<PeerDescriptor> peer_desc =
-      move(((CreateVlinkMsgData*)msg->pdata)->peer_desc);
-    unique_ptr<VlinkDescriptor> vlink_desc = 
-    move(((CreateVlinkMsgData*)msg->pdata)->vlink_desc);
-    shared_ptr<VirtualLink> vl = CreateVlink(move(vlink_desc), move(peer_desc));
-    peer_network_->Add(vl);
-    //set event indicating vlink is create and added to peer network
-    ((CreateVlinkMsgData*)msg->pdata)->msg_event.Set();
-  }
-  break;
-  case MSGID_START_CONNECTION :
-  {
-    shared_ptr<VirtualLink> vl = ((VlinkMsgData*)msg->pdata)->vl;
-    delete msg->pdata;
-    vl->StartConnections();
-  }
-  break;
   case MSGID_TRANSMIT:
   {
     unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->tf);
@@ -519,14 +487,6 @@ void VirtualNetwork::OnMessage(Message * msg)
     //LOG_F(TC_DBG) << "Sent ICC to=" <<vl->PeerInfo().vip4 << " data=\n" <<
     //  string((char*)(frame->begin()+4), *(uint16_t*)(frame->begin()+2));
     delete msg->pdata;
-  }
-  break;
-  case MSGID_END_CONNECTION:
-  {
-    MacAddressType mac = ((MacMsgData*)msg->pdata)->mac;
-    delete msg->pdata;
-    peer_network_->Remove(mac);
-    //DestroyTunnel(*vl);
   }
   break;
   case MSGID_QUERY_NODE_INFO:

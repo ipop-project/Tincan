@@ -23,9 +23,16 @@
 #ifndef TINCAN_VIRTUAL_NETWORK_H_
 #define TINCAN_VIRTUAL_NETWORK_H_
 #include "tincan_base.h"
+
 #pragma warning( push )
 #pragma warning(disable:4996)
 #include "webrtc/base/network.h"
+#ifdef min
+#undef min
+#endif //
+#ifdef max
+#undef max
+#endif //
 #include "webrtc/base/sslidentity.h"
 #include "webrtc/base/thread.h"
 #include "webrtc/base/sigslot.h"
@@ -175,7 +182,8 @@ public:
 private:
   unique_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,
-    unique_ptr<PeerDescriptor> peer_desc);
+    unique_ptr<PeerDescriptor> peer_desc,
+    cricket::IceRole ice_role);
   
   TapDev * tdev_;
   PeerNetwork * peer_network_;
@@ -184,9 +192,10 @@ private:
   rtc::BasicNetworkManager net_manager_;
   unique_ptr<rtc::SSLIdentity> sslid_;
   unique_ptr<rtc::SSLFingerprint> local_fingerprint_;
-  rtc::Thread worker_;
+  rtc::Thread net_worker_;
+  rtc::Thread sig_worker_;
   rtc::Thread peer_net_thread_;
-  mutex vn_mtx;
+  mutex vn_mtx_;
 };
 }  // namespace tincan
 #endif  // TINCAN_VIRTUAL_NETWORK_H_
