@@ -23,9 +23,6 @@
 #ifndef TINCAN_VIRTUAL_NETWORK_H_
 #define TINCAN_VIRTUAL_NETWORK_H_
 #include "tincan_base.h"
-
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "webrtc/base/network.h"
 #ifdef min
 #undef min
@@ -37,7 +34,6 @@
 #include "webrtc/base/thread.h"
 #include "webrtc/base/sigslot.h"
 #include "webrtc/base/json.h"
-#pragma warning( pop )
 #include "async_io.h"
 #include "controller_handle.h"
 #include "peer_network.h"

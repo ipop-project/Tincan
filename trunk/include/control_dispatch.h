@@ -23,13 +23,10 @@
 #ifndef TINCAN_CONTROL_DISPATCH_H_
 #define TINCAN_CONTROL_DISPATCH_H_
 #include "tincan_base.h"
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "webrtc/base/logging.h"
 #include "webrtc/base/logsinks.h"
 #include "webrtc/base/fileutils.h"
 #include "webrtc/base/pathutils.h"
-#pragma warning(pop)
 #include <map>
 #include <memory>
 #include <mutex>
@@ -79,13 +76,14 @@ private:
       msg_ = "No connection to Controller exists. "
         "Create one with the set_ctrl_endpoint control operation";
     }
+    virtual ~DisconnectedControllerHandle() = default;
   private:
     virtual void Deliver(
-      TincanControl & ctrl_resp) {
+      TincanControl &) {
       LOG_F(LS_INFO) << msg_ << endl;
     }
     virtual void Deliver(
-      unique_ptr<TincanControl> ctrl_resp)
+      unique_ptr<TincanControl>)
     {
       LOG_F(LS_INFO) << msg_ << endl;
     }

@@ -21,10 +21,7 @@
 * THE SOFTWARE.
 */
 #include "virtual_link.h"
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "webrtc/base/stringencode.h"
-#pragma warning( pop )
 #include "tincan_exception.h"
 namespace tincan
 {
@@ -69,10 +66,10 @@ VirtualLink::Initialize(
   port_allocator_.reset(new cricket::BasicPortAllocator(
     &network_manager, &packet_factory_, { stun_addr }));
   port_allocator_->set_flags(kFlags);
+  SetupTURN(vlink_desc_->turn_addr, vlink_desc_->turn_user, vlink_desc_->turn_pass);
   transport_ctlr_ = make_unique<TransportController>(signaling_thread_,
     network_thread_, port_allocator_.get());
 
-  SetupTURN(vlink_desc_->turn_addr, vlink_desc_->turn_user, vlink_desc_->turn_pass);
   transport_ctlr_->SetLocalCertificate(RTCCertificate::Create(move(sslid)));
   channel_ = transport_ctlr_->CreateTransportChannel(content_name_,
     cricket::ICE_CANDIDATE_COMPONENT_DEFAULT);
@@ -121,56 +118,26 @@ VirtualLink::AddRemoteCandidates(
 }
 
 void
-VirtualLink::SetupTransport(
-  BasicNetworkManager & network_manager,
-  unique_ptr<SSLIdentity>sslid,
-  rtc::Thread* signaling_thread,
-  rtc::Thread* network_thread)
-{
-  rtc::SocketAddress stun_addr;
-  stun_addr.FromString(vlink_desc_->stun_addr);
-  port_allocator_.reset(new cricket::BasicPortAllocator(
-    &network_manager, &packet_factory_, { stun_addr }));
-  port_allocator_->set_flags(kFlags);
-
-  SetupTURN(vlink_desc_->turn_addr, vlink_desc_->turn_user, vlink_desc_->turn_pass);
-
-  if(vlink_desc_->sec_enabled) {
-    scoped_refptr<RTCCertificate> cert(RTCCertificate::Create(move(sslid)));
-    //Note:DtlsTransportChannelWrapper expects to be created on its worker thread
-    transport_ctlr_ = make_unique<TransportController>(
-      signaling_thread, network_thread, port_allocator_.get());
-    LOG_F(LS_INFO) << "Using DTLS Transport";
-  }
-  else {
-    assert(vlink_desc_->sec_enabled);
-    //transport_ctlr_ = make_unique<cricket::P2PTransport>(
-    //  content_name_, port_allocator_.get());
-    //LOG_F(LS_INFO) << "Using PLAINTEXT Transport";
-  }
-}
-
-void
 VirtualLink::OnReadPacket(
-  PacketTransportInterface * transport,
+  PacketTransportInterface *,
   const char * data,
   size_t len,
-  const rtc::PacketTime & ptime,
-  int flags)
+  const rtc::PacketTime &,
+  int)
 {
   SignalMessageReceived((uint8_t*)data, *(uint32_t*)&len, *this);
 }
 
 void
 VirtualLink::OnSentPacket(
-  PacketTransportInterface * transport,
-  const rtc::SentPacket & packet)
+  PacketTransportInterface *,
+  const rtc::SentPacket &)
 {
   //nothing to do atm ...
 }
 
 void VirtualLink::OnCandidatesGathered(
-  const std::string & transport_name,
+  const std::string &,
   const cricket::Candidates & candidates)
 {
   std::unique_lock<std::mutex> lk(cas_mutex_);

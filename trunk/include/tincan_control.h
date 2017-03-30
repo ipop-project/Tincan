@@ -23,11 +23,8 @@
 #ifndef TINCAN_TINCAN_CONTROL_H_
 #define TINCAN_TINCAN_CONTROL_H_
 #include "tincan_base.h"
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "webrtc/base/json.h"
 #include "webrtc/base/socketaddress.h"
-#pragma warning( pop )
 
 namespace tincan {
 using namespace rtc;

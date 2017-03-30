@@ -94,7 +94,7 @@ VirtualNetwork::Shutdown()
 
 void
 VirtualNetwork::StartTunnel(
-  VirtualLink & vlink)
+  VirtualLink &)
 {
   lock_guard<mutex> lg(vn_mtx_);
   for(uint8_t i = 0; i < kLinkConcurrentAIO; i++)
@@ -109,7 +109,7 @@ VirtualNetwork::StartTunnel(
 
 void
 VirtualNetwork::DestroyTunnel(
-  VirtualLink & vlink)
+  VirtualLink &)
 {
 }
 
@@ -146,7 +146,7 @@ VirtualNetwork::CreateVlink(
   }
   vl->SignalLinkReady.connect(this, &VirtualNetwork::StartTunnel);
   vl->SignalLinkBroken.connect(this, &VirtualNetwork::DestroyTunnel);
-  return move(vl);
+  return vl;
 }
 
 shared_ptr<VirtualLink>
@@ -314,7 +314,7 @@ void
 VirtualNetwork::VlinkReadCompleteL2(
   uint8_t * data,
   uint32_t data_len,
-  VirtualLink & vlink)
+  VirtualLink &)
 {
   unique_ptr<TapFrame> frame = make_unique<TapFrame>(data, data_len);
   TapFrameProperties fp(*frame);
@@ -517,21 +517,21 @@ void VirtualNetwork::OnMessage(Message * msg)
 
 void
 VirtualNetwork::ProcessIncomingFrame(
-  uint8_t * data,
-  uint32_t data_len,
-  VirtualLink & vlink)
+  uint8_t *,
+  uint32_t ,
+  VirtualLink &)
 {
 }
 
 void
 VirtualNetwork::TapReadComplete(
-  AsyncIo * aio_rd)
+  AsyncIo *)
 {
 }
 
 void
 VirtualNetwork::TapWriteComplete(
-  AsyncIo * aio_wr)
+  AsyncIo *)
 {
 }
 

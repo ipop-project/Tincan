@@ -36,11 +36,11 @@ ControlListener::~ControlListener()
 
 void
 ControlListener::ReadPacketHandler(
-  AsyncPacketSocket * socket,
+  AsyncPacketSocket *,
   const char * data,
   size_t len,
-  const SocketAddress & remote_addr,
-  const PacketTime & ptime)
+  const SocketAddress &,
+  const PacketTime &)
 {
   try {
     TincanControl ctrl(data, len);

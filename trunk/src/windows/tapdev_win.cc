@@ -22,10 +22,7 @@
 */
 
 #if defined(_IPOP_WIN)
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "windows/tapdev_win.h"
-#pragma warning(pop)
 #include <iphlpapi.h>
 #include <mstcpip.h>
 #include <wchar.h>

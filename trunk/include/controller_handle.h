@@ -30,6 +30,7 @@ namespace tincan {
   class IpopControllerLink
   {
   public:
+    virtual ~IpopControllerLink() = default;
     virtual void Deliver(
       TincanControl & ctrl_resp) = 0;
 
@@ -40,6 +41,7 @@ namespace tincan {
   class DispatchToListenerInf
   {
   public:
+    virtual ~DispatchToListenerInf() = default;
     virtual void CreateIpopControllerLink(
       unique_ptr<SocketAddress> controller_addr) = 0;
     virtual IpopControllerLink & GetIpopControllerLink() = 0;
@@ -48,6 +50,7 @@ namespace tincan {
   class TincanDispatchInterface
   {
   public:
+    virtual ~TincanDispatchInterface() = default;
     virtual void ConnectToPeer(
       const Json::Value & link_desc) = 0;
 

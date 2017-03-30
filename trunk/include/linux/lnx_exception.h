@@ -20,13 +20,8 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#include <sstream>
-#include <string>
-#include <exception>
-#include <cstdlib>
+#include "tincan_base.h"
 #include <errno.h>
-using namespace std;
-
 namespace tincan
 {
 namespace linux

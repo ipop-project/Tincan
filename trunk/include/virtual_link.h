@@ -23,9 +23,6 @@
 #ifndef TINCAN_VIRTUAL_LINK_H_
 #define TINCAN_VIRTUAL_LINK_H_
 #include "tincan_base.h"
-#pragma warning( push )
-#pragma warning(disable:4459)
-#pragma warning(disable:4996)
 #include "webrtc/base/asyncpacketsocket.h"
 #include "webrtc/base/json.h"
 #include "webrtc/base/network.h"
@@ -37,7 +34,6 @@
 #include "webrtc/p2p/base/packettransportinterface.h"
 #include "webrtc/p2p/base/p2ptransportchannel.h"
 #include "webrtc/p2p/client/basicportallocator.h"
-#pragma warning( pop )
 #include "tap_frame.h"
 #include "peer_descriptor.h"
 
@@ -104,12 +100,6 @@ public:
   sigslot::signal3<uint8_t *, uint32_t, VirtualLink&>
     SignalMessageReceived;
 private:
-  void SetupTransport(
-    BasicNetworkManager & network_manager,
-    unique_ptr<SSLIdentity>sslid,
-    rtc::Thread* signaling_thread,
-    rtc::Thread* network_thread);
-
   void SetupTURN(
     const string & turn_server,
     const string & username,

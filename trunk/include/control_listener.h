@@ -23,8 +23,6 @@
 #ifndef TINCAN_CONTROL_LISTENER_H_
 #define TINCAN_CONTROL_LISTENER_H_
 #include "tincan_base.h"
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "webrtc/base/asyncudpsocket.h"
 #include "webrtc/base/asyncpacketsocket.h"
 #include "webrtc/base/logging.h"
@@ -32,9 +30,6 @@
 #include "webrtc/base/socketaddress.h"
 #include "webrtc/base/thread.h"
 #include "webrtc/p2p/base/basicpacketsocketfactory.h"
-#pragma warning(pop)
-#include <memory>
-#include <mutex>
 #include "controller_handle.h"
 #include "control_dispatch.h"
 #include "tap_frame.h"

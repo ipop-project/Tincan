@@ -21,10 +21,7 @@
 * THE SOFTWARE.
 */
 #include "tincan_control.h"
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "webrtc/base/logging.h"
-#pragma warning( pop )
 #include "tincan_exception.h"
 namespace tincan
 {

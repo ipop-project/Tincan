@@ -41,6 +41,7 @@ struct TapDescriptor
 class TapDevInf
 {
 public:
+  virtual ~TapDevInf() = default;
   virtual void Open(
     const TapDescriptor & tap_desc) = 0;
 

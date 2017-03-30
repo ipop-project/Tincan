@@ -133,7 +133,7 @@ public:
       kVersionCheck = true;
     }
     else if(argc == 2 && strncmp(args[1], "-h", 2) == 0) {
-      kNeedsHelp;
+      kNeedsHelp = true;
     }
     if(argc == 2 && strncmp(args[1], "-p=", 3) == 0) {
       kUdpPort = (uint16_t)atoi(args[1]+3);

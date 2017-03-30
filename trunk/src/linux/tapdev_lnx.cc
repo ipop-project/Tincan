@@ -73,7 +73,7 @@ void TapDevLnx::Open(
     throw TCEXCEPT(emsg.c_str());
   }
   memcpy(mac_.data(), ifr_.ifr_hwaddr.sa_data, 6);
-  SetIpv4Addr(tap_desc.Ip4.c_str(), tap_desc.prefix4, (char*)ip4_.data());
+  SetIpv4Addr(tap_desc.Ip4.c_str(), tap_desc.prefix4);
   if(!tap_desc.mtu4)
     Mtu(1500);
   else
@@ -89,8 +89,7 @@ void TapDevLnx::Close()
 
 void TapDevLnx::SetIpv4Addr(
   const char* ipaddr,
-  unsigned int prefix_len,
-  char *my_ipv4)
+  unsigned int prefix_len)
 {
   string emsg("The Tap device Set IP4 Address operation failed");
   struct sockaddr_in socket_address = { .sin_family = AF_INET,.sin_port = 0 };
@@ -174,7 +173,7 @@ uint32_t TapDevLnx::Read(AsyncIo& aio_rd)
     return 1; //indicates a failure to setup async operation
   TapPayload *tp_ = new TapPayload;
   tp_->aio_ = &aio_rd;
-  reader_.Post(this, MSGID_READ, tp_);
+  reader_.Post(RTC_FROM_HERE, this, MSGID_READ, tp_);
   return 0;
 }
 
@@ -184,7 +183,7 @@ uint32_t TapDevLnx::Write(AsyncIo& aio_wr)
     return 1; //indicates a failure to setup async operation
   TapPayload *tp_ = new TapPayload;
   tp_->aio_ = &aio_wr;
-  writer_.Post(this, MSGID_WRITE, tp_);
+  writer_.Post(RTC_FROM_HERE, this, MSGID_WRITE, tp_);
   return 0;
 }
 

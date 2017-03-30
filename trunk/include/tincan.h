@@ -23,10 +23,7 @@
 #ifndef TINCAN_TINCAN_H_
 #define TINCAN_TINCAN_H_
 #include "tincan_base.h"
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "webrtc/base/event.h"
-#pragma warning( pop )
 #include "control_listener.h"
 #include "control_dispatch.h"
 #include "virtual_network.h"

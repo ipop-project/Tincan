@@ -282,7 +282,7 @@ ControlDispatch::InjectFrame(
 
 void
 ControlDispatch::QueryStunCandidates(
-  TincanControl & control)
+  TincanControl &)
 {
   //TODO: implementation
 }

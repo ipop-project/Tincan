@@ -123,7 +123,7 @@ Tincan::InjectFrame(
 {
   const string & tap_name = frame_desc[TincanControl::InterfaceName].asString();
   VirtualNetwork & vn = VnetFromName(tap_name);
-  vn.InjectFame(move(frame_desc[TincanControl::Data].asString()));
+  vn.InjectFame(frame_desc[TincanControl::Data].asString());
 }
 
 void

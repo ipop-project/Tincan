@@ -92,7 +92,7 @@ private:
   MacAddressType mac_;
   //uint16_t mtu4_;
   bool is_good_;
-  void SetIpv4Addr(const char* a, unsigned int b, char *c);
+  void SetIpv4Addr(const char* a, unsigned int b);
   void SetFlags(short a, short b);
   void PlenToIpv4Mask(unsigned int a, struct sockaddr *b);
   void OnMessage(Message * msg) override;

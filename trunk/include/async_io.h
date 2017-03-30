@@ -22,12 +22,7 @@
 */
 #ifndef TINCAN_ASYNCIO_H_
 #define TINCAN_ASYNCIO_H_
-
-#pragma warning( push )
-#pragma warning(disable:4996)
 #include "webrtc/base/logging.h"
-#pragma warning( pop )
-
 #if defined(_IPOP_WIN)
 #include <Winsock2.h>
 #include <minwinbase.h>
