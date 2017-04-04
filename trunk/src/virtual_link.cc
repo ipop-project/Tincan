@@ -318,13 +318,15 @@ VirtualLink::SetupTURN(
     LOG_F(LS_WARNING) << "TURN credentials were not provided";
     return;
   }
-  SocketAddress turn_addr;
-  turn_addr.FromString(turn_server);
-  cricket::RelayServerConfig relay_config_udp(cricket::RELAY_TURN);
-  relay_config_udp.ports.push_back(cricket::ProtocolAddress(
-    turn_addr, cricket::PROTO_UDP));
-  relay_config_udp.credentials.username = username;
-  relay_config_udp.credentials.password = password;
+  vector<string> add_prt;
+  rtc::split(turn_server, ':', &add_prt);
+  if(add_prt.size() != 2)
+  {
+    LOG_F(LS_INFO) << "Invalid TURN Server address provided";
+    return;
+  }
+  cricket::RelayServerConfig relay_config_udp(add_prt[0], stoi(add_prt[1]),
+    username, password, cricket::PROTO_UDP);
   port_allocator_->AddTurnServer(relay_config_udp);
 }
 
