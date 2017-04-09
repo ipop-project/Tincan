@@ -358,6 +358,8 @@ ControlDispatch::ConfigureLogging(
     {
       if(req["ConsoleLevel"].asString().length() > 0)
         log_lvl = req["ConsoleLevel"].asString();
+      else if (req["Level"].asString().length() > 0)
+        log_lvl = req["Level"].asString();
       LogMessage::LogToDebug(GetLogLevel(log_lvl));
       LogMessage::SetLogToStderr(true);
     }

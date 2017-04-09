@@ -205,7 +205,6 @@ string VirtualLink::Candidates()
       << kCandidateDelim << cnd.foundation()
       << " ";
   }
-  LOG(LS_ERROR) << "Vlink final CAS " << oss.str();
   return oss.str();
 }
 
