@@ -9,4 +9,11 @@ before_install:
 install:
 - sudo apt-get install -y software-properties-common git make libssl-dev make g++-4.9
 - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50
-script: make
+git:
+  depth: 1
+branches:
+  only:
+  - master  
+script: 
+- cd trunk/build
+- make
