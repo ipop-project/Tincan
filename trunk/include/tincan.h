@@ -39,10 +39,10 @@ public:
   //
   //TincanDispatchInterface interface
 
-  void ConnectToPeer(
+  void ConnectTunnel(
     const Json::Value & link_desc) override;
 
-  void CreateVlinkListener(
+  void CreateTunnel(
     const Json::Value & link_desc,
     TincanControl & ctrl) override;
 

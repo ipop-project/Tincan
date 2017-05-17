@@ -34,9 +34,11 @@ ControlDispatch::ControlDispatch() :
 {
   control_map_ = {
     { "UpdateMap", &ControlDispatch::UpdateRoutes },
-    { "ConnectToPeer", &ControlDispatch::ConnectToPeer },
+    { "ConnectToPeer", &ControlDispatch::ConnectToPeer }, //deprecated
+    { "ConnectTunnel", &ControlDispatch::ConnectTunnel },
     { "CreateCtrlRespLink", &ControlDispatch::CreateIpopControllerRespLink },
-    { "CreateLinkListener", &ControlDispatch::CreateLinkListener },
+    { "CreateLinkListener", &ControlDispatch::CreateLinkListener },//deprecated
+    { "CreateTunnel", &ControlDispatch::CreateTunnel },
     { "CreateVnet", &ControlDispatch::CreateVNet },
     { "Echo", &ControlDispatch::Echo },
     { "ICC", &ControlDispatch::SendICC },
@@ -132,17 +134,23 @@ void
 ControlDispatch::ConnectToPeer(
   TincanControl & control)
 {
+  ConnectTunnel(control);
+}
+void
+ControlDispatch::ConnectTunnel(
+  TincanControl & control)
+{
   Json::Value & req = control.GetRequest();
   string msg("Connection to peer node in progress.");
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->ConnectToPeer(req);
+    tincan_->ConnectTunnel(req);
     status = true;
   } catch(exception & e)
   {
-    msg = "The ConnectToPeer operation failed.";
+    msg = "The ConnectTunnel operation failed.";
     LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
@@ -179,14 +187,20 @@ void
 ControlDispatch::CreateLinkListener(
   TincanControl & control)
 {
+  CreateTunnel(control);
+}
+void
+ControlDispatch::CreateTunnel(
+  TincanControl & control)
+{
   Json::Value & req = control.GetRequest();
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->CreateVlinkListener(req, control); //don't use this instance of control after this line as its internals were moved.
+    tincan_->CreateTunnel(req, control); //don't use this instance of control after this line as its internals were moved.
   } catch(exception & e)
   {
-    string msg = "The CreateLinkListener operation failed.";
+    string msg = "The CreateTunnel operation failed.";
     LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
     //send fail here, send the cas when the op completes

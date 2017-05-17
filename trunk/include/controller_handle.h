@@ -51,13 +51,13 @@ namespace tincan {
   {
   public:
     virtual ~TincanDispatchInterface() = default;
-    virtual void ConnectToPeer(
+    virtual void ConnectTunnel(
       const Json::Value & link_desc) = 0;
 
     virtual void CreateVNet(
       unique_ptr<VnetDescriptor> lvecfg) = 0;
 
-    virtual void CreateVlinkListener(
+    virtual void CreateTunnel(
       const Json::Value & link_desc,
       TincanControl & ctrl) = 0;
     

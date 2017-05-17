@@ -51,8 +51,10 @@ public:
 private:
   void UpdateRoutes(TincanControl & control);
   void ConnectToPeer(TincanControl & control);
+  void ConnectTunnel(TincanControl & control);
   void CreateIpopControllerRespLink(TincanControl & control);
   void CreateLinkListener(TincanControl & control);
+  void CreateTunnel(TincanControl & control);
   void CreateVNet(TincanControl & control);
   void Echo(TincanControl & control);
   void InjectFrame(TincanControl & control);

@@ -94,7 +94,7 @@ VirtualNetwork::Shutdown()
 
 void
 VirtualNetwork::StartTunnel(
-  VirtualLink &)
+  int)
 {
   lock_guard<mutex> lg(vn_mtx_);
   for(uint8_t i = 0; i < kLinkConcurrentAIO; i++)
@@ -105,12 +105,6 @@ VirtualNetwork::StartTunnel(
     tf->BytesToTransfer(tf->PayloadCapacity());
     tdev_->Read(*tf.release());
   }
-}
-
-void
-VirtualNetwork::DestroyTunnel(
-  VirtualLink &)
-{
 }
 
 void
@@ -144,13 +138,12 @@ VirtualNetwork::CreateVlink(
   {
     vl->SignalMessageReceived.connect(this, &VirtualNetwork::ProcessIncomingFrame);
   }
-  vl->SignalLinkReady.connect(this, &VirtualNetwork::StartTunnel);
-  vl->SignalLinkBroken.connect(this, &VirtualNetwork::DestroyTunnel);
+  vl->SignalLinkUp.connect(this, &VirtualNetwork::StartTunnel);
   return vl;
 }
 
 shared_ptr<VirtualLink>
-VirtualNetwork::CreateVlinkEndpoint(
+VirtualNetwork::CreateTunnel(
   unique_ptr<PeerDescriptor> peer_desc,
   unique_ptr<VlinkDescriptor> vlink_desc)
 {
@@ -159,46 +152,33 @@ VirtualNetwork::CreateVlinkEndpoint(
   shared_ptr<VirtualLink> vl;
   MacAddressType mac;
   StringToByteArray(peer_desc->mac_address, mac.begin(), mac.end());
-  if(peer_network_->IsAdjacent(mac))
+  shared_ptr<Tunnel> tnl = peer_network_->GetOrCreateTunnel(mac);
+  vl = CreateVlink(move(vlink_desc), move(peer_desc),
+    cricket::ICEROLE_CONTROLLED);
+  if(vl)
   {
-    vl = peer_network_->GetVlink(mac);
+    tnl->AddVlinkEndpoint(vl);
   }
-  else
-  {
-    vl = CreateVlink(move(vlink_desc), move(peer_desc),
-      cricket::ICEROLE_CONTROLLED);
-    peer_network_->Add(vl);
-
-  }
+  else throw TCEXCEPT("The CreateTunnelEndpoint operation failed.");
   return vl;
 }
 
 void
-VirtualNetwork::ConnectToPeer(
+VirtualNetwork::ConnectTunnel(
   unique_ptr<PeerDescriptor> peer_desc,
   unique_ptr<VlinkDescriptor> vlink_desc)
 {
-  shared_ptr<VirtualLink> vl;
   MacAddressType mac;
   StringToByteArray(peer_desc->mac_address, mac.begin(), mac.end());
-  if(peer_network_->IsAdjacent(mac))
-  {
-    vl = peer_network_->GetVlink(mac);
-    vl->PeerCandidates(peer_desc->cas);
-  }
-  else
-  {
-    vl = CreateVlink(move(vlink_desc), move(peer_desc),
+  shared_ptr<Tunnel> tnl = peer_network_->GetOrCreateTunnel(mac);
+  shared_ptr<VirtualLink> vl = CreateVlink(move(vlink_desc), move(peer_desc),
       cricket::ICEROLE_CONTROLLING);
-    peer_network_->Add(vl);
-
-  }
   if(vl)
   {
+    tnl->AddVlinkEndpoint(vl);
     vl->StartConnections();
   }
-  else throw TCEXCEPT("The ConnectToPeer operation failed, no virtual link was"
-    " found in the peer network.");
+  else throw TCEXCEPT("The ConnectTunnel operation failed.");
 }
 
 void VirtualNetwork::RemovePeerConnection(
@@ -252,7 +232,7 @@ void VirtualNetwork::QueryNodeInfo(
   StringToByteArray(node_mac, mac.begin(), mac.end());
   if(peer_network_->IsAdjacent(mac))
   {
-    shared_ptr<VirtualLink> vl = peer_network_->GetVlink(mac);
+    shared_ptr<VirtualLink> vl = peer_network_->GetTunnel(mac)->Vlink();
     node_info[TincanControl::UID] = vl->PeerInfo().uid;
     node_info[TincanControl::VIP4] = vl->PeerInfo().vip4;
     node_info[TincanControl::VIP6] = vl->PeerInfo().vip6;
@@ -289,10 +269,10 @@ VirtualNetwork::SendIcc(
   unique_ptr<IccMessage> icc = make_unique<IccMessage>();
   icc->Message((uint8_t*)data.c_str(), (uint16_t)data.length());
   TransmitMsgData *md = new TransmitMsgData;
-  md->tf = move(icc);
+  md->frm = move(icc);
   MacAddressType mac;
   StringToByteArray(recipient_mac, mac.begin(), mac.end());
-  md->vl = peer_network_->GetVlink(mac);
+  md->tnl = peer_network_->GetTunnel(mac);
   net_worker_.Post(RTC_FROM_HERE, this, MSGID_SEND_ICC, md);
 }
 
@@ -334,10 +314,10 @@ VirtualNetwork::VlinkReadCompleteL2(
   { // a frame to be routed on the overlay
     if(peer_network_->IsRouteExists(fp.DestinationMac()))
     {
-      shared_ptr<VirtualLink> vl = peer_network_->GetRoute(fp.DestinationMac());
+      shared_ptr<Tunnel> tnl = peer_network_->GetRoute(fp.DestinationMac());
       TransmitMsgData *md = new TransmitMsgData;
-      md->tf = move(frame);
-      md->vl = vl;
+      md->frm = move(frame);
+      md->tnl = tnl;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_FWD_FRAME, md);
     }
     else
@@ -404,12 +384,10 @@ VirtualNetwork::TapReadCompleteL2(
   frame->BytesToTransfer(frame->Length());
   if(peer_network_->IsAdjacent(mac))
   {
-    frame->Header(kDtfMagic);
-    frame->Dump("Unicast");
-    shared_ptr<VirtualLink> vl = peer_network_->GetVlink(mac);
+    shared_ptr<Tunnel> tnl = peer_network_->GetTunnel(mac);
     TransmitMsgData *md = new TransmitMsgData;;
-    md->tf.reset(frame);
-    md->vl = vl;
+    md->frm.reset(frame);
+    md->tnl = tnl;
     net_worker_.Post(RTC_FROM_HERE, this, MSGID_TRANSMIT, md);
   }
   else if(peer_network_->IsRouteExists(mac))
@@ -417,8 +395,8 @@ VirtualNetwork::TapReadCompleteL2(
     frame->Header(kFwdMagic);
     frame->Dump("Frame FWD");
     TransmitMsgData *md = new TransmitMsgData;
-    md->tf.reset(frame);
-    md->vl = peer_network_->GetRoute(mac);
+    md->frm.reset(frame);
+    md->tnl = peer_network_->GetRoute(mac);
     net_worker_.Post(RTC_FROM_HERE, this, MSGID_FWD_FRAME, md);
   }
   else
@@ -470,9 +448,9 @@ void VirtualNetwork::OnMessage(Message * msg)
   {
   case MSGID_TRANSMIT:
   {
-    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->tf);
-    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->vl;
-    vl->Transmit(*frame);
+    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
+    shared_ptr<Tunnel> tnl = ((TransmitMsgData*)msg->pdata)->tnl;
+    tnl->Transmit(*frame);
     delete msg->pdata;
     frame->Initialize(frame->Payload(), frame->PayloadCapacity());
     if(0 == tdev_->Read(*frame))
@@ -481,9 +459,9 @@ void VirtualNetwork::OnMessage(Message * msg)
   break;
   case MSGID_SEND_ICC:
   {
-    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->tf);
-    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->vl;
-    vl->Transmit(*frame);
+    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
+    shared_ptr<Tunnel> tnl = ((TransmitMsgData*)msg->pdata)->tnl;
+    tnl->Transmit(*frame);
     //LOG_F(TC_DBG) << "Sent ICC to=" <<vl->PeerInfo().vip4 << " data=\n" <<
     //  string((char*)(frame->begin()+4), *(uint16_t*)(frame->begin()+2));
     delete msg->pdata;
@@ -499,9 +477,9 @@ void VirtualNetwork::OnMessage(Message * msg)
   case MSGID_FWD_FRAME:
   case MSGID_FWD_FRAME_RD:
   {
-    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->tf);
-    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->vl;
-    vl->Transmit(*frame);
+    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
+    shared_ptr<Tunnel> tnl = ((TransmitMsgData*)msg->pdata)->tnl;
+    tnl->Transmit(*frame);
     //LOG(TC_DBG) << "FWDing frame to " << vl->PeerInfo().vip4;
     if(msg->message_id == MSGID_FWD_FRAME_RD)
     {

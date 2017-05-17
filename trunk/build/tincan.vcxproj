@@ -176,6 +176,7 @@
     <ClInclude Include="..\include\tincan.h" />
     <ClInclude Include="..\include\tincan_base.h" />
     <ClInclude Include="..\include\tincan_exception.h" />
+    <ClInclude Include="..\include\tunnel.h" />
     <ClInclude Include="..\include\virtual_link.h" />
     <ClInclude Include="..\include\tincan_control.h" />
     <ClInclude Include="..\include\virtual_network.h" />
@@ -190,6 +191,7 @@
     <ClCompile Include="..\src\tap_frame.cc" />
     <ClCompile Include="..\src\tincan.cc" />
     <ClCompile Include="..\src\tincan_control.cc" />
+    <ClCompile Include="..\src\tunnel.cpp" />
     <ClCompile Include="..\src\virtual_link.cc" />
     <ClCompile Include="..\src\tincan_main.cc" />
     <ClCompile Include="..\src\virtual_network.cc" />

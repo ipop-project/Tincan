@@ -36,30 +36,30 @@ PeerNetwork::~PeerNetwork()
 Adds a new adjacent node to the peer network. This is used when a new vlink is
 created. It also updates the UID map (for now).
 */
-void PeerNetwork::Add(shared_ptr<VirtualLink> vlink)
+void PeerNetwork::Add(shared_ptr<Tunnel> tnl)
 {
   shared_ptr<Hub> hub = make_shared<Hub>();
-  hub->vlink = vlink;
+  hub->tnl = tnl;
   hub->is_valid = true;
   MacAddressType mac;
   size_t cnt = StringToByteArray(
-    vlink->PeerInfo().mac_address, mac.begin(), mac.end());
+    tnl->Vlink()->PeerInfo().mac_address, mac.begin(), mac.end());
   if(cnt != 6)
   {
     string emsg = "Converting the MAC to binary failed, the input string is: ";
-    emsg.append(vlink->PeerInfo().mac_address);
+    emsg.append(tnl->Vlink()->PeerInfo().mac_address);
     throw TCEXCEPT(emsg.c_str());
   }
   {
     lock_guard<mutex> lg(mac_map_mtx_);
     if(mac_map_.count(mac) == 1)
     {
-      LOG_F(LS_WARNING) << "Entry " << vlink->PeerInfo().mac_address <<
+      LOG_F(LS_WARNING) << "Entry " << tnl->Vlink()->PeerInfo().mac_address <<
         " already exists in peer net. It will be updated.";
     }
     mac_map_[mac] = hub;
   }
-  LOG(TC_DBG) << "Added node " << vlink->PeerInfo().mac_address;
+  LOG(TC_DBG) << "Added node " << tnl->Vlink()->PeerInfo().mac_address;
 }
 
 void PeerNetwork::UpdateRoute(
@@ -81,7 +81,7 @@ void PeerNetwork::UpdateRoute(
   LOG(TC_DBG) << "Updated route to node=" <<
     ByteArrayToString(dest.begin(), dest.end()) << " through node=" << 
     ByteArrayToString(route.begin(), route.end()) << " vlink obj=" << 
-    mac_routes_[dest].hub->vlink.get();
+    mac_routes_[dest].hub->tnl->Vlink().get();
 }
 /*
 Used when a vlink is removed and the peer is no longer adjacent. All routes that
@@ -96,8 +96,9 @@ PeerNetwork::Remove(
   {
     lock_guard<mutex> lg(mac_map_mtx_);
     shared_ptr<Hub> hub = mac_map_.at(mac);
-    LOG(TC_DBG) << "Removing node " << hub->vlink->PeerInfo().mac_address <<
-      " hub use count=" << hub.use_count() << " vlink obj=" << hub->vlink.get();
+    LOG(TC_DBG) << "Removing node " << hub->tnl->Vlink()->PeerInfo().mac_address
+      << " hub use count=" << hub.use_count() << " vlink obj=" <<
+      hub->tnl->Vlink().get();
     hub->is_valid = false;
     mac_map_.erase(mac); //remove the MAC for the adjacent node
     //when hub goes out of scope ref count is decr, if it is 0 it's deleted 
@@ -116,32 +117,40 @@ PeerNetwork::Remove(
   }
 }
 
-shared_ptr<VirtualLink>
-PeerNetwork::GetVlink(
+shared_ptr<Tunnel>
+PeerNetwork::GetTunnel(
   const string & mac)
 {
   MacAddressType mac_arr;
   StringToByteArray(mac, mac_arr.begin(), mac_arr.end());
-  return GetVlink(mac_arr);
+  return GetTunnel(mac_arr);
 }
 
-shared_ptr<VirtualLink>
-PeerNetwork::GetVlink(
+shared_ptr<Tunnel>
+PeerNetwork::GetTunnel(
   const MacAddressType& mac)
 {
   lock_guard<mutex> lgm(mac_map_mtx_);
   shared_ptr<Hub> hub = mac_map_.at(mac);
-  return hub->vlink;
+  return hub->tnl;
 }
 
-shared_ptr<VirtualLink>
+shared_ptr<Tunnel>
+PeerNetwork::GetOrCreateTunnel(
+  const MacAddressType& mac)
+{
+  lock_guard<mutex> lgm(mac_map_mtx_);
+  return mac_map_[mac]->tnl;
+}
+
+shared_ptr<Tunnel>
 PeerNetwork::GetRoute(
   const MacAddressType& mac)
 {
   lock_guard<mutex> lgm(mac_map_mtx_);
   HubEx & hux = mac_routes_.at(mac);
   hux.accessed = steady_clock::now();
-  return hux.hub->vlink;
+  return hux.hub->tnl;
 }
 
 bool

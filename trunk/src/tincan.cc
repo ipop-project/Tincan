@@ -55,7 +55,7 @@ void Tincan::UpdateRoute(
 }
 
 void
-Tincan::ConnectToPeer(
+Tincan::ConnectTunnel(
   const Json::Value & link_desc)
 {
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
@@ -71,7 +71,7 @@ Tincan::ConnectToPeer(
   vl_desc->sec_enabled = link_desc[TincanControl::EncryptionEnabled].asBool();
 
   VirtualNetwork & vn = VnetFromName(tap_name);
-  vn.ConnectToPeer(move(peer_desc), move(vl_desc));
+  vn.ConnectTunnel(move(peer_desc), move(vl_desc));
 }
 
 void 
@@ -91,7 +91,7 @@ void Tincan::CreateVNet(unique_ptr<VnetDescriptor> lvecfg)
 }
 
 void
-Tincan::CreateVlinkListener(
+Tincan::CreateTunnel(
   const Json::Value & link_desc,
   TincanControl & ctrl)
 {
@@ -108,7 +108,7 @@ Tincan::CreateVlinkListener(
   
   VirtualNetwork & vn = VnetFromName(tap_name);
   shared_ptr<VirtualLink> vlink =
-    vn.CreateVlinkEndpoint(move(peer_desc), move(vl_desc));
+    vn.CreateTunnel(move(peer_desc), move(vl_desc));
   //if(vlink->Candidates().empty())
   {
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);

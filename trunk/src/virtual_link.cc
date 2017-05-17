@@ -61,6 +61,7 @@ VirtualLink::Initialize(
   SSLFingerprint const & local_fingerprint,
   cricket::IceRole ice_role)
 {
+  ice_role_ = ice_role;
   rtc::SocketAddress stun_addr;
   stun_addr.FromString(vlink_desc_->stun_addr);
   port_allocator_.reset(new cricket::BasicPortAllocator(
@@ -74,7 +75,7 @@ VirtualLink::Initialize(
   channel_ = transport_ctlr_->CreateTransportChannel(content_name_,
     cricket::ICE_CANDIDATE_COMPONENT_DEFAULT);
   RegisterLinkEventHandlers();
-  SetupICE(ice_role, local_fingerprint);
+  SetupICE(local_fingerprint);
   transport_ctlr_->MaybeStartGathering();
 
   return;
@@ -160,12 +161,12 @@ void VirtualLink::OnWriteableState(
   if(transport->writable())
   {
     LOG(TC_DBG) << "Connection established to: " << peer_desc_->mac_address;
-    SignalLinkReady(*this);
+    SignalLinkUp(ice_role_);
   }
   else
   {
     LOG(TC_DBG) << "Link NOT writeable: " << peer_desc_->mac_address;
-    SignalLinkBroken(*this);
+    SignalLinkDown(ice_role_);
   }
 }
 
@@ -242,7 +243,6 @@ VirtualLink::GetStats(Json::Value & stats)
 
 void
 VirtualLink::SetupICE(
-  cricket::IceRole ice_role,
   SSLFingerprint const & local_fingerprint)
 {
   size_t pos = peer_desc_->fingerprint.find(' ');
@@ -257,10 +257,10 @@ VirtualLink::SetupICE(
   //cricket::IceConfig ic;
   //ic.continual_gathering_policy = cricket::GATHER_CONTINUALLY_AND_RECOVER;
   //transport_ctlr_->SetIceConfig(ic);
-  transport_ctlr_->SetIceRole(ice_role);
+  transport_ctlr_->SetIceRole(ice_role_);
   cricket::ConnectionRole remote_conn_role = cricket::CONNECTIONROLE_ACTIVE;
   conn_role_ = cricket::CONNECTIONROLE_ACTPASS;
-  if(cricket::ICEROLE_CONTROLLING == ice_role) {
+  if(cricket::ICEROLE_CONTROLLING == ice_role_) {
     conn_role_ = cricket::CONNECTIONROLE_ACTIVE;
     remote_conn_role = cricket::CONNECTIONROLE_ACTPASS;
   }
@@ -281,7 +281,7 @@ VirtualLink::SetupICE(
     remote_conn_role,
     remote_fingerprint_.get()));
 
-  if(cricket::ICEROLE_CONTROLLING == ice_role)
+  if(cricket::ICEROLE_CONTROLLING == ice_role_)
   {
     //when controlling the remote description must be set first.
     transport_ctlr_->SetRemoteTransportDescription(content_name_,
@@ -289,7 +289,7 @@ VirtualLink::SetupICE(
     transport_ctlr_->SetLocalTransportDescription(content_name_,
       *local_description_.get(), cricket::CA_ANSWER, NULL);
   }
-  else if(cricket::ICEROLE_CONTROLLED == ice_role)
+  else if(cricket::ICEROLE_CONTROLLED == ice_role_)
   {
     transport_ctlr_->SetLocalTransportDescription(content_name_,
       *local_description_.get(), cricket::CA_OFFER, NULL);

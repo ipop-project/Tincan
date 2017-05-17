@@ -94,8 +94,13 @@ public:
 
   void GetStats(Json::Value & infos);
 
-  sigslot::signal1<VirtualLink&> SignalLinkReady;
-  sigslot::signal1<VirtualLink&> SignalLinkBroken;
+  cricket::IceRole IceRole()
+  {
+    return ice_role_;
+  }
+
+  sigslot::signal1<int> SignalLinkUp;
+  sigslot::signal1<int> SignalLinkDown;
   sigslot::signal1<string> SignalLocalCasReady;
   sigslot::signal3<uint8_t *, uint32_t, VirtualLink&>
     SignalMessageReceived;
@@ -123,7 +128,6 @@ private:
     const string & candidates);
 
   void SetupICE(
-    cricket::IceRole ice_role,
     SSLFingerprint const & local_fingerprint);
 
   void OnReadPacket(
@@ -144,6 +148,7 @@ private:
   unique_ptr<cricket::TransportController> transport_ctlr_;
   cricket::Candidates local_candidates_;
   const uint64_t tiebreaker_;
+  cricket::IceRole ice_role_;
   ConnectionRole conn_role_;
   TransportChannel * channel_;
   unique_ptr<cricket::TransportDescription> local_description_;

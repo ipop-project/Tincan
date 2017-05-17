@@ -24,6 +24,7 @@
 #define _TINCAN_PEER_NETWORK_H_
 #include "tincan_base.h"
 #include "virtual_link.h"
+#include "tunnel.h"
 namespace tincan
 {
 class PeerNetwork :
@@ -33,12 +34,16 @@ public:
   PeerNetwork(
     const string & name);
   ~PeerNetwork();
-  void Add(shared_ptr<VirtualLink> vlink);
+  //void Add(shared_ptr<VirtualLink> vlink);
+  void Add(shared_ptr<Tunnel> tnl);
   void UpdateRoute(MacAddressType & dest, MacAddressType & route);
   void Remove(MacAddressType mac);
-  shared_ptr<VirtualLink> GetVlink(const string & mac);
-  shared_ptr<VirtualLink> GetVlink(const MacAddressType & mac);
-  shared_ptr<VirtualLink> GetRoute(const MacAddressType & mac);
+  //shared_ptr<VirtualLink> GetVlink(const string & mac);
+  //shared_ptr<VirtualLink> GetVlink(const MacAddressType & mac);
+  shared_ptr<Tunnel> GetRoute(const MacAddressType & mac);
+  shared_ptr<Tunnel> GetTunnel(const string & mac);
+  shared_ptr<Tunnel> GetTunnel(const MacAddressType & mac);
+  shared_ptr<Tunnel> GetOrCreateTunnel(const MacAddressType & mac);
   bool IsAdjacent(const string & mac);
   bool IsAdjacent(const MacAddressType& mac);
   bool IsRouteExists(const MacAddressType& mac);
@@ -47,7 +52,7 @@ struct Hub
 {
   Hub() : is_valid(false)
   {}
-  shared_ptr<VirtualLink> vlink;
+  shared_ptr<Tunnel> tnl;
   bool is_valid;
 };
 struct HubEx

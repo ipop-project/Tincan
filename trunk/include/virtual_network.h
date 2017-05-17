@@ -42,6 +42,7 @@
 #include "tincan_exception.h"
 #include "vnet_descriptor.h"
 #include "virtual_link.h"
+#include "tunnel.h"
 
 namespace tincan
 {
@@ -64,8 +65,8 @@ public:
   class TransmitMsgData : public MessageData
   {
   public:
-    shared_ptr<VirtualLink> vl;
-    unique_ptr<TapFrame> tf;
+    shared_ptr<Tunnel> tnl;
+    unique_ptr<TapFrame> frm;
   };
   class VlinkMsgData : public MessageData
   {
@@ -107,19 +108,17 @@ public:
   void Start();
   void Shutdown();
   void StartTunnel(
-    VirtualLink & vlink);
-  void DestroyTunnel(
-    VirtualLink & vlink);
+    int);
   void UpdateRoute(MacAddressType mac_dest, MacAddressType mac_path);
   //
   //Creates the listening endpoint of vlink and returns its candidate address
   //set for the connection.
-  shared_ptr<VirtualLink> CreateVlinkEndpoint(
+  shared_ptr<VirtualLink> CreateTunnel(
     unique_ptr<PeerDescriptor> peer_desc,
     unique_ptr<VlinkDescriptor> vlink_desc);
   //
   //Uses the remote's candidate set and actively attempts to connect to it.
-  void ConnectToPeer(
+  void ConnectTunnel(
     unique_ptr<PeerDescriptor> peer_desc,
     unique_ptr<VlinkDescriptor> vlink_desc);
 

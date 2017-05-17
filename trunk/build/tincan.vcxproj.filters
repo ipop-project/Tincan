@@ -526,6 +526,9 @@
     <ClInclude Include="..\include\tincan_base.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\tunnel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\peer_network.cc">
@@ -556,6 +559,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\tap_frame.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tunnel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
