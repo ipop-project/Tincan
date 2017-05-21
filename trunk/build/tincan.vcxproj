@@ -191,7 +191,7 @@
     <ClCompile Include="..\src\tap_frame.cc" />
     <ClCompile Include="..\src\tincan.cc" />
     <ClCompile Include="..\src\tincan_control.cc" />
-    <ClCompile Include="..\src\tunnel.cpp" />
+    <ClCompile Include="..\src\tunnel.cc" />
     <ClCompile Include="..\src\virtual_link.cc" />
     <ClCompile Include="..\src\tincan_main.cc" />
     <ClCompile Include="..\src\virtual_network.cc" />

@@ -561,7 +561,7 @@
     <ClCompile Include="..\src\tap_frame.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tunnel.cpp">
+    <ClCompile Include="..\src\tunnel.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
