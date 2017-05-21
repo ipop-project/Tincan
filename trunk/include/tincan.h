@@ -52,6 +52,11 @@ public:
   void InjectFrame(
     const Json::Value & frame_desc) override;
 
+  void QueryLinkStats(
+    const string & tap_name,
+    const string & node_mac,
+    Json::Value & node_info);
+
   void QueryNodeInfo(
     const string & tap_name,
     const string & node_mac,
@@ -78,6 +83,11 @@ public:
 //
   void OnLocalCasUpdated(
     string lcas);
+
+  void QueryTunnelCas(
+    const string & tap_name,
+    const string & tnl_id,
+    Json::Value & cas_info);
 
   void Run();
 private:

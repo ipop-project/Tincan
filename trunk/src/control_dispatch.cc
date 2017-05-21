@@ -43,7 +43,8 @@ ControlDispatch::ControlDispatch() :
     { "Echo", &ControlDispatch::Echo },
     { "ICC", &ControlDispatch::SendICC },
     { "InjectFrame", &ControlDispatch::InjectFrame },
-    { "QueryStunCandidates", &ControlDispatch::QueryStunCandidates },
+    { "QueryCandidateAddressSet", &ControlDispatch::QueryCandidateAddressSet },
+    { "QueryLinkStats", &ControlDispatch::QueryLinkStats },
     { "QueryNodeInfo", &ControlDispatch::QueryNodeInfo },
     { "RemovePeer", &ControlDispatch::RemovePeer },
     { "SetIgnoredNetInterfaces", &ControlDispatch::SetNetworkIgnoreList },
@@ -256,7 +257,7 @@ ControlDispatch::QueryNodeInfo(
   try
   {
     tincan_->QueryNodeInfo(tap_name, mac, node_info);
-    resp = node_info.toStyledString();;
+    resp = node_info.toStyledString();
     status = true;
   } catch(exception & e)
   {
@@ -295,10 +296,53 @@ ControlDispatch::InjectFrame(
 }
 
 void
-ControlDispatch::QueryStunCandidates(
-  TincanControl &)
+ControlDispatch::QueryLinkStats(
+  TincanControl & control)
 {
-  //TODO: implementation
+  Json::Value & req = control.GetRequest(), node_info;
+  string mac = req[TincanControl::MAC].asString();
+  string tap_name = req[TincanControl::InterfaceName].asString();
+  string resp;
+  bool status = false;
+  lock_guard<mutex> lg(disp_mutex_);
+  try
+  {
+    tincan_->QueryLinkStats(tap_name, mac, node_info);
+    resp = node_info.toStyledString();
+    status = true;
+  } catch(exception & e)
+  {
+    resp = "The QueryLinkStats operation failed. ";
+    LOG_F(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
+      control.StyledString();
+  }
+  control.SetResponse(resp, status);
+  ctrl_link_->Deliver(control);
+}
+
+void
+ControlDispatch::QueryCandidateAddressSet(
+  TincanControl & control)
+{
+  Json::Value & req = control.GetRequest(), cas_info;
+  string mac = req[TincanControl::MAC].asString();
+  string tap_name = req[TincanControl::InterfaceName].asString();
+  string resp;
+  bool status = false;
+  lock_guard<mutex> lg(disp_mutex_);
+  try
+  {
+    tincan_->QueryTunnelCas(tap_name, mac, cas_info);
+    resp = cas_info.toStyledString();
+    status = true;
+  } catch(exception & e)
+  {
+    resp = "The QueryCandidateAddressSet operation failed. ";
+    LOG_F(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
+      control.StyledString();
+  }
+  control.SetResponse(resp, status);
+  ctrl_link_->Deliver(control);
 }
 
 void

@@ -135,10 +135,18 @@ public:
     Json::Value & stats);
   void IgnoredNetworkInterfaces(
     const vector<string>& ignored_list);
+
+  void QueryLinkStats(
+    const string & node_mac,
+    Json::Value & node_info);
   
   void QueryNodeInfo(
     const string & node_mac,
     Json::Value & node_info);
+
+  void QueryTunnelCas(
+    const string & tnl_id,
+    Json::Value & cas_info);
 
   void SendIcc(
     const string & recipient_mac,

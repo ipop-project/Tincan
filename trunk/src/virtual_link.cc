@@ -223,21 +223,24 @@ VirtualLink::GetStats(Json::Value & stats)
   channel_->GetStats(&infos);
   for(auto info : infos)
   {
-    Json::Value stat(Json::objectValue);
-    stat["local_addr"] = info.local_candidate.address().ToString();
-    stat["rem_addr"] = info.remote_candidate.address().ToString();
-    stat["local_type"] = info.local_candidate.type();
-    stat["rem_type"] = info.remote_candidate.type();
-    stat["best_conn"] = info.best_connection;
-    stat["writable"] = info.writable;
-    stat["timeout"] = info.timeout;
-    stat["new_conn"] = info.new_connection;
-    stat["rtt"] = (Json::UInt64)info.rtt;
-    stat["sent_total_bytes"] = (Json::UInt64)info.sent_total_bytes;
-    stat["sent_bytes_second"] = (Json::UInt64)info.sent_bytes_second;
-    stat["recv_total_bytes"] = (Json::UInt64)info.recv_total_bytes;
-    stat["recv_bytes_second"] = (Json::UInt64)info.recv_bytes_second;
-    stats.append(stat);
+    if(info.best_connection)
+    {
+      Json::Value stat(Json::objectValue);
+      stat["local_addr"] = info.local_candidate.address().ToString();
+      stat["rem_addr"] = info.remote_candidate.address().ToString();
+      stat["local_type"] = info.local_candidate.type();
+      stat["rem_type"] = info.remote_candidate.type();
+      stat["best_conn"] = info.best_connection;
+      stat["writable"] = info.writable;
+      stat["timeout"] = info.timeout;
+      stat["new_conn"] = info.new_connection;
+      stat["rtt"] = (Json::UInt64)info.rtt;
+      stat["sent_total_bytes"] = (Json::UInt64)info.sent_total_bytes;
+      stat["sent_bytes_second"] = (Json::UInt64)info.sent_bytes_second;
+      stat["recv_total_bytes"] = (Json::UInt64)info.recv_total_bytes;
+      stat["recv_bytes_second"] = (Json::UInt64)info.recv_bytes_second;
+      stats.append(stat);
+    }
   }
 }
 

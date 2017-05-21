@@ -34,6 +34,7 @@ public:
   virtual ~Tunnel() = default;
   void Transmit(TapFrame & frame);
   void AddVlinkEndpoint(shared_ptr<VirtualLink> vlink);
+  void QueryCas(Json::Value & cas_info);
   shared_ptr<VirtualLink> Vlink()
   {
     return vlinks_[preferred_];

@@ -97,7 +97,7 @@ const array<const char*, 3> ControlTypeStrings = { {"TincanRequest", "TincanResp
   static const Json::StaticString PeerInfo;
   static const Json::StaticString ProtocolVersion;
   static const Json::StaticString QueryNodeInfo;
-  static const Json::StaticString QueryStunCandidates;
+  static const Json::StaticString QueryCandidateAddressSet;
   static const Json::StaticString Recipient;
   static const Json::StaticString RecipientMac;
   static const Json::StaticString RemovePeer;

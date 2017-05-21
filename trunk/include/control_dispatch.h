@@ -58,8 +58,9 @@ private:
   void CreateVNet(TincanControl & control);
   void Echo(TincanControl & control);
   void InjectFrame(TincanControl & control);
+  void QueryLinkStats(TincanControl & control);
   void QueryNodeInfo(TincanControl & control);
-  void QueryStunCandidates(TincanControl & control);
+  void QueryCandidateAddressSet(TincanControl & control);
   void RemovePeer(TincanControl & control);
   void ConfigureLogging(TincanControl & control);
   LoggingSeverity GetLogLevel(const string & log_level);

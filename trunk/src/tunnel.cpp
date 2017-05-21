@@ -43,22 +43,22 @@ void Tunnel::AddVlinkEndpoint(
   vlinks_[role]->SignalLinkUp.connect(this, &Tunnel::SetPreferredLink);
 }
 
-//void Tunnel::AddActiveEndpoint(shared_ptr<VirtualLink> vlink)
-//{
-//  vlinks_[1] = vlink;
-//  vlinks_[1]->SignalLinkReady.connect(this, &Tunnel::SetPreferredLink);
-//}
+void Tunnel::QueryCas(Json::Value & cas_info)
+{
+  cas_info["Controlled"] = vlinks_[1]->Candidates();
+  cas_info["Controlling"] = vlinks_[0]->Candidates();
+}
 
 /*
 Keep the first vlink that connect and release the 2nd if/when it does.
 */
 void
 Tunnel::SetPreferredLink(
-  int link_id)
+  int role)
 {
   if(preferred_ < 0)
-    preferred_ = link_id;
+    preferred_ = role;
   else
-    vlinks_[link_id].reset();
+    vlinks_[role].reset();
 }
 } // end namespace tincan

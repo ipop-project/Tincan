@@ -61,7 +61,7 @@ Tincan::ConnectTunnel(
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
   peer_desc->uid = link_desc[TincanControl::PeerInfo][TincanControl::UID].asString();
   peer_desc->vip4 = link_desc[TincanControl::PeerInfo][TincanControl::VIP4].asString();
-  peer_desc->vip6 = link_desc[TincanControl::PeerInfo][TincanControl::VIP6].asString();
+  //peer_desc->vip6 = link_desc[TincanControl::PeerInfo][TincanControl::VIP6].asString();
   peer_desc->cas = link_desc[TincanControl::PeerInfo][TincanControl::CAS].asString();
   peer_desc->fingerprint = link_desc[TincanControl::PeerInfo][TincanControl::Fingerprint].asString();
   peer_desc->mac_address = link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
@@ -98,7 +98,7 @@ Tincan::CreateTunnel(
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
   peer_desc->uid = link_desc[TincanControl::PeerInfo][TincanControl::UID].asString();
   peer_desc->vip4 = link_desc[TincanControl::PeerInfo][TincanControl::VIP4].asString();
-  peer_desc->vip6 = link_desc[TincanControl::PeerInfo][TincanControl::VIP6].asString();
+  //peer_desc->vip6 = link_desc[TincanControl::PeerInfo][TincanControl::VIP6].asString();
   peer_desc->fingerprint = link_desc[TincanControl::PeerInfo][TincanControl::Fingerprint].asString();
   peer_desc->mac_address = link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
   string tap_name = link_desc[TincanControl::InterfaceName].asString();
@@ -124,6 +124,20 @@ Tincan::InjectFrame(
   const string & tap_name = frame_desc[TincanControl::InterfaceName].asString();
   VirtualNetwork & vn = VnetFromName(tap_name);
   vn.InjectFame(frame_desc[TincanControl::Data].asString());
+}
+
+void
+Tincan::QueryLinkStats(
+  const string & tap_name,
+  const string & node_mac,
+  Json::Value & node_info)
+{
+  VirtualNetwork & vn = VnetFromName(tap_name);
+  node_info[TincanControl::Type] = "peer";
+  node_info[TincanControl::VnetDescription] = vn.Descriptor().description;
+  node_info[TincanControl::InterfaceName] = vn.Name();
+  vn.QueryLinkStats(node_mac, node_info);
+
 }
 
 void
@@ -208,6 +222,16 @@ Tincan::OnLocalCasUpdated(
     ctrl->SetResponse(lcas, true);
     ctrl_link_->Deliver(move(ctrl));
   }
+}
+
+void
+Tincan::QueryTunnelCas(
+  const string & tap_name,
+  const string & tnl_id, //peer mac address
+  Json::Value & cas_info)
+{
+  VirtualNetwork & vn = VnetFromName(tap_name);
+  vn.QueryTunnelCas(tnl_id, cas_info);
 }
 
 void

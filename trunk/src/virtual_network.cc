@@ -224,7 +224,7 @@ VirtualNetwork::IgnoredNetworkInterfaces(
   net_manager_.set_network_ignore_list(ignored_list);
 }
 
-void VirtualNetwork::QueryNodeInfo(
+void VirtualNetwork::QueryLinkStats(
   const string & node_mac,
   Json::Value & node_info)
 {
@@ -233,12 +233,6 @@ void VirtualNetwork::QueryNodeInfo(
   if(peer_network_->IsAdjacent(mac))
   {
     shared_ptr<VirtualLink> vl = peer_network_->GetTunnel(mac)->Vlink();
-    node_info[TincanControl::UID] = vl->PeerInfo().uid;
-    node_info[TincanControl::VIP4] = vl->PeerInfo().vip4;
-    node_info[TincanControl::VIP6] = vl->PeerInfo().vip6;
-    node_info[TincanControl::MAC] = vl->PeerInfo().mac_address;
-    node_info[TincanControl::Fingerprint] = vl->PeerInfo().fingerprint;
-
     if(vl->IsReady())
     {
       LinkStatsMsgData md;
@@ -258,7 +252,47 @@ void VirtualNetwork::QueryNodeInfo(
   {
     node_info[TincanControl::MAC] = node_mac;
     node_info[TincanControl::Status] = "unknown";
+    node_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
   }
+}
+
+void VirtualNetwork::QueryNodeInfo(
+  const string & node_mac,
+  Json::Value & node_info)
+{
+  MacAddressType mac;
+  StringToByteArray(node_mac, mac.begin(), mac.end());
+  if(peer_network_->IsAdjacent(mac))
+  {
+    shared_ptr<VirtualLink> vl = peer_network_->GetTunnel(mac)->Vlink();
+    node_info[TincanControl::UID] = vl->PeerInfo().uid;
+    node_info[TincanControl::VIP4] = vl->PeerInfo().vip4;
+    //node_info[TincanControl::VIP6] = vl->PeerInfo().vip6;
+    node_info[TincanControl::MAC] = vl->PeerInfo().mac_address;
+    node_info[TincanControl::Fingerprint] = vl->PeerInfo().fingerprint;
+
+    if(vl->IsReady())
+    {
+      node_info[TincanControl::Status] = "online";
+    }
+    else
+    {
+      node_info[TincanControl::Status] = "offline";
+    }
+  }
+  else
+  {
+    node_info[TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Status] = "unknown";
+  }
+}
+
+void VirtualNetwork::QueryTunnelCas(
+  const string & tnl_id, //peer mac address
+  Json::Value & cas_info)
+{
+  shared_ptr<Tunnel> tnl = peer_network_->GetTunnel(tnl_id);
+  tnl->QueryCas(cas_info);
 }
 
 void

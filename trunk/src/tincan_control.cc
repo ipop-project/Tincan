@@ -47,7 +47,7 @@ const Json::StaticString TincanControl::Data("Data");
 const Json::StaticString TincanControl::PeerInfo("PeerInfo");
 const Json::StaticString TincanControl::ProtocolVersion("ProtocolVersion");
 const Json::StaticString TincanControl::QueryNodeInfo("QueryNodeInfo");
-const Json::StaticString TincanControl::QueryStunCandidates("QueryStunCandidates");
+const Json::StaticString TincanControl::QueryCandidateAddressSet("QueryCandidateAddressSet");
 const Json::StaticString TincanControl::RemovePeer("RemovePeer");
 const Json::StaticString TincanControl::RemoveRoutes("RemoveRoutes");
 const Json::StaticString TincanControl::Request("Request");
