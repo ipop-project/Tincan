@@ -59,12 +59,16 @@ Tincan::ConnectTunnel(
   const Json::Value & link_desc)
 {
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
-  peer_desc->uid = link_desc[TincanControl::PeerInfo][TincanControl::UID].asString();
-  peer_desc->vip4 = link_desc[TincanControl::PeerInfo][TincanControl::VIP4].asString();
-  //peer_desc->vip6 = link_desc[TincanControl::PeerInfo][TincanControl::VIP6].asString();
-  peer_desc->cas = link_desc[TincanControl::PeerInfo][TincanControl::CAS].asString();
-  peer_desc->fingerprint = link_desc[TincanControl::PeerInfo][TincanControl::Fingerprint].asString();
-  peer_desc->mac_address = link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
+  peer_desc->uid =
+    link_desc[TincanControl::PeerInfo][TincanControl::UID].asString();
+  peer_desc->vip4 =
+    link_desc[TincanControl::PeerInfo][TincanControl::VIP4].asString();
+  peer_desc->cas =
+    link_desc[TincanControl::PeerInfo][TincanControl::CAS].asString();
+  peer_desc->fingerprint =
+    link_desc[TincanControl::PeerInfo][TincanControl::Fingerprint].asString();
+  peer_desc->mac_address =
+    link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
   string tap_name = link_desc[TincanControl::InterfaceName].asString();
   unique_ptr<VlinkDescriptor> vl_desc = make_unique<VlinkDescriptor>();
   vl_desc->name = tap_name;
@@ -127,7 +131,7 @@ Tincan::InjectFrame(
 }
 
 void
-Tincan::QueryLinkStats(
+Tincan::QueryTunnelStats(
   const string & tap_name,
   const string & node_mac,
   Json::Value & node_info)
@@ -136,7 +140,7 @@ Tincan::QueryLinkStats(
   node_info[TincanControl::Type] = "peer";
   node_info[TincanControl::VnetDescription] = vn.Descriptor().description;
   node_info[TincanControl::InterfaceName] = vn.Name();
-  vn.QueryLinkStats(node_mac, node_info);
+  vn.QueryTunnelStats(node_mac, node_info);
 
 }
 
@@ -160,14 +164,26 @@ Tincan::QueryNodeInfo(
   }
 }
 
+void 
+Tincan::TrimTunnel(
+  const Json::Value & tnl_desc)
+{
+  const string & tap_name = tnl_desc[TincanControl::InterfaceName].asString();
+  VirtualNetwork & vn = VnetFromName(tap_name);
+  const string & mac = tnl_desc[TincanControl::MAC].asString();
+  vn.TerminateTunnel(mac);
+
+}
+
 void
-Tincan::RemoveVlink(
+Tincan::TrimVlink(
   const Json::Value & link_desc)
 {
   const string & tap_name = link_desc[TincanControl::InterfaceName].asString();
   VirtualNetwork & vn = VnetFromName(tap_name);
   const string & mac = link_desc[TincanControl::MAC].asString();
-  vn.RemovePeerConnection(mac);
+  const string & role = link_desc[TincanControl::Role].asString();
+  vn.TerminateLink(mac, role);
 }
 
 void
@@ -208,7 +224,7 @@ Tincan::OnLocalCasUpdated(
     itr = inprogess_controls_.begin();
     for(; itr != inprogess_controls_.end(); itr++)
     {
-      if((*itr)->GetCommand() == TincanControl::CreateLinkListener.c_str())
+      if((*itr)->GetCommand() == TincanControl::CreateTunnel.c_str())
       {
         to_deliver = true;
         ctrl = move(*itr);

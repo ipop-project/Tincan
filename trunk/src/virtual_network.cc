@@ -147,17 +147,30 @@ VirtualNetwork::CreateTunnel(
   unique_ptr<PeerDescriptor> peer_desc,
   unique_ptr<VlinkDescriptor> vlink_desc)
 {
-  LOG_F(LS_VERBOSE) << "Attempting to create a new virtual link for node "
-    << peer_desc->uid;
   shared_ptr<VirtualLink> vl;
   MacAddressType mac;
+  shared_ptr<Tunnel> tnl;
+  string mac_str = peer_desc->mac_address;
   StringToByteArray(peer_desc->mac_address, mac.begin(), mac.end());
-  shared_ptr<Tunnel> tnl = peer_network_->GetOrCreateTunnel(mac);
+  if(peer_network_->IsAdjacent(mac))
+  {
+    tnl = peer_network_->GetTunnel(mac);
+    LOG_F(LS_INFO) << "Controlled Tunnel ID (" << mac_str <<
+      ") already exists in peer net. It will be updated.";
+  }
+  else
+  {
+    tnl = make_shared<Tunnel>();
+    tnl->Id(mac);
+  }
   vl = CreateVlink(move(vlink_desc), move(peer_desc),
     cricket::ICEROLE_CONTROLLED);
   if(vl)
   {
     tnl->AddVlinkEndpoint(vl);
+    peer_network_->Add(tnl);
+    LOG_F(LS_VERBOSE) << "Created CONTROLLED vlink w/ Tunnel ID (" <<
+      mac_str << ")";
   }
   else throw TCEXCEPT("The CreateTunnelEndpoint operation failed.");
   return vl;
@@ -169,26 +182,60 @@ VirtualNetwork::ConnectTunnel(
   unique_ptr<VlinkDescriptor> vlink_desc)
 {
   MacAddressType mac;
+  shared_ptr<Tunnel> tnl;
+  string mac_str = peer_desc->mac_address;
   StringToByteArray(peer_desc->mac_address, mac.begin(), mac.end());
-  shared_ptr<Tunnel> tnl = peer_network_->GetOrCreateTunnel(mac);
+  if(peer_network_->IsAdjacent(mac))
+  {
+    tnl = peer_network_->GetTunnel(mac);
+    LOG_F(LS_INFO) << "Controlling Tunnel ID (" << mac_str <<
+      ") already exists in peer net. It will be updated.";
+  }
+  else
+  {
+    tnl = make_shared<Tunnel>();
+    tnl->Id(mac);
+  }
   shared_ptr<VirtualLink> vl = CreateVlink(move(vlink_desc), move(peer_desc),
       cricket::ICEROLE_CONTROLLING);
   if(vl)
   {
     tnl->AddVlinkEndpoint(vl);
     vl->StartConnections();
+    peer_network_->Add(tnl);
+    LOG_F(LS_VERBOSE) << "Created CONTROLLING vlink w/ Tunnel ID (" <<
+      mac_str << ")";
   }
   else throw TCEXCEPT("The ConnectTunnel operation failed.");
 }
 
-void VirtualNetwork::RemovePeerConnection(
-  const string & peer_mac)
+void VirtualNetwork::TerminateTunnel(
+  const string & tnl_id)
 {
   MacAddressType mac;
-  StringToByteArray(peer_mac, mac.begin(), mac.end());
+  StringToByteArray(tnl_id, mac.begin(), mac.end());
   if(peer_network_->IsAdjacent(mac))
   {
     peer_network_->Remove(mac);
+  }
+}
+void VirtualNetwork::TerminateLink(
+  const string & tnl_id,
+  const string & link_role)
+{
+  MacAddressType mac;
+  StringToByteArray(tnl_id, mac.begin(), mac.end());
+  if(peer_network_->IsAdjacent(mac))
+  {
+    shared_ptr<Tunnel> tnl  = peer_network_->GetTunnel(mac);
+    if(link_role == TincanControl::Controlling.c_str())
+    {
+      tnl->ReleaseLink(cricket::ICEROLE_CONTROLLING);
+    }
+    else if (link_role == TincanControl::Controlled.c_str())
+    {
+      tnl->ReleaseLink(cricket::ICEROLE_CONTROLLED);
+    }
   }
 }
 
@@ -224,7 +271,7 @@ VirtualNetwork::IgnoredNetworkInterfaces(
   net_manager_.set_network_ignore_list(ignored_list);
 }
 
-void VirtualNetwork::QueryLinkStats(
+void VirtualNetwork::QueryTunnelStats(
   const string & node_mac,
   Json::Value & node_info)
 {
@@ -232,27 +279,48 @@ void VirtualNetwork::QueryLinkStats(
   StringToByteArray(node_mac, mac.begin(), mac.end());
   if(peer_network_->IsAdjacent(mac))
   {
-    shared_ptr<VirtualLink> vl = peer_network_->GetTunnel(mac)->Vlink();
+    shared_ptr<VirtualLink> vl = peer_network_->GetTunnel(mac)->Controlling();
     if(vl->IsReady())
     {
       LinkStatsMsgData md;
       md.vl = vl;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
       md.msg_event.Wait(Event::kForever);
-      node_info[TincanControl::Stats].swap(md.stats);
-      node_info[TincanControl::Status] = "online";
+      node_info[TincanControl::Controlling][TincanControl::Stats].swap(md.stats);
+      node_info[TincanControl::Controlling][TincanControl::Status] = "online";
     }
     else
     {
-      node_info[TincanControl::Status] = "offline";
-      node_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
+      node_info[TincanControl::Controlling][TincanControl::Status] = "offline";
+      node_info[TincanControl::Controlling][TincanControl::Stats] = Json::Value(Json::arrayValue);
     }
+
+
+    vl = peer_network_->GetTunnel(mac)->Controlled();
+    if(vl->IsReady())
+    {
+      LinkStatsMsgData md;
+      md.vl = vl;
+      net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
+      md.msg_event.Wait(Event::kForever);
+      node_info[TincanControl::Controlled][TincanControl::Stats].swap(md.stats);
+      node_info[TincanControl::Controlled][TincanControl::Status] = "online";
+    }
+    else
+    {
+      node_info[TincanControl::Controlled][TincanControl::Status] = "offline";
+      node_info[TincanControl::Controlled][TincanControl::Stats] = Json::Value(Json::arrayValue);
+    }
+
   }
   else
   {
-    node_info[TincanControl::MAC] = node_mac;
-    node_info[TincanControl::Status] = "unknown";
-    node_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
+    node_info[TincanControl::Controlling][TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Controlling][TincanControl::Status] = "unknown";
+    node_info[TincanControl::Controlling][TincanControl::Stats] = Json::Value(Json::arrayValue);
+    node_info[TincanControl::Controlled][TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Controlled][TincanControl::Status] = "unknown";
+    node_info[TincanControl::Controlled][TincanControl::Stats] = Json::Value(Json::arrayValue);
   }
 }
 
@@ -270,7 +338,6 @@ void VirtualNetwork::QueryNodeInfo(
     //node_info[TincanControl::VIP6] = vl->PeerInfo().vip6;
     node_info[TincanControl::MAC] = vl->PeerInfo().mac_address;
     node_info[TincanControl::Fingerprint] = vl->PeerInfo().fingerprint;
-
     if(vl->IsReady())
     {
       node_info[TincanControl::Status] = "online";
@@ -279,11 +346,73 @@ void VirtualNetwork::QueryNodeInfo(
     {
       node_info[TincanControl::Status] = "offline";
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    vl = peer_network_->GetTunnel(mac)->Controlled();
+    if(vl)
+    {
+      node_info[TincanControl::Controlling][TincanControl::UID] =
+        vl->PeerInfo().uid;
+      node_info[TincanControl::Controlling][TincanControl::VIP4] =
+        vl->PeerInfo().vip4;
+      node_info[TincanControl::Controlling][TincanControl::MAC] =
+        vl->PeerInfo().mac_address;
+      node_info[TincanControl::Controlling][TincanControl::Fingerprint] =
+        vl->PeerInfo().fingerprint;
+      if(vl->IsReady())
+      {
+        node_info[TincanControl::Controlling][TincanControl::Status] = "online";
+      }
+      else
+      {
+        node_info[TincanControl::Controlling][TincanControl::Status] =
+          "offline";
+      }
+    }
+    else
+    {
+      node_info[TincanControl::Controlling][TincanControl::MAC] = node_mac;
+      node_info[TincanControl::Controlled][TincanControl::MAC] = node_mac;
+    }
+    vl = peer_network_->GetTunnel(mac)->Controlling();
+    if(vl)
+    {
+      node_info[TincanControl::Controlled][TincanControl::UID] =
+        vl->PeerInfo().uid;
+      node_info[TincanControl::Controlled][TincanControl::VIP4] =
+        vl->PeerInfo().vip4;
+      node_info[TincanControl::Controlled][TincanControl::MAC] =
+        vl->PeerInfo().mac_address;
+      node_info[TincanControl::Controlled][TincanControl::Fingerprint] =
+        vl->PeerInfo().fingerprint;
+
+      if(vl->IsReady())
+      {
+        node_info[TincanControl::Controlled][TincanControl::Status] =
+          "online";
+      }
+      else
+      {
+        node_info[TincanControl::Controlled][TincanControl::Status] =
+          "offline";
+      }
+    }
+    else
+    {
+      node_info[TincanControl::Controlling][TincanControl::Status] =
+        "unknown";
+      node_info[TincanControl::Controlled][TincanControl::Status] =
+        "unknown";
+    }
   }
   else
   {
     node_info[TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Controlling][TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Controlled][TincanControl::MAC] = node_mac;
     node_info[TincanControl::Status] = "unknown";
+    node_info[TincanControl::Controlling][TincanControl::Status] = "unknown";
+    node_info[TincanControl::Controlled][TincanControl::Status] = "unknown";
   }
 }
 

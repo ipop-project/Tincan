@@ -34,32 +34,30 @@ PeerNetwork::~PeerNetwork()
 {}
 /*
 Adds a new adjacent node to the peer network. This is used when a new vlink is
-created. It also updates the UID map (for now).
+created. The tunnel is assumed to be precreated and with at least one vlink obj.
 */
 void PeerNetwork::Add(shared_ptr<Tunnel> tnl)
 {
-  shared_ptr<Hub> hub = make_shared<Hub>();
-  hub->tnl = tnl;
-  hub->is_valid = true;
-  MacAddressType mac;
-  size_t cnt = StringToByteArray(
-    tnl->Vlink()->PeerInfo().mac_address, mac.begin(), mac.end());
-  if(cnt != 6)
-  {
-    string emsg = "Converting the MAC to binary failed, the input string is: ";
-    emsg.append(tnl->Vlink()->PeerInfo().mac_address);
-    throw TCEXCEPT(emsg.c_str());
-  }
+  tnl->is_valid_ = true;
+  MacAddressType mac = tnl->Id();
+  //size_t cnt = StringToByteArray(
+  //  tnl->Vlink()->PeerInfo().mac_address, mac.begin(), mac.end());
+  //if(cnt != 6)
+  //{
+  //  string emsg = "Converting the MAC to binary failed, the input string is: ";
+  //  emsg.append(tnl->Vlink()->PeerInfo().mac_address);
+  //  throw TCEXCEPT(emsg.c_str());
+  //}
   {
     lock_guard<mutex> lg(mac_map_mtx_);
-    if(mac_map_.count(mac) == 1)
-    {
-      LOG_F(LS_WARNING) << "Entry " << tnl->Vlink()->PeerInfo().mac_address <<
-        " already exists in peer net. It will be updated.";
-    }
-    mac_map_[mac] = hub;
+    //if(mac_map_.count(mac) == 1)
+    //{
+    //  LOG_F(LS_INFO) << "Entry " << tnl->Vlink()->PeerInfo().mac_address <<
+    //    " already exists in peer net. It will be updated.";
+    //}
+    mac_map_[mac] = tnl;
   }
-  LOG(TC_DBG) << "Added node " << tnl->Vlink()->PeerInfo().mac_address;
+  //LOG(TC_DBG) << "Added node " << tnl->Vlink()->PeerInfo().mac_address;
 }
 
 void PeerNetwork::UpdateRoute(
@@ -68,7 +66,7 @@ void PeerNetwork::UpdateRoute(
 {
   lock_guard<mutex> lg(mac_map_mtx_);
   if(dest == route || mac_map_.count(route) == 0 ||
-    (mac_map_.count(route) && !mac_map_.at(route)->is_valid))
+    (mac_map_.count(route) && !mac_map_.at(route)->is_valid_))
   {
     stringstream oss;
     oss << "Attempt to add INVALID route! DEST=" <<
@@ -76,12 +74,12 @@ void PeerNetwork::UpdateRoute(
       ByteArrayToString(route.begin(), route.end());
     throw TCEXCEPT(oss.str().c_str());
   }
-  mac_routes_[dest].hub = mac_map_.at(route);
+  mac_routes_[dest].tnl = mac_map_.at(route);
   mac_routes_[dest].accessed = steady_clock::now();
   LOG(TC_DBG) << "Updated route to node=" <<
     ByteArrayToString(dest.begin(), dest.end()) << " through node=" << 
     ByteArrayToString(route.begin(), route.end()) << " vlink obj=" << 
-    mac_routes_[dest].hub->tnl->Vlink().get();
+    mac_routes_[dest].tnl->Vlink().get();
 }
 /*
 Used when a vlink is removed and the peer is no longer adjacent. All routes that
@@ -95,13 +93,13 @@ PeerNetwork::Remove(
   try
   {
     lock_guard<mutex> lg(mac_map_mtx_);
-    shared_ptr<Hub> hub = mac_map_.at(mac);
-    LOG(TC_DBG) << "Removing node " << hub->tnl->Vlink()->PeerInfo().mac_address
-      << " hub use count=" << hub.use_count() << " vlink obj=" <<
-      hub->tnl->Vlink().get();
-    hub->is_valid = false;
+    shared_ptr<Tunnel> tnl = mac_map_.at(mac);
+    LOG(TC_DBG) << "Removing node " << tnl->Vlink()->PeerInfo().mac_address
+      << " tnl use count=" << tnl.use_count() << " vlink obj=" <<
+      tnl->Vlink().get();
+    tnl->is_valid_ = false;
     mac_map_.erase(mac); //remove the MAC for the adjacent node
-    //when hub goes out of scope ref count is decr, if it is 0 it's deleted 
+    //when tnl goes out of scope ref count is decr, if it is 0 it's deleted 
   }
   catch(exception & e)
   {
@@ -131,17 +129,20 @@ PeerNetwork::GetTunnel(
   const MacAddressType& mac)
 {
   lock_guard<mutex> lgm(mac_map_mtx_);
-  shared_ptr<Hub> hub = mac_map_.at(mac);
-  return hub->tnl;
+  return mac_map_.at(mac);
 }
 
-shared_ptr<Tunnel>
-PeerNetwork::GetOrCreateTunnel(
-  const MacAddressType& mac)
-{
-  lock_guard<mutex> lgm(mac_map_mtx_);
-  return mac_map_[mac]->tnl;
-}
+//shared_ptr<Tunnel>
+//PeerNetwork::GetOrCreateTunnel(
+//  const MacAddressType& mac)
+//{
+//  lock_guard<mutex> lgm(mac_map_mtx_);
+//  if(!mac_map_[mac])
+//  {
+//    mac_map_[mac] = make_shared<Tunnel>();
+//  }
+//  return mac_map_[mac];
+//}
 
 shared_ptr<Tunnel>
 PeerNetwork::GetRoute(
@@ -150,7 +151,7 @@ PeerNetwork::GetRoute(
   lock_guard<mutex> lgm(mac_map_mtx_);
   HubEx & hux = mac_routes_.at(mac);
   hux.accessed = steady_clock::now();
-  return hux.hub->tnl;
+  return hux.tnl;
 }
 
 bool
@@ -178,7 +179,7 @@ PeerNetwork::IsRouteExists(
   lock_guard<mutex> lgm(mac_map_mtx_);
   if(mac_routes_.count(mac) == 1)
   {
-    if(mac_routes_.at(mac).hub->is_valid)
+    if(mac_routes_.at(mac).tnl->is_valid_)
       rv = true;
     else
       mac_routes_.erase(mac);
@@ -197,7 +198,7 @@ PeerNetwork::Run(Thread* thread)
     lock_guard<mutex> lgm(mac_map_mtx_);
     for(auto & i : mac_routes_)
     {
-      if(!i.second.hub->is_valid)
+      if(!i.second.tnl->is_valid_)
         ml.push_back(i.first);
       else
       {

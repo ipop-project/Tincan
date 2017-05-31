@@ -43,31 +43,46 @@ public:
   shared_ptr<Tunnel> GetRoute(const MacAddressType & mac);
   shared_ptr<Tunnel> GetTunnel(const string & mac);
   shared_ptr<Tunnel> GetTunnel(const MacAddressType & mac);
-  shared_ptr<Tunnel> GetOrCreateTunnel(const MacAddressType & mac);
+  //shared_ptr<Tunnel> GetOrCreateTunnel(const MacAddressType & mac);
   bool IsAdjacent(const string & mac);
   bool IsAdjacent(const MacAddressType& mac);
   bool IsRouteExists(const MacAddressType& mac);
 private:
-struct Hub
-{
-  Hub() : is_valid(false)
-  {}
-  shared_ptr<Tunnel> tnl;
-  bool is_valid;
-};
-struct HubEx
-{
-  HubEx() : accessed(steady_clock::now())
-  {}
-  shared_ptr<Hub> hub;
-  steady_clock::time_point accessed;
-};
+//struct Hub
+//{
+//  Hub() : is_valid(false)
+//  {}
+//  shared_ptr<Tunnel> tnl;
+//  bool is_valid;
+//};
+//struct HubEx
+//{
+//  HubEx() : accessed(steady_clock::now())
+//  {}
+//  shared_ptr<Hub> hub;
+//  steady_clock::time_point accessed;
+//};
+//  const string & name_;
+//  mutex mac_map_mtx_;
+//  map<MacAddressType, shared_ptr<Hub>> mac_map_;
+//  map<MacAddressType, HubEx> mac_routes_;
+//  void Run(Thread* thread) override;
+//  milliseconds const scavenge_interval;
+
+  struct HubEx
+  {
+    HubEx() : accessed(steady_clock::now())
+    {}
+    shared_ptr<Tunnel> tnl;
+    steady_clock::time_point accessed;
+  };
   const string & name_;
   mutex mac_map_mtx_;
-  map<MacAddressType, shared_ptr<Hub>> mac_map_;
+  map<MacAddressType, shared_ptr<Tunnel>> mac_map_;
   map<MacAddressType, HubEx> mac_routes_;
   void Run(Thread* thread) override;
   milliseconds const scavenge_interval;
 };
+
 } // namespace tincan
 #endif //_TINCAN_PEER_NETWORK_H_

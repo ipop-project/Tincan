@@ -122,8 +122,12 @@ public:
     unique_ptr<PeerDescriptor> peer_desc,
     unique_ptr<VlinkDescriptor> vlink_desc);
 
-  void RemovePeerConnection(
-    const string & peer_mac);
+  void TerminateTunnel(
+    const string & tnl_d);
+
+  void TerminateLink(
+    const string & peer_mac,
+    const string & link_role);
 
   VnetDescriptor & Descriptor();
 
@@ -131,12 +135,10 @@ public:
   string MacAddress();
   string Fingerprint();
 
-  void GetStats(
-    Json::Value & stats);
   void IgnoredNetworkInterfaces(
     const vector<string>& ignored_list);
 
-  void QueryLinkStats(
+  void QueryTunnelStats(
     const string & node_mac,
     Json::Value & node_info);
   

@@ -21,12 +21,15 @@
 * THE SOFTWARE.
 */
 #include "tunnel.h"
+#include "tincan_exception.h"
 namespace tincan
 {
 Tunnel::Tunnel() :
   preferred_(-1),
-  id_(0)
-{}
+  is_valid_(false)
+{
+  id_.fill(0);
+}
 
 void tincan::Tunnel::Transmit(TapFrame & frame)
 {
@@ -41,6 +44,9 @@ void Tunnel::AddVlinkEndpoint(
   cricket::IceRole role = vlink->IceRole();
   vlinks_[role] = vlink;
   vlinks_[role]->SignalLinkUp.connect(this, &Tunnel::SetPreferredLink);
+
+  if(preferred_ < 0)
+    preferred_ = role;
 }
 
 void Tunnel::QueryCas(Json::Value & cas_info)
@@ -49,6 +55,24 @@ void Tunnel::QueryCas(Json::Value & cas_info)
   cas_info["Controlling"] = vlinks_[0]->Candidates();
 }
 
+void Tunnel::Id(MacAddressType id)
+{
+  id_ = id;
+}
+
+MacAddressType Tunnel::Id()
+{
+  return id_;
+}
+
+void 
+Tunnel::ReleaseLink(int role)
+{
+  if(!(role < 0 || role > 1))
+    vlinks_[role].reset();
+  else
+    throw TCEXCEPT("ReleaseLink failed, an invalid vlink role was specifed");
+}
 /*
 Keep the first vlink that connect and release the 2nd if/when it does.
 */
@@ -56,9 +80,12 @@ void
 Tunnel::SetPreferredLink(
   int role)
 {
-  if(preferred_ < 0)
+
+  if(!vlinks_[role ^ 1]->IsReady())
+  {
     preferred_ = role;
-  else
-    vlinks_[role].reset();
+  }    
+  //else
+  //  vlinks_[role].reset();
 }
 } // end namespace tincan

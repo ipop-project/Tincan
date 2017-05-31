@@ -52,7 +52,7 @@ public:
   void InjectFrame(
     const Json::Value & frame_desc) override;
 
-  void QueryLinkStats(
+  void QueryTunnelStats(
     const string & tap_name,
     const string & node_mac,
     Json::Value & node_info);
@@ -62,7 +62,10 @@ public:
     const string & node_mac,
     Json::Value & node_info) override;
 
-  void RemoveVlink(
+  void TrimTunnel(
+    const Json::Value & tnl_desc) override;
+
+  void TrimVlink(
     const Json::Value & link_desc) override;
 
   void SendIcc(

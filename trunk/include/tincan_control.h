@@ -78,10 +78,12 @@ const array<const char*, 3> ControlTypeStrings = { {"TincanRequest", "TincanResp
   static const Json::StaticString AddRoutes;
   static const Json::StaticString Command;
   static const Json::StaticString CAS;
-  static const Json::StaticString ConnectToPeer;
+  static const Json::StaticString ConnectTunnel;
+  static const Json::StaticString Controlled;
+  static const Json::StaticString Controlling;
   static const Json::StaticString ControlType;
   static const Json::StaticString CreateCtrlRespLink;
-  static const Json::StaticString CreateLinkListener;
+  static const Json::StaticString CreateTunnel;
   static const Json::StaticString CreateVnet;
   static const Json::StaticString Echo;
   static const Json::StaticString EncryptionEnabled;
@@ -100,10 +102,11 @@ const array<const char*, 3> ControlTypeStrings = { {"TincanRequest", "TincanResp
   static const Json::StaticString QueryCandidateAddressSet;
   static const Json::StaticString Recipient;
   static const Json::StaticString RecipientMac;
-  static const Json::StaticString RemovePeer;
+  static const Json::StaticString TrimTunnel;
   static const Json::StaticString RemoveRoutes;
   static const Json::StaticString Request;
   static const Json::StaticString Response;
+  static const Json::StaticString Role;
   static const Json::StaticString Routes;
   static const Json::StaticString UpdateRoutes;
   static const Json::StaticString Sender;

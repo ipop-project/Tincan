@@ -34,19 +34,18 @@ ControlDispatch::ControlDispatch() :
 {
   control_map_ = {
     { "UpdateMap", &ControlDispatch::UpdateRoutes },
-    { "ConnectToPeer", &ControlDispatch::ConnectToPeer }, //deprecated
     { "ConnectTunnel", &ControlDispatch::ConnectTunnel },
     { "CreateCtrlRespLink", &ControlDispatch::CreateIpopControllerRespLink },
-    { "CreateLinkListener", &ControlDispatch::CreateLinkListener },//deprecated
     { "CreateTunnel", &ControlDispatch::CreateTunnel },
     { "CreateVnet", &ControlDispatch::CreateVNet },
     { "Echo", &ControlDispatch::Echo },
     { "ICC", &ControlDispatch::SendICC },
     { "InjectFrame", &ControlDispatch::InjectFrame },
     { "QueryCandidateAddressSet", &ControlDispatch::QueryCandidateAddressSet },
-    { "QueryLinkStats", &ControlDispatch::QueryLinkStats },
+    { "QueryTunnelStats", &ControlDispatch::QueryTunnelStats },
     { "QueryNodeInfo", &ControlDispatch::QueryNodeInfo },
-    { "RemovePeer", &ControlDispatch::RemovePeer },
+    { "TrimTunnel", &ControlDispatch::TrimTunnel },
+    { "RemovePeer", &ControlDispatch::TrimTunnel },
     { "SetIgnoredNetInterfaces", &ControlDispatch::SetNetworkIgnoreList },
     { "ConfigureLogging", &ControlDispatch::ConfigureLogging },
   };
@@ -132,12 +131,6 @@ ControlDispatch::UpdateRoutes(
 }
 
 void
-ControlDispatch::ConnectToPeer(
-  TincanControl & control)
-{
-  ConnectTunnel(control);
-}
-void
 ControlDispatch::ConnectTunnel(
   TincanControl & control)
 {
@@ -184,12 +177,6 @@ void ControlDispatch::CreateIpopControllerRespLink(
   }
 }
 
-void
-ControlDispatch::CreateLinkListener(
-  TincanControl & control)
-{
-  CreateTunnel(control);
-}
 void
 ControlDispatch::CreateTunnel(
   TincanControl & control)
@@ -296,7 +283,7 @@ ControlDispatch::InjectFrame(
 }
 
 void
-ControlDispatch::QueryLinkStats(
+ControlDispatch::QueryTunnelStats(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest(), node_info;
@@ -307,12 +294,12 @@ ControlDispatch::QueryLinkStats(
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->QueryLinkStats(tap_name, mac, node_info);
+    tincan_->QueryTunnelStats(tap_name, mac, node_info);
     resp = node_info.toStyledString();
     status = true;
   } catch(exception & e)
   {
-    resp = "The QueryLinkStats operation failed. ";
+    resp = "The QueryTunnelStats operation failed. ";
     LOG_F(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
@@ -346,7 +333,7 @@ ControlDispatch::QueryCandidateAddressSet(
 }
 
 void
-ControlDispatch::RemovePeer(
+ControlDispatch::TrimLink(
   TincanControl & control)
 {
   bool status = false;
@@ -360,7 +347,7 @@ ControlDispatch::RemovePeer(
   {
     if(!tap_name.empty() && !mac.empty())
     {
-      tincan_->RemoveVlink(req);
+      tincan_->TrimVlink(req);
       status = true;
     }
     else
@@ -373,13 +360,50 @@ ControlDispatch::RemovePeer(
     }
   } catch(exception & e)
   {
-    msg = "The RemovePeer operation failed.";
+    msg = "The TrimTunnel operation failed.";
     LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(msg, status);
   ctrl_link_->Deliver(control);
 }
+
+void
+ControlDispatch::TrimTunnel(
+  TincanControl & control)
+{
+  bool status = false;
+  Json::Value & req = control.GetRequest();
+  const string tap_name = req[TincanControl::InterfaceName].asString();
+  const string mac = req[TincanControl::MAC].asString();
+  string msg("The tunnel to ");
+  msg.append(mac).append(" has been removed.");
+  lock_guard<mutex> lg(disp_mutex_);
+  try
+  {
+    if(!tap_name.empty() && !mac.empty())
+    {
+      tincan_->TrimTunnel(req);
+      status = true;
+    }
+    else
+    {
+      ostringstream oss;
+      oss << "Invalid parameters in request to remove link to peer node. " <<
+        "Received: TAP Name=" << tap_name << " MAC=" << mac;
+      msg = oss.str();
+      throw TCEXCEPT(msg.c_str());
+    }
+  } catch(exception & e)
+  {
+    msg = "The TrimTunnel operation failed.";
+    LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
+      control.StyledString();
+  }
+  control.SetResponse(msg, status);
+  ctrl_link_->Deliver(control);
+}
+
 void
 ControlDispatch::ConfigureLogging(
   TincanControl & control)

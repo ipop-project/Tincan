@@ -26,25 +26,39 @@
 #include "virtual_link.h"
 namespace tincan
 {
+class PeerNetwork;
 class Tunnel :
   public sigslot::has_slots<>
 {
+  friend PeerNetwork;
 public:
   Tunnel();
   virtual ~Tunnel() = default;
   void Transmit(TapFrame & frame);
   void AddVlinkEndpoint(shared_ptr<VirtualLink> vlink);
   void QueryCas(Json::Value & cas_info);
+  void Id(MacAddressType id);
+  MacAddressType Id();
   shared_ptr<VirtualLink> Vlink()
   {
     return vlinks_[preferred_];
   }
+  shared_ptr<VirtualLink> Controlling()
+  {
+    return vlinks_[0];
+  }
+  shared_ptr<VirtualLink> Controlled()
+  {
+    return vlinks_[1];
+  }
+  void ReleaseLink(int role);
   sigslot::signal3<uint8_t *, uint32_t, VirtualLink&> SignalMessageReceived;
 private:
   void SetPreferredLink(int link_id);
   array<shared_ptr<VirtualLink>, 2> vlinks_;
   int preferred_;
-  uint32_t id_;
+  MacAddressType id_;
+  bool is_valid_;
 };
 } //namespace tincan
 #endif  // TINCAN_TUNNEL_H_
