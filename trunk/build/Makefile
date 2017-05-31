@@ -24,7 +24,7 @@ cflags_cc = -std=c++14 -O3 -m64 -march=x86-64 -pthread -g2 -gsplit-dwarf -fno-st
 
 LIBS = -ljsoncpp -lrtc_p2p -lrtc_base -lrtc_base_approved -lfield_trial_default -lboringssl -lboringssl_asm -lprotobuf_lite -lpthread
 
-_OBJ = control_dispatch.o control_listener.o peer_network.o tincan.o tincan_control.o tincan_main.o virtual_link.o virtual_network.o tap_frame.o
+_OBJ = control_dispatch.o control_listener.o peer_network.o tincan.o tincan_control.o tincan_main.o tunnel.o virtual_link.o virtual_network.o tap_frame.o
 LIN_OBJ_=tapdev_lnx.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 LIN_OBJ = $(patsubst %,$(ODIR)/%,$(LIN_OBJ_))
