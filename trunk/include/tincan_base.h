@@ -114,8 +114,6 @@ static const char kLocalHost[] = "127.0.0.1";
 //
 static const char kLocalHost6[] = "::1";
 //
-static bool kIpv6Enabled = true;
-//
 static uint16_t kUdpPort = 5800;
 //
 static const uint8_t kLinkConcurrentAIO = 1;

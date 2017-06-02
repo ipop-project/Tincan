@@ -45,7 +45,6 @@ ControlDispatch::ControlDispatch() :
     { "QueryTunnelStats", &ControlDispatch::QueryTunnelStats },
     { "QueryNodeInfo", &ControlDispatch::QueryNodeInfo },
     { "TrimTunnel", &ControlDispatch::TrimTunnel },
-    { "RemovePeer", &ControlDispatch::TrimTunnel },
     { "SetIgnoredNetInterfaces", &ControlDispatch::SetNetworkIgnoreList },
     { "ConfigureLogging", &ControlDispatch::ConfigureLogging },
   };

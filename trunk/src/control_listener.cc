@@ -21,6 +21,7 @@
 * THE SOFTWARE.
 */
 #include "control_listener.h"
+#include "webrtc/base/nethelpers.h"
 namespace tincan
 {
 using namespace rtc;
@@ -85,7 +86,8 @@ ControlListener::CreateIpopControllerLink(
 void
 ControlListener::Run(Thread* thread) {
   BasicPacketSocketFactory packet_factory;
-  if (kIpv6Enabled)
+  in6_addr addr6;
+  if(rtc::inet_pton(AF_INET6, kLocalHost6, &addr6) != 0)
     rcv_socket_.reset(packet_factory.CreateUdpSocket(
       SocketAddress(kLocalHost6, kUdpPort), 0, 0));
   else
