@@ -1,19 +1,21 @@
 language: cpp
 compiler:
-- g++
+  - g++
 os:
-- linux
+  - linux
+dist: "trusty"  
 before_install:
-- sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-- sudo apt-get update -qq
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get update -qq
 install:
-- sudo apt-get install -y software-properties-common git make libssl-dev make g++-4.9
-- sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50
+  - sudo rm /usr/bin/g++
+  - sudo apt-get install -y software-properties-common git make libssl-dev g++-4.9
+  - sudo ln -s /usr/bin/g++-4.9 /usr/bin/g++
 git:
   depth: 1
 branches:
   only:
-  - master  
-script: 
-- cd trunk/build
-- make
+    - master
+script:
+  - cd trunk/build
+  - make
