@@ -431,12 +431,12 @@ VirtualNetwork::SendIcc(
 {
   unique_ptr<IccMessage> icc = make_unique<IccMessage>();
   icc->Message((uint8_t*)data.c_str(), (uint16_t)data.length());
-  TransmitMsgData *md = new TransmitMsgData;
+  unique_ptr<TransmitMsgData> md = make_unique<TransmitMsgData>();
   md->frm = move(icc);
   MacAddressType mac;
   StringToByteArray(recipient_mac, mac.begin(), mac.end());
   md->tnl = peer_network_->GetTunnel(mac);
-  net_worker_.Post(RTC_FROM_HERE, this, MSGID_SEND_ICC, md);
+  net_worker_.Post(RTC_FROM_HERE, this, MSGID_SEND_ICC, md.release());
 }
 
 /*
@@ -461,7 +461,6 @@ VirtualNetwork::VlinkReadCompleteL2(
 {
   unique_ptr<TapFrame> frame = make_unique<TapFrame>(data, data_len);
   TapFrameProperties fp(*frame);
-  assert(!fp.IsFwdMsg()); // no forwarding at the moment
   if(fp.IsIccMsg())
   { // this is an ICC message, deliver to the ipop-controller
     unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
@@ -547,6 +546,8 @@ VirtualNetwork::TapReadCompleteL2(
   frame->BytesToTransfer(frame->Length());
   if(peer_network_->IsAdjacent(mac))
   {
+    frame->Header(kDtfMagic);
+    frame->Dump("Unicast");
     shared_ptr<Tunnel> tnl = peer_network_->GetTunnel(mac);
     TransmitMsgData *md = new TransmitMsgData;;
     md->frm.reset(frame);

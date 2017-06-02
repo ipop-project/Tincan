@@ -22,6 +22,8 @@
 */
 #include "tunnel.h"
 #include "tincan_exception.h"
+#include "tincan_control.h"
+
 namespace tincan
 {
 Tunnel::Tunnel() :
@@ -31,14 +33,15 @@ Tunnel::Tunnel() :
   id_.fill(0);
 }
 
-void tincan::Tunnel::Transmit(TapFrame & frame)
+void
+tincan::Tunnel::Transmit(
+  TapFrame & frame)
 {
-  frame.Header(kDtfMagic);
-  frame.Dump("Unicast");
   vlinks_[preferred_]->Transmit(frame);
 }
 
-void Tunnel::AddVlinkEndpoint(
+void
+Tunnel::AddVlinkEndpoint(
   shared_ptr<VirtualLink> vlink)
 {
   cricket::IceRole role = vlink->IceRole();
@@ -49,24 +52,32 @@ void Tunnel::AddVlinkEndpoint(
     preferred_ = role;
 }
 
-void Tunnel::QueryCas(Json::Value & cas_info)
+void
+Tunnel::QueryCas(
+  Json::Value & cas_info)
 {
-  cas_info["Controlled"] = vlinks_[1]->Candidates();
-  cas_info["Controlling"] = vlinks_[0]->Candidates();
+  cas_info[TincanControl::Controlling.c_str()] =
+    vlinks_[cricket::ICEROLE_CONTROLLING]->Candidates();
+  cas_info[TincanControl::Controlled.c_str()] =
+    vlinks_[cricket::ICEROLE_CONTROLLED]->Candidates();
 }
 
-void Tunnel::Id(MacAddressType id)
+void
+Tunnel::Id(
+  MacAddressType id)
 {
   id_ = id;
 }
 
-MacAddressType Tunnel::Id()
+MacAddressType
+Tunnel::Id()
 {
   return id_;
 }
 
 void 
-Tunnel::ReleaseLink(int role)
+Tunnel::ReleaseLink(
+  int role)
 {
   if(!(role < 0 || role > 1))
     vlinks_[role].reset();
