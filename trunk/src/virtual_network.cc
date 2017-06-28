@@ -280,7 +280,7 @@ void VirtualNetwork::QueryTunnelStats(
   if(peer_network_->IsAdjacent(mac))
   {
     shared_ptr<VirtualLink> vl = peer_network_->GetTunnel(mac)->Controlling();
-    if(vl->IsReady())
+    if(vl && vl->IsReady())
     {
       LinkStatsMsgData md;
       md.vl = vl;
@@ -297,7 +297,7 @@ void VirtualNetwork::QueryTunnelStats(
 
 
     vl = peer_network_->GetTunnel(mac)->Controlled();
-    if(vl->IsReady())
+    if(vl && vl->IsReady())
     {
       LinkStatsMsgData md;
       md.vl = vl;

@@ -92,7 +92,7 @@ Tunnel::SetPreferredLink(
   int role)
 {
 
-  if(!vlinks_[role ^ 1]->IsReady())
+  if(vlinks_[role ^ 1] && !vlinks_[role ^ 1]->IsReady())
   {
     preferred_ = role;
   }    
