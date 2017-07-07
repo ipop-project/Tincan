@@ -549,7 +549,7 @@ VirtualNetwork::TapReadCompleteL2(
     frame->Header(kDtfMagic);
     frame->Dump("Unicast");
     shared_ptr<Tunnel> tnl = peer_network_->GetTunnel(mac);
-    TransmitMsgData *md = new TransmitMsgData;;
+    TransmitMsgData *md = new TransmitMsgData;
     md->frm.reset(frame);
     md->tnl = tnl;
     net_worker_.Post(RTC_FROM_HERE, this, MSGID_TRANSMIT, md);

@@ -191,6 +191,7 @@ void
 PeerNetwork::Run(Thread* thread)
 {
   steady_clock::time_point accessed;
+  milliseconds expiry_period = 3 * scavenge_interval;
   while(thread->ProcessMessages((int)scavenge_interval.count()))
   {
     accessed = steady_clock::now();
@@ -203,7 +204,7 @@ PeerNetwork::Run(Thread* thread)
       else
       {
         std::chrono::duration<double, milli> elapsed = steady_clock::now() - i.second.accessed;
-        if(elapsed > 3 * scavenge_interval)
+        if(elapsed > expiry_period)
           ml.push_back(i.first);
       }
     }

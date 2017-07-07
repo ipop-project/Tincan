@@ -116,8 +116,6 @@ private:
 
   void OnGatheringState(
     cricket::IceGatheringState gather_state);
-  string Candidates(
-    const cricket::Candidates & candidates);
 
   void OnWriteableState(
     PacketTransportInterface * transport);
