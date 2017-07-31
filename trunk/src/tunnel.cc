@@ -37,7 +37,8 @@ void
 tincan::Tunnel::Transmit(
   TapFrame & frame)
 {
-  vlinks_[preferred_]->Transmit(frame);
+  if (is_valid_)
+    vlinks_[preferred_]->Transmit(frame);
 }
 
 void
@@ -56,9 +57,12 @@ void
 Tunnel::QueryCas(
   Json::Value & cas_info)
 {
-  cas_info[TincanControl::Controlling.c_str()] =
+  if (vlinks_[cricket::ICEROLE_CONTROLLING])
+    cas_info[TincanControl::Controlling.c_str()] =
     vlinks_[cricket::ICEROLE_CONTROLLING]->Candidates();
-  cas_info[TincanControl::Controlled.c_str()] =
+  
+  if(vlinks_[cricket::ICEROLE_CONTROLLED])
+    cas_info[TincanControl::Controlled.c_str()] =
     vlinks_[cricket::ICEROLE_CONTROLLED]->Candidates();
 }
 
@@ -83,18 +87,25 @@ Tunnel::ReleaseLink(
     vlinks_[role].reset();
   else
     throw TCEXCEPT("ReleaseLink failed, an invalid vlink role was specifed");
+  if(vlinks_[role ^ 1] && vlinks_[role ^ 1]->IsReady())
+  {
+    preferred_ = role ^ 1;
+  }
+  else is_valid_ = false;
 }
+
 /*
-Keep the first vlink that connect and release the 2nd if/when it does.
+Set this link role to be preferred for transmits if there is not an already
+writable links.
 */
 void
 Tunnel::SetPreferredLink(
   int role)
 {
-
   if(vlinks_[role ^ 1] && !vlinks_[role ^ 1]->IsReady())
   {
     preferred_ = role;
+    is_valid_ = true;
   }    
   //else
   //  vlinks_[role].reset();

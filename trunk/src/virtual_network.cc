@@ -155,8 +155,6 @@ VirtualNetwork::CreateTunnel(
   if(peer_network_->IsAdjacent(mac))
   {
     tnl = peer_network_->GetTunnel(mac);
-    LOG_F(LS_INFO) << "Controlled Tunnel ID (" << mac_str <<
-      ") already exists in peer net. It will be updated.";
   }
   else
   {
@@ -169,7 +167,7 @@ VirtualNetwork::CreateTunnel(
   {
     tnl->AddVlinkEndpoint(vl);
     peer_network_->Add(tnl);
-    LOG_F(LS_VERBOSE) << "Created CONTROLLED vlink w/ Tunnel ID (" <<
+    LOG_F(LS_INFO) << "Created CONTROLLED vlink w/ Tunnel ID (" <<
       mac_str << ")";
   }
   else throw TCEXCEPT("The CreateTunnelEndpoint operation failed.");
@@ -188,8 +186,6 @@ VirtualNetwork::ConnectTunnel(
   if(peer_network_->IsAdjacent(mac))
   {
     tnl = peer_network_->GetTunnel(mac);
-    LOG_F(LS_INFO) << "Controlling Tunnel ID (" << mac_str <<
-      ") already exists in peer net. It will be updated.";
   }
   else
   {
@@ -203,7 +199,7 @@ VirtualNetwork::ConnectTunnel(
     tnl->AddVlinkEndpoint(vl);
     vl->StartConnections();
     peer_network_->Add(tnl);
-    LOG_F(LS_VERBOSE) << "Created CONTROLLING vlink w/ Tunnel ID (" <<
+    LOG_F(LS_INFO) << "Created CONTROLLING vlink w/ Tunnel ID (" <<
       mac_str << ")";
   }
   else throw TCEXCEPT("The ConnectTunnel operation failed.");
