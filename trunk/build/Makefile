@@ -13,18 +13,18 @@ vars :
 
 ## mkdirs : creates the output directories	if it does not exist
 mkdirs :
-	if [ ! -d $(ODIR) ]; then  mkdir -p $(ODIR); fi
+	if [ ! -d $(OBJ_DIR) ]; then  mkdir -p $(OBJ_DIR); fi
 
 $(TARGET) : $(OBJ_FILES) $(LOBJ_FILES)
-	$(CC) -o $@ $^ -L $(LDIR) $(LIBS)
+	$(CC) -o $@ $^ -L $(EXT_LIB_DIR) $(LIBS)
 
 ## ../src/file.obj : comiples the specified object file
-$(ODIR)/%.o : $(SRC_DIR)/%.cc $(HDR_FILES)	
-	$(CC) -iquote $(IDIR) -isystem $(IDIR_EXT) $(defines) $(cflags_cc) -c $< -o $@
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cc $(HDR_FILES)	
+	$(CC) -iquote $(INC_DIR) -isystem $(EXT_INC_DIR) $(defines) $(cflags_cc) -c $< -o $@
 
 
-$(LOBJ_FILES) : $(LSRC_FILES) $(IDIR_LNX)/tapdev_lnx.h
-	$(CC) -iquote $(IDIR) -isystem $(IDIR_EXT) -iquote $(IDIR_LNX) $(defines) $(cflags_cc) -c $< -o $@
+$(LOBJ_FILES) : $(LSRC_FILES) $(INC_DIR_LNX)/tapdev_lnx.h
+	$(CC) -iquote $(INC_DIR) -isystem $(EXT_INC_DIR) -iquote $(INC_DIR_LNX) $(defines) $(cflags_cc) -c $< -o $@
 
 ## clean : removes output dir and generated files
 clean:

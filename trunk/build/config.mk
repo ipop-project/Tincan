@@ -1,29 +1,36 @@
+#To build Raspberry Pi set ARCH=arm7 and PLAT=rpi
+#To build CentOS set PLAT=centos
+
 CC = g++
-OS = ubuntu
-IDIR = ../include
-IDIR_LNX = ../include/linux
-IDIR_EXT = ../../external/include
+
+ARCH = x64
+OPT = release
+PLAT = ubuntu
+
+INC_DIR = ../include
+INC_DIR_LNX = $(INC_DIR)/linux
+EXT_INC_DIR = ../../external/include
 
 SRC_DIR = ../src
-LNX_SRC_DIR = ../src/linux
+SRC_DIR_LNX = $(SRC_DIR)/linux
 
-LDIR = ../../external/lib/release/x64/$(OS)
+EXT_LIB_DIR = ../../external/lib/$(OPT)/$(ARCH)/$(PLAT)
 OUT = ../out
-ODIR = $(OUT)/release/x64/obj
-BDIR = $(OUT)/release/x64
+OBJ_DIR = $(OUT)/$(OPT)/$(ARCH)/obj
+BIN_DIR = $(OUT)/$(OPT)/$(ARCH)
 
 BINARY = ipop-tincan
-TARGET = $(patsubst %,$(BDIR)/%,$(BINARY))
+TARGET = $(patsubst %,$(BIN_DIR)/%,$(BINARY))
 
 defines = -DLINUX -D_IPOP_LINUX -DWEBRTC_POSIX -DWEBRTC_LINUX
 
-cflags_cc = -std=c++14 -O3 -m64 -march=x86-64 -pthread -g2 -gsplit-dwarf -fno-strict-aliasing --param=ssp-buffer-size=4 -fstack-protector -funwind-tables -fPIC -pipe -Wall -fno-rtti
+cflags_cc = -std=c++14 -O3 -pthread -g2 -gsplit-dwarf -fno-strict-aliasing --param=ssp-buffer-size=4 -fstack-protector -funwind-tables -fPIC -pipe -Wall -fno-rtti
 
 LIBS = -ljsoncpp -lrtc_p2p -lrtc_base -lrtc_base_approved -lfield_trial_default -lboringssl -lboringssl_asm -lprotobuf_lite -lpthread
 
-HDR_FILES = $(wildcard $(IDIR)/*.h)
+HDR_FILES = $(wildcard $(INC_DIR)/*.h)
 SRC_FILES = $(wildcard $(SRC_DIR)/*.cc)
-OBJ_FILES = $(patsubst $(SRC_DIR)/%.cc, $(ODIR)/%.o, $(SRC_FILES))
+OBJ_FILES = $(patsubst $(SRC_DIR)/%.cc, $(OBJ_DIR)/%.o, $(SRC_FILES))
 
-LSRC_FILES = $(wildcard $(LNX_SRC_DIR)/*.cc)
-LOBJ_FILES = $(patsubst $(LNX_SRC_DIR)/%.cc, $(ODIR)/%.o, $(LSRC_FILES))
+LSRC_FILES = $(wildcard $(SRC_DIR_LNX)/*.cc)
+LOBJ_FILES = $(patsubst $(SRC_DIR_LNX)/%.cc, $(OBJ_DIR)/%.o, $(LSRC_FILES))
