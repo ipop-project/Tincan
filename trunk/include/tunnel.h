@@ -54,7 +54,8 @@ public:
   void ReleaseLink(int role);
   sigslot::signal3<uint8_t *, uint32_t, VirtualLink&> SignalMessageReceived;
 private:
-  void SetPreferredLink(int link_id);
+  void SetPreferredLink(int role);
+  void UpdatePreferredLink(int role);
   array<shared_ptr<VirtualLink>, 2> vlinks_;
   int preferred_;
   MacAddressType id_;

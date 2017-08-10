@@ -215,7 +215,8 @@ Tincan::OnLocalCasUpdated(
     lcas = "No local candidates available on this vlink";
     LOG_F(LS_WARNING) << lcas;
   }
-  //this seemingly round-about code is to avoid locking the Deliver() call or setting up the excepton handler necessary for using the mutex directly.
+  //this seemingly round-about code is to avoid locking the Deliver() call or
+  //setting up the excepton handler necessary for using the mutex directly.
   bool to_deliver = false;
   list<unique_ptr<TincanControl>>::iterator itr;
   unique_ptr<TincanControl> ctrl;
@@ -236,6 +237,7 @@ Tincan::OnLocalCasUpdated(
   if(to_deliver)
   {
     ctrl->SetResponse(lcas, true);
+    LOG(LS_INFO) << "Sending updated CAS to Ctlr: " << ctrl->StyledString();
     ctrl_link_->Deliver(move(ctrl));
   }
 }

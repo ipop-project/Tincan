@@ -46,8 +46,16 @@ Tunnel::AddVlinkEndpoint(
   shared_ptr<VirtualLink> vlink)
 {
   cricket::IceRole role = vlink->IceRole();
+  if(vlinks_[role])
+  {
+    stringstream ss;
+    ss << "This tunnel already has a vlink (" << vlink << ") for"
+      "the requested role=" << role << ". Remove the exising vlink before"
+      "creating a new one.";
+    throw TCEXCEPT(ss.str().c_str());
+  }
   vlinks_[role] = vlink;
-  vlinks_[role]->SignalLinkUp.connect(this, &Tunnel::SetPreferredLink);
+  vlinks_[role]->SignalLinkUp.connect(this, &Tunnel::UpdatePreferredLink);
 
   if(preferred_ < 0)
     preferred_ = role;
@@ -95,19 +103,35 @@ Tunnel::ReleaseLink(
 }
 
 /*
-Set this link role to be preferred for transmits if there is not an already
-writable links.
+Set this link role to be preferred for transmits if it is valid.
 */
 void
 Tunnel::SetPreferredLink(
   int role)
 {
-  if(vlinks_[role ^ 1] && !vlinks_[role ^ 1]->IsReady())
+  if(vlinks_[role] && vlinks_[role]->IsReady()) // the requested link is valid
   {
     preferred_ = role;
     is_valid_ = true;
-  }    
-  //else
-  //  vlinks_[role].reset();
+  }
+}
+
+/*
+Update the tunnel's preferred link only if the new link is valid and the
+existing one is no longer valid. This prevents interrupting the connection
+winner
+*/
+void
+Tunnel::UpdatePreferredLink(
+  int role)
+{    // the requested link is valid
+  if(vlinks_[role] && vlinks_[role]->IsReady())
+  {  //the existing preferred link is invalid
+    if(!vlinks_[role ^ 1] || (vlinks_[role ^ 1] && !vlinks_[role ^ 1]->IsReady()))
+    {
+      preferred_ = role;
+      is_valid_ = true;
+    }
+  }
 }
 } // end namespace tincan
