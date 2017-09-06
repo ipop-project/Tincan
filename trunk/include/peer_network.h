@@ -48,27 +48,18 @@ public:
   bool IsAdjacent(const MacAddressType& mac);
   bool IsRouteExists(const MacAddressType& mac);
 private:
-//struct Hub
-//{
-//  Hub() : is_valid(false)
-//  {}
-//  shared_ptr<Tunnel> tnl;
-//  bool is_valid;
-//};
-//struct HubEx
-//{
-//  HubEx() : accessed(steady_clock::now())
-//  {}
-//  shared_ptr<Hub> hub;
-//  steady_clock::time_point accessed;
-//};
-//  const string & name_;
-//  mutex mac_map_mtx_;
-//  map<MacAddressType, shared_ptr<Hub>> mac_map_;
-//  map<MacAddressType, HubEx> mac_routes_;
-//  void Run(Thread* thread) override;
-//  milliseconds const scavenge_interval;
-
+  struct MacAddressHasher
+  {
+    size_t operator()(const MacAddressType& mac) const
+    {
+      size_t h = 0;
+      for(auto e : mac)
+      {
+        h ^= hash<uint8_t>{}(e)+0x9e3779b9 + (h << 6) + (h >> 2);
+      }
+      return h;
+    }
+  };
   struct HubEx
   {
     HubEx() : accessed(steady_clock::now())
@@ -78,8 +69,8 @@ private:
   };
   const string & name_;
   mutex mac_map_mtx_;
-  map<MacAddressType, shared_ptr<Tunnel>> mac_map_;
-  map<MacAddressType, HubEx> mac_routes_;
+  unordered_map<MacAddressType, shared_ptr<Tunnel>, MacAddressHasher> mac_map_;
+  unordered_map<MacAddressType, HubEx, MacAddressHasher> mac_routes_;
   void Run(Thread* thread) override;
   milliseconds const scavenge_interval;
 };

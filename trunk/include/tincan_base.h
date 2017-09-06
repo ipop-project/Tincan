@@ -40,6 +40,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <unordered_map>
 #include <vector>
 namespace tincan
 {
@@ -52,12 +53,14 @@ using std::chrono::steady_clock;
 using std::cout;
 using std::endl;
 using std::exception;
+using std::hash;
 using std::istringstream;
 using std::list;
 using std::lock_guard;
 using std::make_shared;
 using std::make_unique;
 using std::map;
+using std::memcpy;
 using std::milli;
 using std::move;
 using std::mutex;
@@ -68,8 +71,8 @@ using std::stack;
 using std::string;
 using std::stringstream;
 using std::unique_ptr;
+using std::unordered_map;
 using std::vector;
-using std::memcpy;
 
 
 #define TC_DBG LS_ERROR
