@@ -84,12 +84,12 @@ private:
   private:
     virtual void Deliver(
       TincanControl &) {
-      LOG_F(LS_INFO) << msg_ << endl;
+      LOG(LS_INFO) << msg_ << endl;
     }
     virtual void Deliver(
       unique_ptr<TincanControl>)
     {
-      LOG_F(LS_INFO) << msg_ << endl;
+      LOG(LS_INFO) << msg_ << endl;
     }
     string msg_;
   };

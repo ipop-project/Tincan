@@ -52,7 +52,7 @@ void PeerNetwork::Add(shared_ptr<Tunnel> tnl)
     lock_guard<mutex> lg(mac_map_mtx_);
     //if(mac_map_.count(mac) == 1)
     //{
-    //  LOG_F(LS_INFO) << "Entry " << tnl->Vlink()->PeerInfo().mac_address <<
+    //  LOG(LS_INFO) << "Entry " << tnl->Vlink()->PeerInfo().mac_address <<
     //    " already exists in peer net. It will be updated.";
     //}
     mac_map_[mac] = tnl;
@@ -103,7 +103,7 @@ PeerNetwork::Remove(
   }
   catch(exception & e)
   {
-    LOG_F(LS_WARNING) << e.what();
+    LOG(LS_WARNING) << e.what();
   }
   catch(...)
   {
@@ -111,7 +111,7 @@ PeerNetwork::Remove(
     oss << "The Peer Network Remove operation failed. MAC " <<
       ByteArrayToString(mac.begin(), mac.end()) <<
       " was not found in peer network: " << name_;
-    LOG_F(LS_WARNING) << oss.str().c_str();
+    LOG(LS_WARNING) << oss.str().c_str();
   }
 }
 
@@ -215,7 +215,7 @@ PeerNetwork::Run(Thread* thread)
     }
     if(LOG_CHECK_LEVEL(LS_VERBOSE))
     {
-      LOG_F(LS_VERBOSE) << "PeerNetwork scavenge took " <<
+      LOG(LS_VERBOSE) << "PeerNetwork scavenge took " <<
         (steady_clock::now() - accessed).count() << " nanosecs.";
     }
   }

@@ -45,11 +45,11 @@ ControlListener::ReadPacketHandler(
 {
   try {
     TincanControl ctrl(data, len);
-    LOG_F(LS_VERBOSE) << "Received CONTROL: " << ctrl.StyledString();
+    LOG(LS_VERBOSE) << "Received CONTROL: " << ctrl.StyledString();
     (*ctrl_dispatch_)(ctrl);
   }
   catch(exception & e) {
-    LOG_F(LS_WARNING) << "A control failed to execute." << endl
+    LOG(LS_WARNING) << "A control failed to execute." << endl
       << string(data, len) << endl
       << e.what();
   }

@@ -213,7 +213,7 @@ Tincan::OnLocalCasUpdated(
   if(lcas.empty())
   {
     lcas = "No local candidates available on this vlink";
-    LOG_F(LS_WARNING) << lcas;
+    LOG(LS_WARNING) << lcas;
   }
   //this seemingly round-about code is to avoid locking the Deliver() call or
   //setting up the excepton handler necessary for using the mutex directly.

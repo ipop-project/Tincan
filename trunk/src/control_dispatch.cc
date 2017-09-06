@@ -66,17 +66,17 @@ ControlDispatch::operator () (TincanControl & control)
     // todo: A controller response to something sent earlier
       break;
     default:
-      LOG_F(LS_WARNING) << "Unrecognized control type received and discarded.";
+      LOG(LS_WARNING) << "Unrecognized control type received and discarded.";
       break;
     }
   }
   catch(out_of_range & e) {
-    LOG_F(LS_WARNING) << "An invalid IPOP control operation was received and "
+    LOG(LS_WARNING) << "An invalid IPOP control operation was received and "
       "discarded: " << control.StyledString() << "Exception=" << e.what();
   }
   catch(exception & e)
   {
-    LOG_F(LS_WARNING) << e.what();
+    LOG(LS_WARNING) << e.what();
   }
 }
 void
@@ -114,7 +114,7 @@ ControlDispatch::UpdateRoutes(
         tincan_->UpdateRoute(tap_name, dest_mac, path_mac);
       } catch(exception & e)
       {
-        LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
+        LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
           control.StyledString();
       }
     }
@@ -144,7 +144,7 @@ ControlDispatch::ConnectTunnel(
   } catch(exception & e)
   {
     msg = "The ConnectTunnel operation failed.";
-    LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(msg, status);
@@ -171,7 +171,7 @@ void ControlDispatch::CreateIpopControllerRespLink(
   {
     //if this fails we can't indicate this to the controller so log with
     //high severity
-    LOG_F(LS_ERROR) << e.what() << ". Control Data=\n" <<
+    LOG(LS_ERROR) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
 }
@@ -188,7 +188,7 @@ ControlDispatch::CreateTunnel(
   } catch(exception & e)
   {
     string msg = "The CreateTunnel operation failed.";
-    LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
     //send fail here, send the cas when the op completes
     control.SetResponse(msg, false);
@@ -223,7 +223,7 @@ ControlDispatch::CreateVNet(
   } catch(exception & e)
   {
     msg = "The CreateVNet operation failed.";
-    LOG_F(LS_ERROR) << e.what() << ". Control Data=\n" <<
+    LOG(LS_ERROR) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(msg, status);
@@ -248,7 +248,7 @@ ControlDispatch::QueryNodeInfo(
   } catch(exception & e)
   {
     resp = "The QueryNodeInfo operation failed. ";
-    LOG_F(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(resp, status);
@@ -276,7 +276,7 @@ ControlDispatch::InjectFrame(
   } catch(exception & e)
   {
     string msg = "The Inject Frame operation failed - ";
-    LOG_F(LS_WARNING) << msg << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << msg << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
 }
@@ -299,7 +299,7 @@ ControlDispatch::QueryTunnelStats(
   } catch(exception & e)
   {
     resp = "The QueryTunnelStats operation failed. ";
-    LOG_F(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(resp, status);
@@ -324,7 +324,7 @@ ControlDispatch::QueryCandidateAddressSet(
   } catch(exception & e)
   {
     resp = "The QueryCandidateAddressSet operation failed. ";
-    LOG_F(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(resp, status);
@@ -360,7 +360,7 @@ ControlDispatch::TrimLink(
   } catch(exception & e)
   {
     msg = "The TrimTunnel operation failed.";
-    LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(msg, status);
@@ -396,7 +396,7 @@ ControlDispatch::TrimTunnel(
   } catch(exception & e)
   {
     msg = "The TrimTunnel operation failed.";
-    LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(msg, status);
@@ -476,7 +476,7 @@ ControlDispatch::GetLogLevel(
   else
   {
     string msg = "An invalid log level was specified =  ";
-    LOG_F(LS_WARNING) << msg << log_level << ". Defaulting to WARNING";
+    LOG(LS_WARNING) << msg << log_level << ". Defaulting to WARNING";
   }
   return lv;
 }
@@ -504,7 +504,7 @@ ControlDispatch::SetNetworkIgnoreList(
   } catch(exception & e)
   {
     resp = "The SetNetworkIgnoreList operation failed.";
-    LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
   control.SetResponse(resp, status);
@@ -523,7 +523,7 @@ ControlDispatch::SendICC(
   } catch(exception & e)
   {
     string msg = "The ICC operation failed.";
-    LOG_F(LS_WARNING) << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
     //send fail here, ack success when send completes
     control.SetResponse(msg, false);
