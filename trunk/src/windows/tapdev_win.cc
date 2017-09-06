@@ -75,7 +75,7 @@ TapDevWin::IoThreadDescriptor::IoCompletionThread(void * param)
       break;
     else if(ERROR_SUCCESS != rv)
     {//completion packet for a failed IO
-      LOG_F(LS_WARNING) << "Received a completion packet for a failed IO";
+      LOG(LS_WARNING) << "Received a completion packet for a failed IO";
       //indicate failure and deliver
       AsyncIo * aio = (AsyncIo*)overlap;
       aio->BytesTransferred(0);
@@ -128,7 +128,7 @@ TapDevWin::Open(
       memmove(ip4_.data(), &vip4_addr.S_un.S_addr, sizeof(ip4_));
     }
     else
-      LOG_F(WARNING) << "Failed to convert IP4 string in Tap Descriptor=" << tap_desc.Ip4;
+      LOG(WARNING) << "Failed to convert IP4 string in Tap Descriptor=" << tap_desc.Ip4;
 
     NetDeviceNameToGuid(tap_name_, device_guid);
     string device_path(USER_MODE_DEVICE_DIR_);
@@ -180,7 +180,7 @@ TapDevWin::Read(
   DWORD rv = GetLastError();
   if(rv != ERROR_IO_PENDING)
   {
-    LOG_F(LS_ERROR) << "The TAP device read request operation failed.";
+    LOG(LS_ERROR) << "The TAP device read request operation failed.";
     return rv;
   }
   return 0;
@@ -199,7 +199,7 @@ TapDevWin::Write(
   DWORD rv = GetLastError();
   if(rv != ERROR_IO_PENDING && rv != ERROR_SUCCESS)
   {
-    LOG_F(LS_WARNING) << "The TAP device write request operation failed.";
+    LOG(LS_WARNING) << "The TAP device write request operation failed.";
     return rv;
   }
   return 0;
@@ -302,11 +302,11 @@ TapDevWin::Up() {
   if(DeviceIoControl(dev_handle_, TAP_IOCTL_GET_VERSION, &info,
     sizeof(info), &info, sizeof(info), &len, NULL))
   {
-    LOG_F(LS_INFO) << "TAP Driver Version " << (int)info[0] <<
+    LOG(LS_INFO) << "TAP Driver Version " << (int)info[0] <<
       (int)info[1] << (info[2] ? "(DEBUG)" : "");
   }
   uint16_t mtu = Mtu();
-  LOG_F(LS_INFO) << "TAP device MTU " << mtu;
+  LOG(LS_INFO) << "TAP device MTU " << mtu;
 }
 
 void

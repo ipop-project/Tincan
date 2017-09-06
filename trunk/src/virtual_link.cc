@@ -187,7 +187,7 @@ void VirtualLink::Transmit(TapFrame & frame)
   int status = channel_->SendPacket((const char*)frame.BufferToTransfer(),
     frame.BytesToTransfer(), packet_options_, 0);
   if(status < 0)
-    LOG_F(LS_INFO) << "Vlink send failed";
+    LOG(LS_INFO) << "Vlink send failed";
 }
 
 string VirtualLink::Candidates()
@@ -312,19 +312,19 @@ VirtualLink::SetupTURN(
   const std::string & password)
 {
   if(turn_server.empty()) {
-    LOG_F(LS_INFO) << "No TURN Server address provided";
+    LOG(LS_INFO) << "No TURN Server address provided";
     return;
   }
   if(!turn_server.empty() && (username.empty() || password.empty()))
   {
-    LOG_F(LS_WARNING) << "TURN credentials were not provided";
+    LOG(LS_WARNING) << "TURN credentials were not provided";
     return;
   }
   vector<string> add_prt;
   rtc::split(turn_server, ':', &add_prt);
   if(add_prt.size() != 2)
   {
-    LOG_F(LS_INFO) << "Invalid TURN Server address provided";
+    LOG(LS_INFO) << "Invalid TURN Server address provided";
     return;
   }
   cricket::RelayServerConfig relay_config_udp(add_prt[0], stoi(add_prt[1]),
