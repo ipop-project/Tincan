@@ -55,7 +55,7 @@ public:
   void QueryTunnelStats(
     const string & tap_name,
     const string & node_mac,
-    Json::Value & node_info);
+    Json::Value & node_info) override;
 
   void QueryNodeInfo(
     const string & tap_name,

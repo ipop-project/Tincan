@@ -167,7 +167,7 @@ VirtualNetwork::CreateTunnel(
   {
     tnl->AddVlinkEndpoint(vl);
     peer_network_->Add(tnl);
-    LOG_F(LS_INFO) << "Created CONTROLLED vlink w/ Tunnel ID (" <<
+    LOG(LS_INFO) << "Created CONTROLLED vlink w/ Tunnel ID (" <<
       mac_str << ")";
   }
   else throw TCEXCEPT("The CreateTunnelEndpoint operation failed.");
@@ -199,7 +199,7 @@ VirtualNetwork::ConnectTunnel(
     tnl->AddVlinkEndpoint(vl);
     vl->StartConnections();
     peer_network_->Add(tnl);
-    LOG_F(LS_INFO) << "Created CONTROLLING vlink w/ Tunnel ID (" <<
+    LOG(LS_INFO) << "Created CONTROLLING vlink w/ Tunnel ID (" <<
       mac_str << ")";
   }
   else throw TCEXCEPT("The ConnectTunnel operation failed.");
@@ -487,7 +487,8 @@ VirtualNetwork::VlinkReadCompleteL2(
       req[TincanControl::InterfaceName] = descriptor_->name;
       req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
         frame->PayloadEnd());
-      //LOG(TC_DBG) << "FWDing frame to ctrl, data=\n" << req[TincanControl::Data].asString();
+      LOG(TC_DBG) << "FWDing frame to ctrl, data=\n" <<
+        req[TincanControl::Data].asString();
       ctrl_link_->Deliver(move(ctrl));
     }
   }
@@ -501,7 +502,7 @@ VirtualNetwork::VlinkReadCompleteL2(
   }
   else
   {
-    LOG_F(LS_ERROR) << "Unknown frame type received!";
+    LOG(LS_ERROR) << "Unknown frame type received!";
     frame->Dump("Invalid header");
   }
 }
@@ -574,7 +575,7 @@ VirtualNetwork::TapReadCompleteL2(
     {
       frame->Dump("No Route Unicast");
     }
-    // The IPOP Controller has to find a route to deliver this ARP as Tincan cannot
+    //Send to IPOP Controller to find a route for this frame
     unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
@@ -598,7 +599,7 @@ VirtualNetwork::TapWriteCompleteL2(
   if(frame->IsGood())
     frame->Dump("TAP Write Completed");
   else
-    LOG_F(LS_WARNING) << "Tap Write FAILED completion";
+    LOG(LS_WARNING) << "Tap Write FAILED completion";
   delete frame;
 }
 
@@ -622,7 +623,7 @@ void VirtualNetwork::OnMessage(Message * msg)
     unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
     shared_ptr<Tunnel> tnl = ((TransmitMsgData*)msg->pdata)->tnl;
     tnl->Transmit(*frame);
-    //LOG_F(TC_DBG) << "Sent ICC to=" <<vl->PeerInfo().vip4 << " data=\n" <<
+    //LOG(TC_DBG) << "Sent ICC to=" <<vl->PeerInfo().vip4 << " data=\n" <<
     //  string((char*)(frame->begin()+4), *(uint16_t*)(frame->begin()+2));
     delete msg->pdata;
   }
