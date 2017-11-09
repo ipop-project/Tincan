@@ -1,5 +1,6 @@
-#To build Raspberry Pi set ARCH=arm7 and PLAT=rpi
-#To build CentOS set PLAT=centos
+#To build Raspberry Pi 3 and 2, set ARCH=arm7 and PLAT=rpi
+#To build Raspberry Pi Zero and 1, set ARCH=arm6 and PLAT=rpi
+#To build CentOS, set PLAT=centos
 
 CC = g++
 
