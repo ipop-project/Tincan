@@ -1,12 +1,7 @@
-#To build Raspberry Pi 3 and 2, set ARCH=arm7 and PLAT=rpi
-#To build Raspberry Pi Zero and 1, set ARCH=arm6 and PLAT=rpi
-#To build CentOS, set PLAT=centos
-
 CC = g++
 
-ARCH = x64
+ARCH = $(shell uname -m)
 OPT = release
-PLAT = ubuntu
 
 INC_DIR = ../include
 INC_DIR_LNX = $(INC_DIR)/linux
@@ -15,7 +10,7 @@ EXT_INC_DIR = ../../external/include
 SRC_DIR = ../src
 SRC_DIR_LNX = $(SRC_DIR)/linux
 
-EXT_LIB_DIR = ../../external/lib/$(OPT)/$(ARCH)/$(PLAT)
+EXT_LIB_DIR = ../../external/3rd-Party-Libs/$(OPT)
 OUT = ../out
 OBJ_DIR = $(OUT)/$(OPT)/$(ARCH)/obj
 BIN_DIR = $(OUT)/$(OPT)/$(ARCH)
