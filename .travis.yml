@@ -17,5 +17,6 @@ branches:
   only:
     - master
 script:
+  - git clone -b ubuntu-x64 --single-branch https://github.com/ipop-project/3rd-Party-Libs.git external/3rd-Party-Libs
   - cd trunk/build
   - make
