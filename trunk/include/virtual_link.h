@@ -46,6 +46,8 @@ using cricket::TransportChannel;
 using cricket::ConnectionRole;
 using rtc::PacketTransportInterface;
 
+class PeerNetwork;
+
 struct  VlinkDescriptor
 {
   bool sec_enabled;
@@ -60,6 +62,7 @@ class VirtualLink :
   public sigslot::has_slots<>
 {
 public:
+  friend PeerNetwork;
   VirtualLink(
     unique_ptr<VlinkDescriptor> vlink_desc,
     unique_ptr<PeerDescriptor> peer_desc,
@@ -158,6 +161,7 @@ private:
 
   std::mutex cas_mutex_;
   bool cas_ready_;
+  bool is_valid_;
   rtc::Thread* signaling_thread_;
   rtc::Thread* network_thread_;
 };

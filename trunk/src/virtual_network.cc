@@ -149,28 +149,26 @@ VirtualNetwork::CreateTunnel(
 {
   shared_ptr<VirtualLink> vl;
   MacAddressType mac;
-  shared_ptr<Tunnel> tnl;
   string mac_str = peer_desc->mac_address;
   StringToByteArray(peer_desc->mac_address, mac.begin(), mac.end());
   if(peer_network_->IsAdjacent(mac))
   {
-    tnl = peer_network_->GetTunnel(mac);
+    vl = peer_network_->GetVlink(mac);
+    vl->PeerCandidates(peer_desc->cas);
+    vl->StartConnections();
+    LOG(LS_INFO) << "Added remote CAS to vlink w/ peer " << peer_desc->uid;
   }
   else
   {
-    tnl = make_shared<Tunnel>();
-    tnl->Id(mac);
+    cricket::IceRole ir = cricket::ICEROLE_CONTROLLED;
+    if(descriptor_->uid < peer_desc->uid)
+      ir = cricket::ICEROLE_CONTROLLING;
+    string roles[] = { "CONTROLLED", "CONTROLLING" };
+    LOG(LS_INFO) << "Creating "<< roles[ir] << " vlink w/ peer " << peer_desc->uid;
+    vl = CreateVlink(move(vlink_desc), move(peer_desc), ir);
+    peer_network_->Add(vl);
   }
-  vl = CreateVlink(move(vlink_desc), move(peer_desc),
-    cricket::ICEROLE_CONTROLLED);
-  if(vl)
-  {
-    tnl->AddVlinkEndpoint(vl);
-    peer_network_->Add(tnl);
-    LOG(LS_INFO) << "Created CONTROLLED vlink w/ Tunnel ID (" <<
-      mac_str << ")";
-  }
-  else throw TCEXCEPT("The CreateTunnelEndpoint operation failed.");
+  //else throw TCEXCEPT("The CreateTunnelEndpoint operation failed. A Controlled link already exist.");
   return vl;
 }
 
@@ -179,30 +177,8 @@ VirtualNetwork::ConnectTunnel(
   unique_ptr<PeerDescriptor> peer_desc,
   unique_ptr<VlinkDescriptor> vlink_desc)
 {
-  MacAddressType mac;
-  shared_ptr<Tunnel> tnl;
-  string mac_str = peer_desc->mac_address;
-  StringToByteArray(peer_desc->mac_address, mac.begin(), mac.end());
-  if(peer_network_->IsAdjacent(mac))
-  {
-    tnl = peer_network_->GetTunnel(mac);
-  }
-  else
-  {
-    tnl = make_shared<Tunnel>();
-    tnl->Id(mac);
-  }
-  shared_ptr<VirtualLink> vl = CreateVlink(move(vlink_desc), move(peer_desc),
-      cricket::ICEROLE_CONTROLLING);
-  if(vl)
-  {
-    tnl->AddVlinkEndpoint(vl);
-    vl->StartConnections();
-    peer_network_->Add(tnl);
-    LOG(LS_INFO) << "Created CONTROLLING vlink w/ Tunnel ID (" <<
-      mac_str << ")";
-  }
-  else throw TCEXCEPT("The ConnectTunnel operation failed.");
+  CreateTunnel(move(peer_desc), move(vlink_desc));
+  return;
 }
 
 void VirtualNetwork::TerminateTunnel(
@@ -213,25 +189,6 @@ void VirtualNetwork::TerminateTunnel(
   if(peer_network_->IsAdjacent(mac))
   {
     peer_network_->Remove(mac);
-  }
-}
-void VirtualNetwork::TerminateLink(
-  const string & tnl_id,
-  const string & link_role)
-{
-  MacAddressType mac;
-  StringToByteArray(tnl_id, mac.begin(), mac.end());
-  if(peer_network_->IsAdjacent(mac))
-  {
-    shared_ptr<Tunnel> tnl  = peer_network_->GetTunnel(mac);
-    if(link_role == TincanControl::Controlling.c_str())
-    {
-      tnl->ReleaseLink(cricket::ICEROLE_CONTROLLING);
-    }
-    else if (link_role == TincanControl::Controlled.c_str())
-    {
-      tnl->ReleaseLink(cricket::ICEROLE_CONTROLLED);
-    }
   }
 }
 
@@ -267,7 +224,7 @@ VirtualNetwork::IgnoredNetworkInterfaces(
   net_manager_.set_network_ignore_list(ignored_list);
 }
 
-void VirtualNetwork::QueryTunnelStats(
+void VirtualNetwork::QueryLinkStats(
   const string & node_mac,
   Json::Value & node_info)
 {
@@ -275,48 +232,31 @@ void VirtualNetwork::QueryTunnelStats(
   StringToByteArray(node_mac, mac.begin(), mac.end());
   if(peer_network_->IsAdjacent(mac))
   {
-    shared_ptr<VirtualLink> vl = peer_network_->GetTunnel(mac)->Controlling();
+    shared_ptr<VirtualLink> vl = peer_network_->GetVlink(mac);
     if(vl && vl->IsReady())
     {
       LinkStatsMsgData md;
       md.vl = vl;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
       md.msg_event.Wait(Event::kForever);
-      node_info[TincanControl::Controlling][TincanControl::Stats].swap(md.stats);
-      node_info[TincanControl::Controlling][TincanControl::Status] = "online";
+      node_info[TincanControl::Stats].swap(md.stats);
+      node_info[TincanControl::Status] = "online";
+      if (vl->IceRole() == cricket::ICEROLE_CONTROLLING)
+       node_info["IceRole"] = TincanControl::Controlling;
+      else
+        node_info["IceRole"] = TincanControl::Controlled;
     }
     else
     {
-      node_info[TincanControl::Controlling][TincanControl::Status] = "offline";
-      node_info[TincanControl::Controlling][TincanControl::Stats] = Json::Value(Json::arrayValue);
+      node_info[TincanControl::Status] = "offline";
+      node_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
     }
-
-
-    vl = peer_network_->GetTunnel(mac)->Controlled();
-    if(vl && vl->IsReady())
-    {
-      LinkStatsMsgData md;
-      md.vl = vl;
-      net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
-      md.msg_event.Wait(Event::kForever);
-      node_info[TincanControl::Controlled][TincanControl::Stats].swap(md.stats);
-      node_info[TincanControl::Controlled][TincanControl::Status] = "online";
-    }
-    else
-    {
-      node_info[TincanControl::Controlled][TincanControl::Status] = "offline";
-      node_info[TincanControl::Controlled][TincanControl::Stats] = Json::Value(Json::arrayValue);
-    }
-
   }
   else
   {
-    node_info[TincanControl::Controlling][TincanControl::MAC] = node_mac;
-    node_info[TincanControl::Controlling][TincanControl::Status] = "unknown";
-    node_info[TincanControl::Controlling][TincanControl::Stats] = Json::Value(Json::arrayValue);
-    node_info[TincanControl::Controlled][TincanControl::MAC] = node_mac;
-    node_info[TincanControl::Controlled][TincanControl::Status] = "unknown";
-    node_info[TincanControl::Controlled][TincanControl::Stats] = Json::Value(Json::arrayValue);
+    node_info[TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Status] = "unknown";
+    node_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
   }
 }
 
@@ -328,7 +268,7 @@ void VirtualNetwork::QueryNodeInfo(
   StringToByteArray(node_mac, mac.begin(), mac.end());
   if(peer_network_->IsAdjacent(mac))
   {
-    shared_ptr<VirtualLink> vl = peer_network_->GetTunnel(mac)->Vlink();
+    shared_ptr<VirtualLink> vl = peer_network_->GetVlink(mac);
     node_info[TincanControl::UID] = vl->PeerInfo().uid;
     node_info[TincanControl::VIP4] = vl->PeerInfo().vip4;
     //node_info[TincanControl::VIP6] = vl->PeerInfo().vip6;
@@ -344,8 +284,13 @@ void VirtualNetwork::QueryNodeInfo(
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    vl = peer_network_->GetTunnel(mac)->Controlled();
-    if(vl)
+    node_info[TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Controlling][TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Controlled][TincanControl::MAC] = node_mac;
+    node_info[TincanControl::Controlling][TincanControl::Status] = "unknown";
+    node_info[TincanControl::Controlled][TincanControl::Status] = "unknown";
+
+    if(vl->IceRole() == cricket::ICEROLE_CONTROLLING)
     {
       node_info[TincanControl::Controlling][TincanControl::UID] =
         vl->PeerInfo().uid;
@@ -367,12 +312,6 @@ void VirtualNetwork::QueryNodeInfo(
     }
     else
     {
-      node_info[TincanControl::Controlling][TincanControl::MAC] = node_mac;
-      node_info[TincanControl::Controlled][TincanControl::MAC] = node_mac;
-    }
-    vl = peer_network_->GetTunnel(mac)->Controlling();
-    if(vl)
-    {
       node_info[TincanControl::Controlled][TincanControl::UID] =
         vl->PeerInfo().uid;
       node_info[TincanControl::Controlled][TincanControl::VIP4] =
@@ -393,22 +332,6 @@ void VirtualNetwork::QueryNodeInfo(
           "offline";
       }
     }
-    else
-    {
-      node_info[TincanControl::Controlling][TincanControl::Status] =
-        "unknown";
-      node_info[TincanControl::Controlled][TincanControl::Status] =
-        "unknown";
-    }
-  }
-  else
-  {
-    node_info[TincanControl::MAC] = node_mac;
-    node_info[TincanControl::Controlling][TincanControl::MAC] = node_mac;
-    node_info[TincanControl::Controlled][TincanControl::MAC] = node_mac;
-    node_info[TincanControl::Status] = "unknown";
-    node_info[TincanControl::Controlling][TincanControl::Status] = "unknown";
-    node_info[TincanControl::Controlled][TincanControl::Status] = "unknown";
   }
 }
 
@@ -416,8 +339,14 @@ void VirtualNetwork::QueryTunnelCas(
   const string & tnl_id, //peer mac address
   Json::Value & cas_info)
 {
-  shared_ptr<Tunnel> tnl = peer_network_->GetTunnel(tnl_id);
-  tnl->QueryCas(cas_info);
+  if(peer_network_->IsAdjacent(tnl_id))
+  {
+    shared_ptr<VirtualLink> vl = peer_network_->GetVlink(tnl_id);
+    if(vl->IceRole() == cricket::ICEROLE_CONTROLLING)
+      cas_info[TincanControl::Controlling.c_str()] = vl->Candidates();
+    else if(vl->IceRole() == cricket::ICEROLE_CONTROLLED)
+      cas_info[TincanControl::Controlled.c_str()] = vl->Candidates();
+  }
 }
 
 void
@@ -431,7 +360,7 @@ VirtualNetwork::SendIcc(
   md->frm = move(icc);
   MacAddressType mac;
   StringToByteArray(recipient_mac, mac.begin(), mac.end());
-  md->tnl = peer_network_->GetTunnel(mac);
+  md->tnl = peer_network_->GetVlink(mac);
   net_worker_.Post(RTC_FROM_HERE, this, MSGID_SEND_ICC, md.release());
 }
 
@@ -472,10 +401,10 @@ VirtualNetwork::VlinkReadCompleteL2(
   { // a frame to be routed on the overlay
     if(peer_network_->IsRouteExists(fp.DestinationMac()))
     {
-      shared_ptr<Tunnel> tnl = peer_network_->GetRoute(fp.DestinationMac());
+      shared_ptr<VirtualLink> vl = peer_network_->GetRoute(fp.DestinationMac());
       TransmitMsgData *md = new TransmitMsgData;
       md->frm = move(frame);
-      md->tnl = tnl;
+      md->tnl = vl;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_FWD_FRAME, md);
     }
     else
@@ -545,10 +474,10 @@ VirtualNetwork::TapReadCompleteL2(
   {
     frame->Header(kDtfMagic);
     frame->Dump("Unicast");
-    shared_ptr<Tunnel> tnl = peer_network_->GetTunnel(mac);
+    shared_ptr<VirtualLink> vl = peer_network_->GetVlink(mac);
     TransmitMsgData *md = new TransmitMsgData;
     md->frm.reset(frame);
-    md->tnl = tnl;
+    md->tnl = vl;
     net_worker_.Post(RTC_FROM_HERE, this, MSGID_TRANSMIT, md);
   }
   else if(peer_network_->IsRouteExists(mac))
@@ -610,8 +539,8 @@ void VirtualNetwork::OnMessage(Message * msg)
   case MSGID_TRANSMIT:
   {
     unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
-    shared_ptr<Tunnel> tnl = ((TransmitMsgData*)msg->pdata)->tnl;
-    tnl->Transmit(*frame);
+    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->tnl;
+    vl->Transmit(*frame);
     delete msg->pdata;
     frame->Initialize(frame->Payload(), frame->PayloadCapacity());
     if(0 == tdev_->Read(*frame))
@@ -621,8 +550,8 @@ void VirtualNetwork::OnMessage(Message * msg)
   case MSGID_SEND_ICC:
   {
     unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
-    shared_ptr<Tunnel> tnl = ((TransmitMsgData*)msg->pdata)->tnl;
-    tnl->Transmit(*frame);
+    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->tnl;
+    vl->Transmit(*frame);
     //LOG(TC_DBG) << "Sent ICC to=" <<vl->PeerInfo().vip4 << " data=\n" <<
     //  string((char*)(frame->begin()+4), *(uint16_t*)(frame->begin()+2));
     delete msg->pdata;
@@ -639,8 +568,8 @@ void VirtualNetwork::OnMessage(Message * msg)
   case MSGID_FWD_FRAME_RD:
   {
     unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
-    shared_ptr<Tunnel> tnl = ((TransmitMsgData*)msg->pdata)->tnl;
-    tnl->Transmit(*frame);
+    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->tnl;
+    vl->Transmit(*frame);
     //LOG(TC_DBG) << "FWDing frame to " << vl->PeerInfo().vip4;
     if(msg->message_id == MSGID_FWD_FRAME_RD)
     {

@@ -24,7 +24,6 @@
 #define _TINCAN_PEER_NETWORK_H_
 #include "tincan_base.h"
 #include "virtual_link.h"
-#include "tunnel.h"
 namespace tincan
 {
 class PeerNetwork :
@@ -34,16 +33,12 @@ public:
   PeerNetwork(
     const string & name);
   ~PeerNetwork();
-  //void Add(shared_ptr<VirtualLink> vlink);
-  void Add(shared_ptr<Tunnel> tnl);
+  void Add(shared_ptr<VirtualLink> vlink);
   void UpdateRoute(MacAddressType & dest, MacAddressType & route);
   void Remove(MacAddressType mac);
-  //shared_ptr<VirtualLink> GetVlink(const string & mac);
-  //shared_ptr<VirtualLink> GetVlink(const MacAddressType & mac);
-  shared_ptr<Tunnel> GetRoute(const MacAddressType & mac);
-  shared_ptr<Tunnel> GetTunnel(const string & mac);
-  shared_ptr<Tunnel> GetTunnel(const MacAddressType & mac);
-  //shared_ptr<Tunnel> GetOrCreateTunnel(const MacAddressType & mac);
+  shared_ptr<VirtualLink> GetVlink(const string & mac);
+  shared_ptr<VirtualLink> GetVlink(const MacAddressType & mac);
+  shared_ptr<VirtualLink> GetRoute(const MacAddressType & mac);
   bool IsAdjacent(const string & mac);
   bool IsAdjacent(const MacAddressType& mac);
   bool IsRouteExists(const MacAddressType& mac);
@@ -64,12 +59,12 @@ private:
   {
     HubEx() : accessed(steady_clock::now())
     {}
-    shared_ptr<Tunnel> tnl;
+    shared_ptr<VirtualLink> vl;
     steady_clock::time_point accessed;
   };
   const string & name_;
   mutex mac_map_mtx_;
-  unordered_map<MacAddressType, shared_ptr<Tunnel>, MacAddressHasher> mac_map_;
+  unordered_map<MacAddressType, shared_ptr<VirtualLink>, MacAddressHasher> mac_map_;
   unordered_map<MacAddressType, HubEx, MacAddressHasher> mac_routes_;
   void Run(Thread* thread) override;
   milliseconds const scavenge_interval;

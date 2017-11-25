@@ -58,7 +58,7 @@ private:
   void CreateVNet(TincanControl & control);
   void Echo(TincanControl & control);
   void InjectFrame(TincanControl & control);
-  void QueryTunnelStats(TincanControl & control);
+  void QueryLinkStats(TincanControl & control);
   void QueryNodeInfo(TincanControl & control);
   void QueryCandidateAddressSet(TincanControl & control);
   void TrimLink(TincanControl & control);
