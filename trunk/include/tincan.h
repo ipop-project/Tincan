@@ -52,7 +52,7 @@ public:
   void InjectFrame(
     const Json::Value & frame_desc) override;
 
-  void QueryTunnelStats(
+  void QueryLinkStats(
     const string & tap_name,
     const string & node_mac,
     Json::Value & node_info) override;

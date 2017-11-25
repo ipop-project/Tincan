@@ -64,7 +64,7 @@ namespace tincan {
     virtual void InjectFrame(
       const Json::Value & frame_desc) = 0;
 
-    virtual void QueryTunnelStats(
+    virtual void QueryLinkStats(
       const string & tap_name,
       const string & node_mac,
       Json::Value & node_info) = 0;

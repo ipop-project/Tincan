@@ -66,7 +66,7 @@ VirtualLink::Initialize(
   stun_addr.FromString(vlink_desc_->stun_addr);
   port_allocator_.reset(new cricket::BasicPortAllocator(
     &network_manager, &packet_factory_, { stun_addr }));
-  port_allocator_->set_flags(kFlags);
+  port_allocator_->set_flags(cricket::PORTALLOCATOR_DISABLE_TCP);
   SetupTURN(vlink_desc_->turn_addr, vlink_desc_->turn_user, vlink_desc_->turn_pass);
   transport_ctlr_ = make_unique<TransportController>(signaling_thread_,
     network_thread_, port_allocator_.get());

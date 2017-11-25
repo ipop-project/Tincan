@@ -42,7 +42,7 @@ ControlDispatch::ControlDispatch() :
     { "ICC", &ControlDispatch::SendICC },
     { "InjectFrame", &ControlDispatch::InjectFrame },
     { "QueryCandidateAddressSet", &ControlDispatch::QueryCandidateAddressSet },
-    { "QueryTunnelStats", &ControlDispatch::QueryTunnelStats },
+    { "QueryLinkStats", &ControlDispatch::QueryLinkStats },
     { "QueryNodeInfo", &ControlDispatch::QueryNodeInfo },
     { "TrimTunnel", &ControlDispatch::TrimTunnel },
     { "SetIgnoredNetInterfaces", &ControlDispatch::SetNetworkIgnoreList },
@@ -282,7 +282,7 @@ ControlDispatch::InjectFrame(
 }
 
 void
-ControlDispatch::QueryTunnelStats(
+ControlDispatch::QueryLinkStats(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest(), node_info;
@@ -293,12 +293,12 @@ ControlDispatch::QueryTunnelStats(
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->QueryTunnelStats(tap_name, mac, node_info);
+    tincan_->QueryLinkStats(tap_name, mac, node_info);
     resp = node_info.toStyledString();
     status = true;
   } catch(exception & e)
   {
-    resp = "The QueryTunnelStats operation failed. ";
+    resp = "The QueryLinkStats operation failed. ";
     LOG(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }

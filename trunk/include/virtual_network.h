@@ -42,7 +42,6 @@
 #include "tincan_exception.h"
 #include "vnet_descriptor.h"
 #include "virtual_link.h"
-#include "tunnel.h"
 
 namespace tincan
 {
@@ -65,7 +64,7 @@ public:
   class TransmitMsgData : public MessageData
   {
   public:
-    shared_ptr<Tunnel> tnl;
+    shared_ptr<VirtualLink> tnl;
     unique_ptr<TapFrame> frm;
   };
   class VlinkMsgData : public MessageData
@@ -125,10 +124,6 @@ public:
   void TerminateTunnel(
     const string & tnl_d);
 
-  void TerminateLink(
-    const string & peer_mac,
-    const string & link_role);
-
   VnetDescriptor & Descriptor();
 
   string Name();
@@ -138,7 +133,7 @@ public:
   void IgnoredNetworkInterfaces(
     const vector<string>& ignored_list);
 
-  void QueryTunnelStats(
+  void QueryLinkStats(
     const string & node_mac,
     Json::Value & node_info);
   

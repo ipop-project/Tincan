@@ -131,7 +131,7 @@ Tincan::InjectFrame(
 }
 
 void
-Tincan::QueryTunnelStats(
+Tincan::QueryLinkStats(
   const string & tap_name,
   const string & node_mac,
   Json::Value & node_info)
@@ -140,7 +140,7 @@ Tincan::QueryTunnelStats(
   node_info[TincanControl::Type] = "peer";
   node_info[TincanControl::VnetDescription] = vn.Descriptor().description;
   node_info[TincanControl::InterfaceName] = vn.Name();
-  vn.QueryTunnelStats(node_mac, node_info);
+  vn.QueryLinkStats(node_mac, node_info);
 
 }
 
@@ -179,11 +179,11 @@ void
 Tincan::TrimVlink(
   const Json::Value & link_desc)
 {
-  const string & tap_name = link_desc[TincanControl::InterfaceName].asString();
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  const string & mac = link_desc[TincanControl::MAC].asString();
-  const string & role = link_desc[TincanControl::Role].asString();
-  vn.TerminateLink(mac, role);
+//  const string & tap_name = link_desc[TincanControl::InterfaceName].asString();
+//  VirtualNetwork & vn = VnetFromName(tap_name);
+//  const string & mac = link_desc[TincanControl::MAC].asString();
+//  const string & role = link_desc[TincanControl::Role].asString();
+  //vn.TerminateLink(mac, role);
 }
 
 void
