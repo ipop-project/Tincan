@@ -30,11 +30,11 @@ namespace tincan
 {
 struct TapDescriptor
 {
-  const string interface_name;
-  const string Ip4;
+  string name;
+  string ip4;
   uint32_t prefix4;
   uint32_t mtu4;
-  string Ip6;
+  string ip6;
   uint32_t prefix6;
   uint32_t mtu6;
 };

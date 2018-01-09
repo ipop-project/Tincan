@@ -77,13 +77,13 @@ using std::vector;
 
 #define TC_DBG LS_ERROR
 ///////////////////////////////////////////////////////////////////////////////
-static const uint16_t kTincanVerMjr = 2;
+static const uint16_t kTincanVerMjr = 3;
 //
 static const uint16_t kTincanVerMnr = 0;
 //
 static const uint16_t kTincanVerRev = 0;
 //
-static const uint8_t kTincanControlVer = 4;
+static const uint8_t kTincanControlVer = 5;
 //
 static const uint8_t kTincanLinkVer = 1;
 //
@@ -96,9 +96,6 @@ static const uint16_t kEthHeaderSize = 14;
 static const uint16_t kEthernetSize = kEthHeaderSize + kMaxMtuSize;
 //
 static const uint16_t kTapBufferSize = kTapHeaderSize + kEthernetSize;
-//
-//Port Allocator Flags
-static const uint32_t kFlags = 0;
 
 static const uint8_t kFT_DTF = 0x0A;
 static const uint8_t kFT_FWD = 0x0B;

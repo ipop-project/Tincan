@@ -23,41 +23,20 @@
 #ifndef TINCAN_VIRTUAL_NETWORK_H_
 #define TINCAN_VIRTUAL_NETWORK_H_
 #include "tincan_base.h"
-#include "webrtc/base/network.h"
-#ifdef min
-#undef min
-#endif //
-#ifdef max
-#undef max
-#endif //
-#include "webrtc/base/sslidentity.h"
-#include "webrtc/base/thread.h"
-#include "webrtc/base/sigslot.h"
-#include "webrtc/base/json.h"
-#include "async_io.h"
-#include "controller_handle.h"
-#include "peer_network.h"
-#include "tapdev.h"
-#include "tap_frame.h"
-#include "tincan_exception.h"
-#include "vnet_descriptor.h"
-#include "virtual_link.h"
-#include "tunnel.h"
-
+#include "overlay.h"
 namespace tincan
 {
 class VirtualNetwork :
-  public sigslot::has_slots<>,
-  public MessageHandler
+  public Overlay
 {
 public:
   enum MSG_ID
   {
-    MSGID_CREATE_LINK,
-    MSGID_START_CONNECTION,
+    //MSGID_CREATE_LINK,
+    //MSGID_START_CONNECTION,
     MSGID_TRANSMIT,
     MSGID_SEND_ICC,
-    MSGID_END_CONNECTION,
+    //MSGID_END_CONNECTION,
     MSGID_QUERY_NODE_INFO,
     MSGID_FWD_FRAME,
     MSGID_FWD_FRAME_RD,
@@ -65,29 +44,29 @@ public:
   class TransmitMsgData : public MessageData
   {
   public:
-    shared_ptr<Tunnel> tnl;
+    shared_ptr<VirtualLink> tnl;
     unique_ptr<TapFrame> frm;
   };
-  class VlinkMsgData : public MessageData
-  {
-  public:
-    shared_ptr<VirtualLink> vl;
-  };
-  class MacMsgData : public MessageData
-  {
-  public:
-    MacAddressType mac;
-  };
-  class CreateVlinkMsgData : public MessageData
-  {
-  public:
-    unique_ptr<PeerDescriptor> peer_desc;
-    unique_ptr<VlinkDescriptor> vlink_desc;
-    rtc::Event msg_event;
-    CreateVlinkMsgData() : msg_event(false, false)
-    {}
-    ~CreateVlinkMsgData() = default;
-  };
+  //class VlinkMsgData : public MessageData
+  //{
+  //public:
+  //  shared_ptr<VirtualLink> vl;
+  //};
+  //class MacMsgData : public MessageData
+  //{
+  //public:
+  //  MacAddressType mac;
+  //};
+  //class CreateVlinkMsgData : public MessageData
+  //{
+  //public:
+  //  unique_ptr<PeerDescriptor> peer_desc;
+  //  unique_ptr<VlinkDescriptor> vlink_desc;
+  //  rtc::Event msg_event;
+  //  CreateVlinkMsgData() : msg_event(false, false)
+  //  {}
+  //  ~CreateVlinkMsgData() = default;
+  //};
   class LinkStatsMsgData : public MessageData
   {
   public:
@@ -100,107 +79,58 @@ public:
   };
   //ctor
    VirtualNetwork(
-     unique_ptr<VnetDescriptor> descriptor,
+     unique_ptr<OverlayDescriptor> descriptor,
      shared_ptr<IpopControllerLink> ctrl_handle);
 
   ~VirtualNetwork();
-  void Configure();
-  void Start();
-  void Shutdown();
-  void StartTunnel(
-    int);
-  void UpdateRoute(MacAddressType mac_dest, MacAddressType mac_path);
-  //
-  //Creates the listening endpoint of vlink and returns its candidate address
-  //set for the connection.
-  shared_ptr<VirtualLink> CreateTunnel(
-    unique_ptr<PeerDescriptor> peer_desc,
-    unique_ptr<VlinkDescriptor> vlink_desc);
-  //
-  //Uses the remote's candidate set and actively attempts to connect to it.
-  void ConnectTunnel(
-    unique_ptr<PeerDescriptor> peer_desc,
-    unique_ptr<VlinkDescriptor> vlink_desc);
 
-  void TerminateTunnel(
-    const string & tnl_d);
+  shared_ptr<VirtualLink> CreateVlink(
+    unique_ptr<VlinkDescriptor> vlink_desc,
+    unique_ptr<PeerDescriptor> peer_desc);
 
-  void TerminateLink(
-    const string & peer_mac,
-    const string & link_role);
+  void QueryInfo(
+    Json::Value & olay_info);
 
-  VnetDescriptor & Descriptor();
-
-  string Name();
-  string MacAddress();
-  string Fingerprint();
-
-  void IgnoredNetworkInterfaces(
-    const vector<string>& ignored_list);
-
-  void QueryTunnelStats(
-    const string & node_mac,
-    Json::Value & node_info);
-  
-  void QueryNodeInfo(
-    const string & node_mac,
-    Json::Value & node_info);
-
-  void QueryTunnelCas(
-    const string & tnl_id,
+  void QueryLinkCas(
+    const string & vlink_id,
     Json::Value & cas_info);
+
+  void QueryLinkInfo(
+    const string & vlink_id,
+    Json::Value & vlink_info);
+
+  void Shutdown();
 
   void SendIcc(
     const string & recipient_mac,
     const string & data);
 
+  void Start();
+
+  void RemoveLink(
+    const string & vlink_id);
+
+  void UpdateRoute(
+    MacAddressType mac_dest,
+    MacAddressType mac_path);
   //
   //FrameHandler implementation
-  void ProcessIncomingFrame(
+  void VlinkReadComplete(
     uint8_t * data,
     uint32_t data_len,
     VirtualLink & vlink);
-
-  void VlinkReadCompleteL2(
-    uint8_t * data,
-    uint32_t data_len,
-    VirtualLink & vlink);
-
   //
   //AsyncIOComplete
   void TapReadComplete(
     AsyncIo * aio_rd);
-
-  void TapReadCompleteL2(
-    AsyncIo * aio_rd);
-
   void TapWriteComplete(
     AsyncIo * aio_wr);
-
-  void TapWriteCompleteL2(
-    AsyncIo * aio_wr);
-
-  void InjectFame(string && data);
   //
   //MessageHandler overrides
   void OnMessage(Message* msg) override;
 private:
-  unique_ptr<VirtualLink> CreateVlink(
-    unique_ptr<VlinkDescriptor> vlink_desc,
-    unique_ptr<PeerDescriptor> peer_desc,
-    cricket::IceRole ice_role);
-  
-  TapDev * tdev_;
-  PeerNetwork * peer_network_;
-  unique_ptr<VnetDescriptor> descriptor_;
-  shared_ptr<IpopControllerLink> ctrl_link_;
-  rtc::BasicNetworkManager net_manager_;
-  unique_ptr<rtc::SSLIdentity> sslid_;
-  unique_ptr<rtc::SSLFingerprint> local_fingerprint_;
-  rtc::Thread net_worker_;
-  rtc::Thread sig_worker_;
+  unique_ptr<PeerNetwork> peer_network_;
   rtc::Thread peer_net_thread_;
-  mutex vn_mtx_;
 };
 }  // namespace tincan
 #endif  // TINCAN_VIRTUAL_NETWORK_H_

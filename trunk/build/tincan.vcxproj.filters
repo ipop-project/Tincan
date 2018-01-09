@@ -529,6 +529,9 @@
     <ClInclude Include="..\include\tunnel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\overlay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\peer_network.cc">
@@ -562,6 +565,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\tunnel.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\overlay.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

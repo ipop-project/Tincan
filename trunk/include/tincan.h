@@ -26,6 +26,8 @@
 #include "webrtc/base/event.h"
 #include "control_listener.h"
 #include "control_dispatch.h"
+#include "overlay.h"
+#include "tunnel.h"
 #include "virtual_network.h"
 
 namespace tincan {
@@ -39,67 +41,70 @@ public:
   //
   //TincanDispatchInterface interface
 
-  void ConnectTunnel(
-    const Json::Value & link_desc) override;
+  //void ConnectTunnel(
+  //  const Json::Value & link_desc) override;
 
-  void CreateTunnel(
+  //void CreateTunnel(
+  //  const Json::Value & tnl_desc) override;
+
+  void CreateVlink(
     const Json::Value & link_desc,
     TincanControl & ctrl) override;
 
-  void CreateVNet(
-    unique_ptr<VnetDescriptor> lvecfg) override;
+  void CreateOverlay(
+    const Json::Value & olay_desc) override;
   
   void InjectFrame(
     const Json::Value & frame_desc) override;
 
-  void QueryTunnelStats(
-    const string & tap_name,
-    const string & node_mac,
+  void QueryLinkStats(
+    const Json::Value & link_desc,
     Json::Value & node_info) override;
 
-  void QueryNodeInfo(
-    const string & tap_name,
-    const string & node_mac,
+  void QueryOverlayInfo(
+    const Json::Value & olay_desc,
     Json::Value & node_info) override;
 
-  void TrimTunnel(
+  void RemoveOverlay(
     const Json::Value & tnl_desc) override;
 
-  void TrimVlink(
+  void RemoveVlink(
     const Json::Value & link_desc) override;
 
   void SendIcc(
     const Json::Value & icc_desc) override;
 
   void SetIgnoredNetworkInterfaces(
-    const string & tap_name,
+    const Json::Value & olay_desc,
     vector<string> & ignored_list) override;
 
   void SetIpopControllerLink(
     shared_ptr<IpopControllerLink> ctrl_handle) override;
 
-  void UpdateRoute(
-    const string & tap_name,
-    const string & dest_mac,
-    const string & path_mac) override;
+  //void UpdateRoute(
+  //  const string & tap_name,
+  //  const string & dest_mac,
+  //  const string & path_mac) override;
 //
 //
   void OnLocalCasUpdated(
     string lcas);
 
-  void QueryTunnelCas(
-    const string & tap_name,
-    const string & tnl_id,
+  void QueryLinkCas(
+    const Json::Value & link_desc,
     Json::Value & cas_info);
 
   void Run();
 private:
-  void GetLocalNodeInfo(
-    VirtualNetwork & vnet,
-    Json::Value & node_info);
+  //void GetLocalNodeInfo(
+  //  VirtualNetwork & vnet,
+  //  Json::Value & node_info);
 
-  VirtualNetwork & VnetFromName(
-    const string & tap_name);
+  Overlay * GetOverlay(
+    const string & oid);
+
+  Overlay & OverlayFromId(
+    const string & oid);
 
   void OnStop();
   void Shutdown();
@@ -109,13 +114,13 @@ private:
     DWORD CtrlType);
 #endif // _IPOP_WIN
 
-  vector<unique_ptr<VirtualNetwork>> vnets_;
+  vector<unique_ptr<Overlay>> ovlays_;
   ControlListener * ctrl_listener_;
   shared_ptr<IpopControllerLink> ctrl_link_;
   list<unique_ptr<TincanControl>> inprogess_controls_;
   Thread ctl_thread_;
   static Tincan * self_;
-  std::mutex vnets_mutex_;
+  std::mutex ovlays_mutex_;
   std::mutex inprogess_controls_mutex_;
   rtc::Event exit_event_;
 

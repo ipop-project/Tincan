@@ -24,7 +24,7 @@
 #define TINCAN_CONTROLLER_HANDLE_H_
 #include "tincan_base.h"
 #include "tincan_control.h"
-#include "vnet_descriptor.h"
+//#include "vnet_descriptor.h"
 
 namespace tincan {
   class IpopControllerLink
@@ -51,54 +51,54 @@ namespace tincan {
   {
   public:
     virtual ~TincanDispatchInterface() = default;
-    virtual void ConnectTunnel(
-      const Json::Value & link_desc) = 0;
+    //virtual void ConnectTunnel(
+    //  const Json::Value & link_desc) = 0;
 
-    virtual void CreateVNet(
-      unique_ptr<VnetDescriptor> lvecfg) = 0;
+    virtual void CreateOverlay(
+      const Json::Value & vnet_desc) = 0;
 
-    virtual void CreateTunnel(
+    //virtual void CreateTunnel(
+    //  const Json::Value & tnl_desc) = 0;
+
+    virtual void CreateVlink(
       const Json::Value & link_desc,
       TincanControl & ctrl) = 0;
-    
+
     virtual void InjectFrame(
       const Json::Value & frame_desc) = 0;
 
-    virtual void QueryTunnelStats(
-      const string & tap_name,
-      const string & node_mac,
+    virtual void QueryLinkStats(
+      const Json::Value & link_desc,
       Json::Value & node_info) = 0;
 
-    virtual void QueryNodeInfo(
-      const string & tap_name,
-      const string & uid_node,
+    virtual void QueryOverlayInfo(
+      const Json::Value & olay_desc,
       Json::Value & state_data) = 0;
 
-    virtual void QueryTunnelCas(
-      const string & tap_name,
-      const string & tnl_id,
+    virtual void QueryLinkCas(
+      const Json::Value & link_desc,
       Json::Value & cas_info) = 0;
 
-    virtual void TrimTunnel(
+    virtual void RemoveOverlay(
       const Json::Value & tnl_desc) = 0;
 
-    virtual void TrimVlink(
+    virtual void RemoveVlink(
       const Json::Value & link_desc) = 0;
 
     virtual void SendIcc(
       const Json::Value & icc_desc) = 0;
 
     virtual void SetIgnoredNetworkInterfaces(
-      const string & tap_name,
+      const Json::Value & olay_desc,
       vector<string> & ignored_list) = 0;
 
     virtual void SetIpopControllerLink(
       shared_ptr<IpopControllerLink> ctrl_link) = 0;
 
-    virtual void UpdateRoute(
-      const string & tap_name,
-      const string & dest_mac,
-      const string & path_mac) = 0;
+    //virtual void UpdateRoute(
+    //  const string & tap_name,
+    //  const string & dest_mac,
+    //  const string & path_mac) = 0;
 };
 }  // namespace tincan
 #endif  // TINCAN_CONTROLLER_HANDLE_H_

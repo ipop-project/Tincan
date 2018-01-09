@@ -116,19 +116,19 @@ TapDevWin::Open(
   const TapDescriptor & tap_desc)
 {
   lock_guard<mutex> lg(rw_mutex_);
-  tap_name_ = tap_desc.interface_name;
+  tap_name_ = tap_desc.name;
   string device_guid;
   try
   {
     const char *term;
     struct in_addr vip4_addr;
-    if(0 == RtlIpv4StringToAddress(tap_desc.Ip4.c_str(), TRUE,
+    if(0 == RtlIpv4StringToAddress(tap_desc.ip4.c_str(), TRUE,
       &term, &vip4_addr))
     {
       memmove(ip4_.data(), &vip4_addr.S_un.S_addr, sizeof(ip4_));
     }
     else
-      LOG(WARNING) << "Failed to convert IP4 string in Tap Descriptor=" << tap_desc.Ip4;
+      LOG(WARNING) << "Failed to convert IP4 string in Tap Descriptor=" << tap_desc.ip4;
 
     NetDeviceNameToGuid(tap_name_, device_guid);
     string device_path(USER_MODE_DEVICE_DIR_);
