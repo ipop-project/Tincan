@@ -43,16 +43,16 @@ void TapDevLnx::Open(
   const TapDescriptor & tap_desc)
 {
   string emsg("The Tap device open operation failed - ");
-  //const char* tap_name = tap_desc.interface_name;
+  //const char* tap_name = tap_desc.name;
   if((fd_ = open(TUN_PATH, O_RDWR)) < 0)
     throw TCEXCEPT(emsg.c_str());
   ifr_.ifr_flags = IFF_TAP | IFF_NO_PI;
-  if(tap_desc.interface_name.length() >= IFNAMSIZ)
+  if(tap_desc.name.length() >= IFNAMSIZ)
   {
     emsg.append("the name length is longer than maximum allowed.");
     throw TCEXCEPT(emsg.c_str());
   }
-  strncpy(ifr_.ifr_name, tap_desc.interface_name.c_str(), tap_desc.interface_name.length());
+  strncpy(ifr_.ifr_name, tap_desc.name.c_str(), tap_desc.name.length());
   //create the device
   if(ioctl(fd_, TUNSETIFF, (void *)&ifr_) < 0)
   {
@@ -73,7 +73,7 @@ void TapDevLnx::Open(
     throw TCEXCEPT(emsg.c_str());
   }
   memcpy(mac_.data(), ifr_.ifr_hwaddr.sa_data, 6);
-  SetIpv4Addr(tap_desc.Ip4.c_str(), tap_desc.prefix4);
+  SetIpv4Addr(tap_desc.ip4.c_str(), tap_desc.prefix4);
   if(!tap_desc.mtu4)
     Mtu(576);
   else
