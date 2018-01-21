@@ -65,7 +65,7 @@ private:
   void UpdateRoutes(TincanControl & control);
   LoggingSeverity GetLogLevel(const string & log_level);
   void SetNetworkIgnoreList(TincanControl & control);
-  void SendICC(TincanControl & control);
+  void SendIcc(TincanControl & control);
 
   map<string, void (ControlDispatch::*)(TincanControl & control)>control_map_;
   DispatchToListenerInf * dtol_;

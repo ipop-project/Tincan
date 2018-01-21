@@ -51,14 +51,9 @@ namespace tincan {
   {
   public:
     virtual ~TincanDispatchInterface() = default;
-    //virtual void ConnectTunnel(
-    //  const Json::Value & link_desc) = 0;
 
     virtual void CreateOverlay(
       const Json::Value & vnet_desc) = 0;
-
-    //virtual void CreateTunnel(
-    //  const Json::Value & tnl_desc) = 0;
 
     virtual void CreateVlink(
       const Json::Value & link_desc,
@@ -89,8 +84,7 @@ namespace tincan {
       const Json::Value & icc_desc) = 0;
 
     virtual void SetIgnoredNetworkInterfaces(
-      const Json::Value & olay_desc,
-      vector<string> & ignored_list) = 0;
+      const Json::Value & ignore_list) = 0;
 
     virtual void SetIpopControllerLink(
       shared_ptr<IpopControllerLink> ctrl_link) = 0;

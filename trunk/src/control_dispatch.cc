@@ -36,10 +36,9 @@ ControlDispatch::ControlDispatch() :
     { "ConfigureLogging", &ControlDispatch::ConfigureLogging },
     { "CreateCtrlRespLink", &ControlDispatch::CreateIpopControllerRespLink },
     { "CreateLink", &ControlDispatch::CreateLink },
-    //{ "CreateTunnel", &ControlDispatch::CreateTunnel },
     { "CreateOverlay", &ControlDispatch::CreateOverlay },
-    //{ "Echo", &ControlDispatch::Echo },
-    { "ICC", &ControlDispatch::SendICC },
+    { "Echo", &ControlDispatch::Echo },
+    { "SendIcc", &ControlDispatch::SendIcc },
     { "InjectFrame", &ControlDispatch::InjectFrame },
     { "QueryCandidateAddressSet", &ControlDispatch::QueryCandidateAddressSet },
     { "QueryLinkStats", &ControlDispatch::QueryLinkStats },
@@ -164,9 +163,13 @@ ControlDispatch::CreateLink(
     LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
-  control.SetResponse(msg, status);
-  ctrl_link_->Deliver(control);
+  if(!status)
+  {
+    control.SetResponse(msg, status);
+    ctrl_link_->Deliver(control);
+  } //else respond when CAS is available
 }
+
 void ControlDispatch::CreateIpopControllerRespLink(
   TincanControl & control)
 {
@@ -343,8 +346,6 @@ ControlDispatch::QueryOverlayInfo(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest(), node_info;
-  string mac = req[TincanControl::MAC].asString();
-  string tap_name = req[TincanControl::TapName].asString();
   string resp;
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
@@ -431,7 +432,7 @@ void ControlDispatch::RemoveVnet(
 {}
 
 void
-ControlDispatch::SendICC(
+ControlDispatch::SendIcc(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest();
@@ -455,20 +456,12 @@ ControlDispatch::SetNetworkIgnoreList(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest();
-  string tap_name = req[TincanControl::TapName].asString();
-  int count = req[TincanControl::IgnoredNetInterfaces].size();
-  Json::Value network_ignore_list = req[TincanControl::IgnoredNetInterfaces];
   string resp;
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    vector<string> ignore_list(count);
-    for(int i = 0; i < count; i++)
-    {
-      ignore_list[i] = network_ignore_list[i].asString();
-    }
-    tincan_->SetIgnoredNetworkInterfaces(tap_name, ignore_list);
+    tincan_->SetIgnoredNetworkInterfaces(req);
     status = true;
   } catch(exception & e)
   {

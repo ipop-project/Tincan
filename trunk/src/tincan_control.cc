@@ -55,7 +55,7 @@ const Json::StaticString TincanControl::QueryCandidateAddressSet("QueryCandidate
 const Json::StaticString TincanControl::RemoveOverlay("RemoveOverlay");
 const Json::StaticString TincanControl::RemoveRoutes("RemoveRoutes");
 const Json::StaticString TincanControl::Request("Request");
-const Json::StaticString TincanControl::RecipientMac("RecipientMac");
+//const Json::StaticString TincanControl::RecipientMac("RecipientMac");
 const Json::StaticString TincanControl::Response("Response");
 const Json::StaticString TincanControl::Role("Role");
 const Json::StaticString TincanControl::Routes("Routes");

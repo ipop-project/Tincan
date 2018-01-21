@@ -40,6 +40,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <utility>
 #include <unordered_map>
 #include <vector>
 namespace tincan
@@ -57,6 +58,7 @@ using std::hash;
 using std::istringstream;
 using std::list;
 using std::lock_guard;
+using std::make_pair;
 using std::make_shared;
 using std::make_unique;
 using std::map;
@@ -64,6 +66,7 @@ using std::memcpy;
 using std::milli;
 using std::move;
 using std::mutex;
+using std::pair;
 using std::ostringstream;
 using std::out_of_range;
 using std::shared_ptr;

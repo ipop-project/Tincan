@@ -41,12 +41,6 @@ public:
   //
   //TincanDispatchInterface interface
 
-  //void ConnectTunnel(
-  //  const Json::Value & link_desc) override;
-
-  //void CreateTunnel(
-  //  const Json::Value & tnl_desc) override;
-
   void CreateVlink(
     const Json::Value & link_desc,
     TincanControl & ctrl) override;
@@ -75,8 +69,7 @@ public:
     const Json::Value & icc_desc) override;
 
   void SetIgnoredNetworkInterfaces(
-    const Json::Value & olay_desc,
-    vector<string> & ignored_list) override;
+    const Json::Value & ignore_list) override;
 
   void SetIpopControllerLink(
     shared_ptr<IpopControllerLink> ctrl_handle) override;
@@ -88,6 +81,7 @@ public:
 //
 //
   void OnLocalCasUpdated(
+    string link_id,
     string lcas);
 
   void QueryLinkCas(
@@ -100,7 +94,7 @@ private:
   //  VirtualNetwork & vnet,
   //  Json::Value & node_info);
 
-  Overlay * GetOverlay(
+  bool IsOverlayExisit(
     const string & oid);
 
   Overlay & OverlayFromId(
@@ -117,7 +111,7 @@ private:
   vector<unique_ptr<Overlay>> ovlays_;
   ControlListener * ctrl_listener_;
   shared_ptr<IpopControllerLink> ctrl_link_;
-  list<unique_ptr<TincanControl>> inprogess_controls_;
+  list<pair<string, TincanControl>> inprogess_controls_;
   Thread ctl_thread_;
   static Tincan * self_;
   std::mutex ovlays_mutex_;

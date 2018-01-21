@@ -151,7 +151,7 @@ void VirtualLink::OnGatheringState(
   cricket::IceGatheringState gather_state)
 {
   if(gather_state == cricket::kIceGatheringComplete)
-    SignalLocalCasReady(Candidates());
+    SignalLocalCasReady(vlink_desc_->uid, Candidates());
   return;
 }
 
