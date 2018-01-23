@@ -29,7 +29,10 @@ PeerNetwork::PeerNetwork() :
 {}
 
 PeerNetwork::~PeerNetwork()
-{}
+{
+  lock_guard<mutex> lgm(mac_map_mtx_);
+  Clear();
+}
 /*
 Adds a new adjacent node to the peer network. This is used when a new vlink is
 created.
@@ -54,6 +57,7 @@ void PeerNetwork::Add(shared_ptr<VirtualLink> vlink)
         " already exists in peer net. It will be updated.";
     }
     mac_map_[mac] = vlink;
+    link_map_[vlink->Id()] = vlink;
   }
   //LOG(TC_DBG) << "Added node " << vlink->PeerInfo().mac_address;
 }
@@ -63,6 +67,7 @@ void PeerNetwork::Clear()
   lock_guard<mutex> lgm(mac_map_mtx_);
   mac_routes_.clear();
   mac_map_.clear();
+  link_map_.clear();
 }
 
 shared_ptr<VirtualLink>
@@ -92,16 +97,20 @@ PeerNetwork::GetVlink(
   return mac_map_.at(mac);
 }
 
-vector<string> 
-PeerNetwork::QueryVlinks()
+shared_ptr<VirtualLink>
+PeerNetwork::GetVlinkById(
+  const string & link_id)
 {
-  vector<string> vlids;
-  lock_guard<mutex> lg(mac_map_mtx_);
-  for(auto vl : mac_map_)
-  {
-    vlids.push_back(vl.second->Id());
-  }
-  return vlids;
+  lock_guard<mutex> lgm(mac_map_mtx_);
+  return link_map_.at(link_id);
+}
+
+bool
+PeerNetwork::Exists(
+  const string & link_id)
+{
+  lock_guard<mutex> lgm(mac_map_mtx_);
+  return (link_map_.count(link_id) == 1);
 }
 
 bool
@@ -137,34 +146,47 @@ PeerNetwork::IsRouteExists(
   return rv;
 }
 
+vector<string>
+PeerNetwork::QueryVlinks()
+{
+  vector<string> vlids;
+  lock_guard<mutex> lg(mac_map_mtx_);
+  for(auto vl : mac_map_)
+  {
+    vlids.push_back(vl.second->Id());
+  }
+  return vlids;
+}
+
 /*
 Used when a vlink is removed and the peer is no longer adjacent. All routes that
 use this path must be removed as well.
 */
 void
 PeerNetwork::Remove(
-  //const string & peer_uid)
-  MacAddressType mac)
+  const string & link_id)
 {
   try
   {
     lock_guard<mutex> lg(mac_map_mtx_);
-    shared_ptr<VirtualLink> vl = mac_map_.at(mac);
+    shared_ptr<VirtualLink> vl = link_map_.at(link_id);
     LOG(TC_DBG) << "Removing node " << vl->PeerInfo().mac_address
       << " tnl use count=" << vl.use_count() << " vlink obj=" <<
       vl.get();
     vl->is_valid_ = false;
-    mac_map_.erase(mac); //remove the MAC for the adjacent node
-                         //when tnl goes out of scope ref count is decr, if it is 0 it's deleted 
+    //remove the MAC for the adjacent node when tnl goes out of scope ref count
+    //is decr, if it is 0 it's deleted 
+    MacAddressType mac;
+    StringToByteArray(vl->PeerInfo().mac_address, mac.begin(), mac.end());
+    mac_map_.erase(mac);
+    link_map_.erase(vl->Id());
   } catch(exception & e)
   {
     LOG(LS_WARNING) << e.what();
   } catch(...)
   {
     ostringstream oss;
-    oss << "The Peer Network Remove operation failed. MAC " <<
-      ByteArrayToString(mac.begin(), mac.end()) <<
-      " was not found";
+    oss << "Failed to remove link: " << link_id;
     LOG(LS_WARNING) << oss.str().c_str();
   }
 }

@@ -65,9 +65,9 @@ void Tunnel::QueryInfo(
   olay_info[TincanControl::VIP4] = tap_desc_->ip4;
   olay_info["IP4PrefixLen"] = tap_desc_->prefix4;
   olay_info["MTU4"] = tap_desc_->mtu4;
+  olay_info["LinkIds"] = Json::Value(Json::arrayValue);
   if(vlink_)
   {
-    olay_info["LinkIds"] = Json::Value(Json::arrayValue);
     olay_info["LinkIds"].append(vlink_->Id());
   }
 }
@@ -76,31 +76,37 @@ void Tunnel::QueryLinkCas(
   const string & vlink_id,
   Json::Value & cas_info)
 {
-  if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
-    cas_info[TincanControl::Controlling.c_str()] = vlink_->Candidates();
-  else if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLED)
-    cas_info[TincanControl::Controlled.c_str()] = vlink_->Candidates();
+  if(vlink_)
+  {
+    if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
+      cas_info["IceRole"] = TincanControl::Controlling.c_str();
+    else if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLED)
+      cas_info["IceRole"] = TincanControl::Controlled.c_str();
+
+    cas_info["CAS"] = vlink_->Candidates();
+  }
 }
 
 void Tunnel::QueryLinkInfo(
   const string & vlink_id,
   Json::Value & vlink_info)
 {
-  vlink_info["LinkId"] = descriptor_->uid;
-  vlink_info["TapName"] = tap_desc_->name;
+  vlink_info["OverlayId"] = descriptor_->uid;
   if(vlink_)
   {
-    if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
-      vlink_info["IceRole"] = TincanControl::Controlling;
-    else
-      vlink_info["IceRole"] = TincanControl::Controlled;
+    vlink_info["LinkId"] = vlink_->Id();
     if(vlink_->IsReady())
     {
+      if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
+        vlink_info["IceRole"] = TincanControl::Controlling;
+      else
+        vlink_info["IceRole"] = TincanControl::Controlled;
       LinkInfoMsgData md;
       md.vl = vlink_;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
       md.msg_event.Wait(Event::kForever);
       vlink_info[TincanControl::Stats].swap(md.info);
+      vlink_info[TincanControl::Status] = "online";
     }
     else
     {
@@ -117,9 +123,19 @@ void Tunnel::QueryLinkInfo(
 }
 
 void Tunnel::SendIcc(
-  const string & recipient_mac,
+  const string & vlink_id,
   const string & data)
-{}
+{
+  if(!vlink_ || vlink_->Id() != vlink_id)
+    throw TCEXCEPT("No vlink exists by the specified id");
+  unique_ptr<IccMessage> icc = make_unique<IccMessage>();
+  icc->Message((uint8_t*)data.c_str(), (uint16_t)data.length());
+  unique_ptr<TransmitMsgData> md = make_unique<TransmitMsgData>();
+  md->frm = move(icc);
+  md->vl = vlink_;
+  net_worker_.Post(RTC_FROM_HERE, this, MSGID_SEND_ICC, md.release());
+
+}
 
 void Tunnel::Shutdown()
 {
@@ -139,8 +155,8 @@ Tunnel::StartIo()
 void Tunnel::RemoveLink(
   const string & vlink_id)
 {
-  //TODO: Incomplete logic
-  Overlay::RemoveLink(vlink_id);
+  if(vlink_->Id() != vlink_id)
+    throw TCEXCEPT("The specified VLink ID does not match this Tunnel");
   vlink_->Disconnect();
   vlink_.reset();
 }

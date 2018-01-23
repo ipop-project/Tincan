@@ -42,12 +42,12 @@ VirtualNetwork::CreateVlink(
   unique_ptr<PeerDescriptor> peer_desc)
 {
   shared_ptr<VirtualLink> vl;
-  MacAddressType mac;
-  string mac_str = peer_desc->mac_address;
-  StringToByteArray(peer_desc->mac_address, mac.begin(), mac.end());
-  if(peer_network_->IsAdjacent(mac))
+  //MacAddressType mac;
+  //string mac_str = peer_desc->mac_address;
+  //StringToByteArray(peer_desc->mac_address, mac.begin(), mac.end());
+  if(peer_network_->Exists(vlink_desc->uid))
   {
-    vl = peer_network_->GetVlink(mac);
+    vl = peer_network_->GetVlinkById(vlink_desc->uid);
     vl->PeerCandidates(peer_desc->cas);
     vl->StartConnections();
     LOG(LS_INFO) << "Added remote CAS to vlink w/ peer " << peer_desc->uid;
@@ -55,7 +55,7 @@ VirtualNetwork::CreateVlink(
   else
   {
     cricket::IceRole ir = cricket::ICEROLE_CONTROLLED;
-    if(descriptor_->uid < peer_desc->uid)
+    if(local_fingerprint_->ToString() < peer_desc->fingerprint)
       ir = cricket::ICEROLE_CONTROLLING;
     string roles[] = { "CONTROLLED", "CONTROLLING" };
     LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer " << peer_desc->uid;
@@ -93,12 +93,7 @@ VirtualNetwork::UpdateRoute(
 void VirtualNetwork::RemoveLink(
   const string & vlink_id)
 {
-  MacAddressType mac;
-  StringToByteArray(vlink_id, mac.begin(), mac.end());
-  if(peer_network_->IsAdjacent(mac))
-  {
-    peer_network_->Remove(mac);
-  }
+    peer_network_->Remove(vlink_id);
 }
 
 void VirtualNetwork::QueryInfo(
@@ -121,67 +116,68 @@ void VirtualNetwork::QueryInfo(
 }
 
 void VirtualNetwork::QueryLinkCas(
-  const string & vlink_id, //peer mac address
+  const string & vlink_id,
   Json::Value & cas_info)
 {
-  if(peer_network_->IsAdjacent(vlink_id))
+  if(peer_network_->Exists(vlink_id))
   {
     shared_ptr<VirtualLink> vl = peer_network_->GetVlink(vlink_id);
     if(vl->IceRole() == cricket::ICEROLE_CONTROLLING)
-      cas_info[TincanControl::Controlling.c_str()] = vl->Candidates();
+      cas_info["IceRole"] = TincanControl::Controlling.c_str();
     else if(vl->IceRole() == cricket::ICEROLE_CONTROLLED)
-      cas_info[TincanControl::Controlled.c_str()] = vl->Candidates();
+      cas_info["IceRole"] = TincanControl::Controlled.c_str();
+
+    cas_info["CAS"] = vl->Candidates();
   }
 }
 
 void VirtualNetwork::QueryLinkInfo(
-  const string & node_mac,
-  Json::Value & node_info)
+  const string & vlink_id,
+  Json::Value & vlink_info)
 {
-  MacAddressType mac;
-  StringToByteArray(node_mac, mac.begin(), mac.end());
-  if(peer_network_->IsAdjacent(mac))
+  vlink_info["OverlayId"] = descriptor_->uid;
+  if(peer_network_->Exists(vlink_id))
   {
-    shared_ptr<VirtualLink> vl = peer_network_->GetVlink(mac);
+    shared_ptr<VirtualLink> vl = peer_network_->GetVlinkById(vlink_id);
     if(vl && vl->IsReady())
     {
       LinkStatsMsgData md;
       md.vl = vl;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
       md.msg_event.Wait(Event::kForever);
-      node_info[TincanControl::Stats].swap(md.stats);
-      node_info[TincanControl::Status] = "online";
+      vlink_info[TincanControl::Stats].swap(md.stats);
+      vlink_info[TincanControl::Status] = "online";
       if(vl->IceRole() == cricket::ICEROLE_CONTROLLING)
-        node_info["IceRole"] = TincanControl::Controlling;
+        vlink_info["IceRole"] = TincanControl::Controlling;
       else
-        node_info["IceRole"] = TincanControl::Controlled;
+        vlink_info["IceRole"] = TincanControl::Controlled;
     }
     else
     {
-      node_info[TincanControl::Status] = "offline";
-      node_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
+      vlink_info[TincanControl::Status] = "offline";
+      vlink_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
     }
   }
   else
   {
-    node_info[TincanControl::MAC] = node_mac;
-    node_info[TincanControl::Status] = "unknown";
-    node_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
+    vlink_info[TincanControl::Status] = "unknown";
+    vlink_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
   }
 }
 
 void
 VirtualNetwork::SendIcc(
-  const string & recipient_mac,
+  const string & vlink_id,
   const string & data)
 {
+  if(!peer_network_->Exists(vlink_id))
+    throw TCEXCEPT("No vlink exists by the specified id");
+
   unique_ptr<IccMessage> icc = make_unique<IccMessage>();
   icc->Message((uint8_t*)data.c_str(), (uint16_t)data.length());
   unique_ptr<TransmitMsgData> md = make_unique<TransmitMsgData>();
   md->frm = move(icc);
-  MacAddressType mac;
-  StringToByteArray(recipient_mac, mac.begin(), mac.end());
-  md->tnl = peer_network_->GetVlink(mac);
+  md->tnl = peer_network_->GetVlinkById(vlink_id);
   net_worker_.Post(RTC_FROM_HERE, this, MSGID_SEND_ICC, md.release());
 }
 

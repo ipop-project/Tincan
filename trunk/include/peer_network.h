@@ -34,14 +34,16 @@ public:
   ~PeerNetwork();
   void Add(shared_ptr<VirtualLink> vlink);
   void Clear();
+  shared_ptr<VirtualLink> GetRoute(const MacAddressType & mac);
   shared_ptr<VirtualLink> GetVlink(const string & mac);
   shared_ptr<VirtualLink> GetVlink(const MacAddressType & mac);
-  shared_ptr<VirtualLink> GetRoute(const MacAddressType & mac);
+  shared_ptr<VirtualLink> GetVlinkById(const string & link_id);
+  bool Exists(const string & link_id);
   bool IsAdjacent(const string & mac);
   bool IsAdjacent(const MacAddressType& mac);
   bool IsRouteExists(const MacAddressType& mac);
   vector<string> QueryVlinks();
-  void Remove(MacAddressType mac);
+  void Remove(const string & link_id);
   void UpdateRoute(MacAddressType & dest, MacAddressType & route);
 private:
   struct MacAddressHasher
@@ -64,6 +66,7 @@ private:
     steady_clock::time_point accessed;
   };
   mutex mac_map_mtx_;
+  unordered_map<string, shared_ptr<VirtualLink>> link_map_;
   unordered_map<MacAddressType, shared_ptr<VirtualLink>, MacAddressHasher> mac_map_;
   unordered_map<MacAddressType, HubEx, MacAddressHasher> mac_routes_;
   void Run(Thread* thread) override;

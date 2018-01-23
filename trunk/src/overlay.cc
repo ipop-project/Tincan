@@ -94,11 +94,6 @@ Overlay::CreateVlink(
   return vl;
 }
 
-
-void Overlay::RemoveLink(
-  const string & vlink_id)
-{}
-
 void
 Overlay::StartIo()
 {

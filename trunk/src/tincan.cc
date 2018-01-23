@@ -219,11 +219,10 @@ Tincan::SendIcc(
   const Json::Value & icc_desc)
 {
   const string olid = icc_desc["OverlayId"].asString();
-  //const string vlid = icc_desc[TincanControl::LinkId].asString();
   Overlay & ol = OverlayFromId(olid);
-  const string & mac = icc_desc[TincanControl::MAC].asString();
+  const string & link_id = icc_desc[TincanControl::LinkId].asString();
   const string & data = icc_desc[TincanControl::Data].asString();
-  ol.SendIcc(mac, data);
+  ol.SendIcc(link_id, data);
 }
 
 void

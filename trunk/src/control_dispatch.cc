@@ -408,8 +408,6 @@ ControlDispatch::RemoveOverlay(
 {
   bool status = false;
   Json::Value & req = control.GetRequest();
-  //const string olid = req[TincanControl::OverlayId].asString();
-  //const string mac = req[TincanControl::MAC].asString();
   string msg("The RemoveOverlay operation ");
   lock_guard<mutex> lg(disp_mutex_);
   try
@@ -426,10 +424,6 @@ ControlDispatch::RemoveOverlay(
   control.SetResponse(msg, status);
   ctrl_link_->Deliver(control);
 }
-
-void ControlDispatch::RemoveVnet(
-  TincanControl & control)
-{}
 
 void
 ControlDispatch::SendIcc(

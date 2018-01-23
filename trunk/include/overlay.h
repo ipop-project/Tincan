@@ -83,11 +83,6 @@ public:
   virtual void Configure(
     unique_ptr<TapDescriptor> tap_desc);
 
-  virtual unique_ptr<VirtualLink> CreateVlink(
-    unique_ptr<VlinkDescriptor> vlink_desc, 
-    unique_ptr<PeerDescriptor> 
-    peer_desc, cricket::IceRole ice_role);
-
   virtual shared_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,
     unique_ptr<PeerDescriptor> peer_desc) = 0;
@@ -118,7 +113,7 @@ public:
     Json::Value & cas_info) = 0;
 
   virtual void SendIcc(
-    const string & recipient_mac,
+    const string & vlink_id,
     const string & data) = 0;
 
   virtual void Shutdown();
@@ -146,6 +141,10 @@ public:
   void OnMessage(
     Message* msg) override;
 protected:
+  unique_ptr<VirtualLink> CreateVlink(
+    unique_ptr<VlinkDescriptor> vlink_desc,
+    unique_ptr<PeerDescriptor>
+    peer_desc, cricket::IceRole ice_role);
   unique_ptr<TapDev> tdev_;
   unique_ptr<TapDescriptor> tap_desc_;
   unique_ptr<OverlayDescriptor> descriptor_;
