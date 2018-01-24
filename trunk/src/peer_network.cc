@@ -30,7 +30,6 @@ PeerNetwork::PeerNetwork() :
 
 PeerNetwork::~PeerNetwork()
 {
-  lock_guard<mutex> lgm(mac_map_mtx_);
   Clear();
 }
 /*

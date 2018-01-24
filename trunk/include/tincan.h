@@ -109,7 +109,7 @@ private:
 #endif // _IPOP_WIN
 
   vector<unique_ptr<Overlay>> ovlays_;
-  ControlListener * ctrl_listener_;
+  shared_ptr<ControlListener> ctrl_listener_;
   shared_ptr<IpopControllerLink> ctrl_link_;
   list<pair<string, TincanControl>> inprogess_controls_;
   Thread ctl_thread_;

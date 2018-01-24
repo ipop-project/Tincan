@@ -140,7 +140,8 @@ void Tunnel::SendIcc(
 void Tunnel::Shutdown()
 {
   Overlay::Shutdown();
-  vlink_->Disconnect();
+  if (vlink_)
+    vlink_->Disconnect();
 }
 
 //void Tunnel::Start()

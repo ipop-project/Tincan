@@ -26,16 +26,11 @@
 namespace tincan
 {
 Tincan::Tincan() :
-  ctrl_listener_(nullptr),
-
-  ctrl_link_(nullptr),
-
   exit_event_(false, false)
 {}
 
 Tincan::~Tincan()
 {
-  delete ctrl_listener_;
 }
 
 //void Tincan::UpdateRoute(
@@ -289,8 +284,8 @@ Tincan::Run()
   //Start tincan control to get config from Controller
   unique_ptr<ControlDispatch> ctrl_dispatch(new ControlDispatch);
   ctrl_dispatch->SetDispatchToTincanInf(this);
-  ctrl_listener_ = new ControlListener(move(ctrl_dispatch));
-  ctl_thread_.Start(ctrl_listener_);
+  ctrl_listener_ = make_shared<ControlListener>(move(ctrl_dispatch));
+  ctl_thread_.Start(ctrl_listener_.get());
   exit_event_.Wait(Event::kForever);
 }
 
