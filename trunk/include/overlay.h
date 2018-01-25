@@ -104,6 +104,9 @@ public:
   virtual void QueryInfo(
     Json::Value & olay_info) = 0;
 
+  virtual void QueryLinkIds(
+    vector<string> & link_ids) = 0;
+
   virtual void QueryLinkInfo(
     const string & vlink_id,
     Json::Value & vlink_info) = 0;

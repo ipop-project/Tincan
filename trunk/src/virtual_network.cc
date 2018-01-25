@@ -131,11 +131,19 @@ void VirtualNetwork::QueryLinkCas(
   }
 }
 
-void VirtualNetwork::QueryLinkInfo(
+void
+VirtualNetwork::QueryLinkIds
+(vector<string>& link_ids)
+{
+  link_ids = peer_network_->QueryVlinks();
+}
+
+void
+VirtualNetwork::QueryLinkInfo(
   const string & vlink_id,
   Json::Value & vlink_info)
 {
-  vlink_info["OverlayId"] = descriptor_->uid;
+  //vlink_info["OverlayId"] = descriptor_->uid;
   if(peer_network_->Exists(vlink_id))
   {
     shared_ptr<VirtualLink> vl = peer_network_->GetVlinkById(vlink_id);

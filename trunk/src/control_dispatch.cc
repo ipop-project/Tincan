@@ -296,9 +296,7 @@ ControlDispatch::QueryCandidateAddressSet(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest(), cas_info;
-  string mac = req[TincanControl::MAC].asString();
-  string tap_name = req[TincanControl::TapName].asString();
-  string resp;
+  string resp("The QueryCandidateAddressSet operation succeeded");
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
@@ -320,16 +318,14 @@ void
 ControlDispatch::QueryLinkStats(
   TincanControl & control)
 {
-  Json::Value & req = control.GetRequest(), node_info;
-  string mac = req[TincanControl::MAC].asString();
-  string tap_name = req[TincanControl::TapName].asString();
+  Json::Value & req = control.GetRequest(), stat_info;
   string resp;
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->QueryLinkStats(req, node_info);
-    resp = node_info.toStyledString();
+    tincan_->QueryLinkStats(req, stat_info);
+    resp = stat_info.toStyledString();
     status = true;
   } catch(exception & e)
   {
@@ -346,7 +342,7 @@ ControlDispatch::QueryOverlayInfo(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest(), node_info;
-  string resp;
+  string resp("The QueryOverlayInfo operation succeeded");
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
@@ -372,26 +368,12 @@ ControlDispatch::RemoveLink(
 {
   bool status = false;
   Json::Value & req = control.GetRequest();
-  const string tap_name = req[TincanControl::TapName].asString();
-  const string mac = req[TincanControl::MAC].asString();
-  string msg("The virtual link to ");
-  msg.append(mac).append(" has been removed.");
+  string msg("The RemoveLink operation succeeded");
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    if(!tap_name.empty() && !mac.empty())
-    {
-      tincan_->RemoveVlink(req);
-      status = true;
-    }
-    else
-    {
-      ostringstream oss;
-      oss << "Invalid parameters in request to remove link to peer node. " <<
-        "Received: TAP Name=" << tap_name << " MAC=" << mac;
-      msg = oss.str();
-      throw TCEXCEPT(msg.c_str());
-    }
+    tincan_->RemoveVlink(req);
+    status = true;
   } catch(exception & e)
   {
     msg = "The RemoveLink operation failed.";
@@ -430,16 +412,16 @@ ControlDispatch::SendIcc(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest();
+  string msg("The ICC operation succeeded");
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
     tincan_->SendIcc(req);
   } catch(exception & e)
   {
-    string msg = "The ICC operation failed.";
+    msg = "The ICC operation failed.";
     LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
-    //send fail here, ack success when send completes
     control.SetResponse(msg, false);
     ctrl_link_->Deliver(control);
   }

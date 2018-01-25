@@ -150,15 +150,22 @@ Tincan::QueryLinkCas(
 
 void
 Tincan::QueryLinkStats(
-  const Json::Value & link_desc,
-  Json::Value & link_info)
+  const Json::Value & overlay_ids,
+  Json::Value & stat_info)
 {
-  string olid = link_desc["OverlayId"].asString();
-  string vlid = link_desc["LinkId"].asString();
-  if(olid.empty() || vlid.empty())
-    throw TCEXCEPT("Required paramater missing.");
-  Overlay & ol = OverlayFromId(olid);
-  ol.QueryLinkInfo(vlid, link_info);
+  string olid = overlay_ids["OverlayId"].asString();
+  for(uint32_t i = 0; i < overlay_ids.size(); i++)
+  {
+    vector<string>link_ids;
+    stat_info[olid] = Json::Value(Json::objectValue);
+    Overlay & ol = OverlayFromId(olid);
+    ol.QueryLinkIds(link_ids);
+    for(auto vlid : link_ids)
+    {
+      ol.QueryLinkInfo(vlid, stat_info[olid]);
+    }
+  }
+
 }
 
 void

@@ -47,6 +47,9 @@ public:
     const string & vlink_id,
     Json::Value & cas_info);
 
+  void QueryLinkIds(
+    vector<string> & link_ids);
+
   void QueryLinkInfo(
     const string & vlink_id,
     Json::Value & vlink_info);

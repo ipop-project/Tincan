@@ -87,11 +87,17 @@ void Tunnel::QueryLinkCas(
   }
 }
 
+void Tunnel::QueryLinkIds(vector<string>& link_ids)
+{
+  if(vlink_)
+    link_ids.push_back(vlink_->Id());
+}
+
 void Tunnel::QueryLinkInfo(
   const string & vlink_id,
   Json::Value & vlink_info)
 {
-  vlink_info["OverlayId"] = descriptor_->uid;
+  //vlink_info["OverlayId"] = descriptor_->uid;
   if(vlink_)
   {
     vlink_info["LinkId"] = vlink_->Id();
@@ -178,7 +184,8 @@ void Tunnel::VlinkReadComplete(
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
     req[TincanControl::Command] = TincanControl::ICC;
-    req[TincanControl::TapName] = descriptor_->uid;
+    req[TincanControl::OverlayId] = descriptor_->uid;
+    req[TincanControl::LinkId] = vlink.Id();
     req[TincanControl::Data] = string((char*)frame->Payload(), frame->PayloadLength());
     //LOG(TC_DBG) << " Delivering ICC to ctrl, data=\n" << req[TincanControl::Data].asString();
     ctrl_link_->Deliver(move(ctrl));
