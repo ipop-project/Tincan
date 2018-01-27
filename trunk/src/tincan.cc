@@ -121,7 +121,8 @@ Tincan::CreateVlink(
   //if(vlink->Candidates().empty())
   {
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);
-    inprogess_controls_.push_back(pair<string&, TincanControl&>(vl_desc->uid, ctrl));
+    inprogess_controls_.push_back(
+      make_pair(link_desc["LinkId"].asString(), ctrl));
     vlink->SignalLocalCasReady.connect(this, &Tincan::OnLocalCasUpdated);
   }
 }

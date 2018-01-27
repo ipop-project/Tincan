@@ -45,7 +45,7 @@ const array<const char*, 3> ControlTypeStrings = { {"TincanRequest", "TincanResp
   TincanControl(unique_ptr<Json::Value> req);
   TincanControl(unique_ptr<Json::Value> req, unique_ptr<Json::Value> resp);
   TincanControl(const char * const req_data, const size_t len);
-  TincanControl(TincanControl & ctrl);
+  TincanControl(const TincanControl & ctrl);
   TincanControl(TincanControl && ctrl);
   ~TincanControl();
   TincanControl& operator= (TincanControl & rhs);

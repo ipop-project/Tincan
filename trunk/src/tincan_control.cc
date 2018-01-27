@@ -155,7 +155,7 @@ TincanControl::TincanControl(
 }
 
 TincanControl::TincanControl(
-  TincanControl & ctrl_req) :
+  const TincanControl & ctrl_req) :
   proto_ver_(ctrl_req.proto_ver_),
   tag_(ctrl_req.tag_),
   type_(ctrl_req.type_),
