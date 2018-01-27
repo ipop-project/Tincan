@@ -120,10 +120,8 @@ Tincan::CreateVlink(
     ol.CreateVlink(move(vl_desc), move(peer_desc));
   //if(vlink->Candidates().empty())
   {
-    //pair<string, TincanControl> ipc = make_pair(vl_desc->uid, ctrl);
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);
-    inprogess_controls_.push_back(make_pair(vl_desc->uid, ctrl));
-   // inprogess_controls_.push_back(make_unique<TincanControl>(move(ctrl)));
+    inprogess_controls_.push_back(pair<string&, TincanControl&>(vl_desc->uid, ctrl));
     vlink->SignalLocalCasReady.connect(this, &Tincan::OnLocalCasUpdated);
   }
 }
@@ -255,11 +253,10 @@ Tincan::OnLocalCasUpdated(
     LOG(LS_WARNING) << lcas;
   }
   bool to_deliver = false;
-  list<pair<string, TincanControl>>::iterator itr;
   unique_ptr<TincanControl> ctrl;
   {
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);
-    itr = inprogess_controls_.begin();
+    auto itr = inprogess_controls_.begin();
     for(; itr != inprogess_controls_.end(); itr++)
     {
       if(itr->first == link_id)
