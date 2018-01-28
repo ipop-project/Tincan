@@ -59,7 +59,7 @@ void Tunnel::QueryInfo(
   Json::Value & olay_info)
 {
   olay_info["OverlayId"] = descriptor_->uid;
-  olay_info[TincanControl::Fingerprint] = Fingerprint();
+  olay_info[TincanControl::FPR] = Fingerprint();
   olay_info[TincanControl::TapName] = tap_desc_->name;
   olay_info[TincanControl::MAC] = MacAddress();
   olay_info[TincanControl::VIP4] = tap_desc_->ip4;

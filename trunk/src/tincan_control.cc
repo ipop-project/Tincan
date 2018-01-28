@@ -38,7 +38,7 @@ const Json::StaticString TincanControl::CreateOverlay("CreateOverlay");
 const Json::StaticString TincanControl::Data("Data");
 const Json::StaticString TincanControl::Echo("Echo");
 const Json::StaticString TincanControl::EncryptionEnabled("EncryptionEnabled");
-const Json::StaticString TincanControl::Fingerprint("Fingerprint");
+const Json::StaticString TincanControl::FPR("FPR");
 const Json::StaticString TincanControl::ICC("ICC");
 const Json::StaticString TincanControl::IgnoredNetInterfaces("IgnoredNetInterfaces");
 const Json::StaticString TincanControl::TapName("TapName");
@@ -72,7 +72,7 @@ const Json::StaticString TincanControl::TransactionId("TransactionId");
 const Json::StaticString TincanControl::Type("Type");
 const Json::StaticString TincanControl::UID("UID");
 const Json::StaticString TincanControl::VIP4("VIP4");
-const Json::StaticString TincanControl::VIP6("VIP6");
+//const Json::StaticString TincanControl::VIP6("VIP6");
 const Json::StaticString TincanControl::VnetDescription("VnetDescription");
 
 TincanControl::TincanControl() :

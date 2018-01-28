@@ -106,7 +106,7 @@ Tincan::CreateVlink(
   peer_desc->cas =
     link_desc[TincanControl::PeerInfo][TincanControl::CAS].asString();
   peer_desc->fingerprint =
-    link_desc[TincanControl::PeerInfo][TincanControl::Fingerprint].asString();
+    link_desc[TincanControl::PeerInfo][TincanControl::FPR].asString();
   peer_desc->mac_address =
     link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
   string tap_name = link_desc[TincanControl::TapName].asString();
@@ -152,10 +152,10 @@ Tincan::QueryLinkStats(
   const Json::Value & overlay_ids,
   Json::Value & stat_info)
 {
-  string olid = overlay_ids["OverlayId"].asString();
-  for(uint32_t i = 0; i < overlay_ids.size(); i++)
+  for(uint32_t i = 0; i < overlay_ids["OverlayIds"].size(); i++)
   {
     vector<string>link_ids;
+    string olid = overlay_ids["OverlayIds"][i].asString();
     stat_info[olid] = Json::Value(Json::objectValue);
     Overlay & ol = OverlayFromId(olid);
     ol.QueryLinkIds(link_ids);
@@ -304,7 +304,7 @@ Tincan::Run()
   ////node_info[TincanControl::VIP4] = lcfg.vip4;
   //node_info[TincanControl::VnetDescription] = lcfg.description;
   //node_info[TincanControl::MAC] = vnet.MacAddress();
-  //node_info[TincanControl::Fingerprint] = vnet.Fingerprint();
+  //node_info[TincanControl::FPR] = vnet.Fingerprint();
   //node_info[TincanControl::TapName] = vnet.Name();
 //}
 
