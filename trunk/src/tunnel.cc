@@ -46,7 +46,7 @@ Tunnel::CreateVlink(
   else
   {
     cricket::IceRole ir = cricket::ICEROLE_CONTROLLED;
-    if(descriptor_->uid < peer_desc->uid)
+    if(local_fingerprint_->ToString() < peer_desc->fingerprint)
       ir = cricket::ICEROLE_CONTROLLING;
     string roles[] = { "CONTROLLED", "CONTROLLING" };
     LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer " << peer_desc->uid;
@@ -178,7 +178,15 @@ void Tunnel::VlinkReadComplete(
 {
   unique_ptr<TapFrame> frame = make_unique<TapFrame>(data, data_len);
   TapFrameProperties fp(*frame);
-  if(fp.IsIccMsg())
+  if(fp.IsDtfMsg())
+  {
+    //frame->Dump("Frame from vlink");
+    frame->BufferToTransfer(frame->Payload()); //write frame payload to TAP
+    frame->BytesToTransfer(frame->PayloadLength());
+    frame->SetWriteOp();
+    tdev_->Write(*frame.release());
+  }
+  else if(fp.IsIccMsg())
   { // this is an ICC message, deliver to the ipop-controller
     unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
     ctrl->SetControlType(TincanControl::CTTincanRequest);
@@ -189,14 +197,6 @@ void Tunnel::VlinkReadComplete(
     req[TincanControl::Data] = string((char*)frame->Payload(), frame->PayloadLength());
     //LOG(TC_DBG) << " Delivering ICC to ctrl, data=\n" << req[TincanControl::Data].asString();
     ctrl_link_->Deliver(move(ctrl));
-  }
-  else if(fp.IsDtfMsg())
-  {
-    frame->Dump("Frame from vlink");
-    frame->BufferToTransfer(frame->Payload()); //write frame payload to TAP
-    frame->BytesToTransfer(frame->PayloadLength());
-    frame->SetWriteOp();
-    tdev_->Write(*frame.release());
   }
   else
   {
@@ -232,6 +232,9 @@ void Tunnel::TapReadComplete(
 
 void Tunnel::TapWriteComplete(
   AsyncIo * aio_wr)
-{}
+{
+  //TapFrame * frame = static_cast<TapFrame*>(aio_wr->context_);
+  delete static_cast<TapFrame*>(aio_wr->context_);
+}
 
 } // end namespace tincan
