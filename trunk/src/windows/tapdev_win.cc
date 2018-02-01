@@ -141,7 +141,7 @@ TapDevWin::Open(
       throw WINEXCEPT("The TAP open operation failed to create the device handle.");
     }
     cmpl_prt_handle_ = CreateIoCompletionPort(DeviceHandle(),
-      CompletionPortHandle(), (ULONG_PTR)this, 2 * NumCpu());
+      CompletionPortHandle(), (ULONG_PTR)this, NumCpu());
     if(!cmpl_prt_handle_)
     {
       string emsg("The TAP IO completetion thread failed to create a handle "
