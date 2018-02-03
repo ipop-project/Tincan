@@ -46,7 +46,7 @@ ControlDispatch::ControlDispatch() :
     { "RemoveOverlay", &ControlDispatch::RemoveOverlay },
     { "RemoveLink", &ControlDispatch::RemoveLink },
     { "SetIgnoredNetInterfaces", &ControlDispatch::SetNetworkIgnoreList },
-    //{ "UpdateMap", &ControlDispatch::UpdateRoutes },
+    { "UpdateMap", &ControlDispatch::UpdateRouteTable },
   };
 }
 ControlDispatch::~ControlDispatch()
@@ -97,7 +97,7 @@ ControlDispatch::ConfigureLogging(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest();
-  string log_lvl = req["Level"].asString();
+  string log_lvl = req[TincanControl::Level].asString();
   string msg("Tincan logging successfully configured.");
   bool status = true;
   try
@@ -120,7 +120,7 @@ ControlDispatch::ConfigureLogging(
       size_t num_fls = req["MaxArchives"].asUInt64();
       log_sink_ = make_unique<FileRotatingLogSink>(dir, fn, max_sz, num_fls);
       log_sink_->Init();
-      log_lvl = req["Level"].asString();
+      log_lvl = req[TincanControl::Level].asString();
       LogMessage::AddLogToStream(log_sink_.get(), GetLogLevel(log_lvl));
     }
     if(req["Device"].asString() == "All" ||
@@ -128,8 +128,8 @@ ControlDispatch::ConfigureLogging(
     {
       if(req["ConsoleLevel"].asString().length() > 0)
         log_lvl = req["ConsoleLevel"].asString();
-      else if(req["Level"].asString().length() > 0)
-        log_lvl = req["Level"].asString();
+      else if(req[TincanControl::Level].asString().length() > 0)
+        log_lvl = req[TincanControl::Level].asString();
       LogMessage::LogToDebug(GetLogLevel(log_lvl));
       LogMessage::SetLogToStderr(true);
     }
@@ -159,7 +159,7 @@ ControlDispatch::CreateLink(
     status = true;
   } catch(exception & e)
   {
-    msg = "The ConnectTunnel operation failed.";
+    msg = "CreateLink failed.";
     LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
@@ -196,32 +196,12 @@ void ControlDispatch::CreateIpopControllerRespLink(
   }
 }
 
-//void
-//ControlDispatch::CreateTunnel(
-//  TincanControl & control)
-//{
-//  Json::Value & req = control.GetRequest();
-//  lock_guard<mutex> lg(disp_mutex_);
-//  try
-//  {
-//    tincan_->CreateTunnel(req); 
-//  } catch(exception & e)
-//  {
-//    string msg = "The CreateTunnel operation failed.";
-//    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
-//      control.StyledString();
-//    //send fail here, send the cas when the op completes
-//    control.SetResponse(msg, false);
-//    ctrl_link_->Deliver(control);
-//  }
-//}
-
 void
 ControlDispatch::CreateOverlay(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest(), resp;
-  string msg = "The CreateOverlay succeeded.";
+  string msg = "CreateOverlay succeeded.";
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
@@ -279,16 +259,21 @@ ControlDispatch::InjectFrame(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest();
+  string msg = "InjectFrame failed.";
+  bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
     tincan_->InjectFrame(req);
+    msg = "InjectFrame succeeded.";
+    status = true;
   } catch(exception & e)
   {
-    string msg = "The Inject Frame operation failed - ";
-    LOG(LS_WARNING) << msg << e.what() << ". Control Data=\n" <<
+    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
       control.StyledString();
   }
+  control.SetResponse(msg, status);
+  ctrl_link_->Deliver(control);
 }
 
 void
@@ -296,7 +281,7 @@ ControlDispatch::QueryCandidateAddressSet(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest(), cas_info;
-  string resp("The QueryCandidateAddressSet operation succeeded");
+  string resp;
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
@@ -449,40 +434,25 @@ ControlDispatch::SetNetworkIgnoreList(
   ctrl_link_->Deliver(control);
 }
 
-//void
-//ControlDispatch::UpdateRoutes(
-//  TincanControl & control)
-//{
-//  bool status = false;
-//  Json::Value & req = control.GetRequest();
-//  const string tap_name = req[TincanControl::TapName].asString();
-//  string msg = "The Add Routes operation failed.";
-//  lock_guard<mutex> lg(disp_mutex_);
-//  Json::Value rts = req[TincanControl::Routes];
-//  if(rts.isArray())
-//  {
-//    for(uint32_t i = 0; i < rts.size(); i++)
-//    {
-//      try
-//      {
-//        string route = rts[i].asString();
-//        string dest_mac = route.substr(0, 12);
-//        string path_mac = route.substr(13, 24);
-//        tincan_->UpdateRoute(tap_name, dest_mac, path_mac);
-//      } catch(exception & e)
-//      {
-//        LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
-//          control.StyledString();
-//      }
-//    }
-//    status = true;
-//    msg = "The Add Routes opertation completed successfully.";
-//  }
-//  else
-//  {
-//    msg += "The routes parameter is not an array. ";
-//  }
-//  control.SetResponse(msg, status);
-//  ctrl_link_->Deliver(control);
-//}
+void
+ControlDispatch::UpdateRouteTable(
+  TincanControl & control)
+{
+  bool status = false;
+  Json::Value & req = control.GetRequest();
+  string msg = "The Add Routes operation failed.";
+  lock_guard<mutex> lg(disp_mutex_);
+  try
+  {
+    tincan_->UpdateRouteTable(req);
+    status = true;
+    msg = "The Add Routes opertation completed successfully.";
+  } catch(exception & e)
+  {
+    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
+      control.StyledString();
+  }
+  control.SetResponse(msg, status);
+  ctrl_link_->Deliver(control);
+}
 }  // namespace tincan

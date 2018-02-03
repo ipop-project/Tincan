@@ -38,25 +38,25 @@ public:
 
   shared_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,
-    unique_ptr<PeerDescriptor> peer_desc);
+    unique_ptr<PeerDescriptor> peer_desc) override;
 
   void QueryInfo(
-    Json::Value & olay_info);
+    Json::Value & olay_info) override;
 
   void QueryLinkCas(
     const string & vlink_id,
-    Json::Value & cas_info);
+    Json::Value & cas_info) override;
 
   void QueryLinkIds(
-    vector<string> & link_ids);
+    vector<string> & link_ids) override;
 
   void QueryLinkInfo(
     const string & vlink_id,
-    Json::Value & vlink_info);
+    Json::Value & vlink_info) override;
 
   void SendIcc(
     const string & recipient_mac,
-    const string & data);
+    const string & data) override;
 
   //void Start();
 
@@ -65,19 +65,23 @@ public:
   void StartIo() override;
 
   void RemoveLink(
-    const string & vlink_id);
+    const string & vlink_id) override;
+
+  void UpdateRouteTable(
+    const Json::Value & rt_descr) override;
+
   //
   //FrameHandler implementation
   void VlinkReadComplete(
     uint8_t * data,
     uint32_t data_len,
-    VirtualLink & vlink);
+    VirtualLink & vlink) override;
   //
   //AsyncIOComplete
   void TapReadComplete(
     AsyncIo * aio_rd);
   void TapWriteComplete(
-    AsyncIo * aio_wr);
+    AsyncIo * aio_wr) override;
 
 private:
   shared_ptr<VirtualLink> vlink_;

@@ -32,50 +32,11 @@ class VirtualNetwork :
 public:
   enum MSG_ID
   {
-    //MSGID_CREATE_LINK,
-    //MSGID_START_CONNECTION,
     MSGID_TRANSMIT,
     MSGID_SEND_ICC,
-    //MSGID_END_CONNECTION,
     MSGID_QUERY_NODE_INFO,
     MSGID_FWD_FRAME,
     MSGID_FWD_FRAME_RD,
-  };
-  class TransmitMsgData : public MessageData
-  {
-  public:
-    shared_ptr<VirtualLink> tnl;
-    unique_ptr<TapFrame> frm;
-  };
-  //class VlinkMsgData : public MessageData
-  //{
-  //public:
-  //  shared_ptr<VirtualLink> vl;
-  //};
-  //class MacMsgData : public MessageData
-  //{
-  //public:
-  //  MacAddressType mac;
-  //};
-  //class CreateVlinkMsgData : public MessageData
-  //{
-  //public:
-  //  unique_ptr<PeerDescriptor> peer_desc;
-  //  unique_ptr<VlinkDescriptor> vlink_desc;
-  //  rtc::Event msg_event;
-  //  CreateVlinkMsgData() : msg_event(false, false)
-  //  {}
-  //  ~CreateVlinkMsgData() = default;
-  //};
-  class LinkStatsMsgData : public MessageData
-  {
-  public:
-    shared_ptr<VirtualLink> vl;
-    Json::Value stats;
-    rtc::Event msg_event;
-    LinkStatsMsgData() : stats(Json::arrayValue), msg_event(false, false)
-    {}
-    ~LinkStatsMsgData() = default;
   };
   //ctor
    VirtualNetwork(
@@ -86,51 +47,48 @@ public:
 
   shared_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,
-    unique_ptr<PeerDescriptor> peer_desc);
+    unique_ptr<PeerDescriptor> peer_desc) override;
 
   void QueryInfo(
-    Json::Value & olay_info);
+    Json::Value & olay_info) override;
 
   void QueryLinkCas(
     const string & vlink_id,
-    Json::Value & cas_info);
+    Json::Value & cas_info) override;
   
   void QueryLinkIds(
-    vector<string> & link_ids);
+    vector<string> & link_ids) override;
 
   void QueryLinkInfo(
     const string & vlink_id,
-    Json::Value & vlink_info);
+    Json::Value & vlink_info) override;
 
-  void Shutdown();
+  void Shutdown() override;
 
   void SendIcc(
     const string & recipient_mac,
-    const string & data);
+    const string & data) override;
 
-  void Start();
+  void Start() override;
 
   void RemoveLink(
-    const string & vlink_id);
+    const string & vlink_id) override;
 
-  void UpdateRoute(
-    MacAddressType mac_dest,
-    MacAddressType mac_path);
+  void UpdateRouteTable(
+    const Json::Value & rt_descr) override;
   //
   //FrameHandler implementation
   void VlinkReadComplete(
     uint8_t * data,
     uint32_t data_len,
-    VirtualLink & vlink);
+    VirtualLink & vlink) override;
   //
   //AsyncIOComplete
   void TapReadComplete(
     AsyncIo * aio_rd);
   void TapWriteComplete(
-    AsyncIo * aio_wr);
+    AsyncIo * aio_wr) override;
   //
-  //MessageHandler overrides
-  void OnMessage(Message* msg) override;
 private:
   unique_ptr<PeerNetwork> peer_network_;
   rtc::Thread peer_net_thread_;

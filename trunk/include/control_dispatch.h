@@ -52,7 +52,6 @@ private:
   void ConfigureLogging(TincanControl & control);
   void CreateLink(TincanControl & control);
   void CreateIpopControllerRespLink(TincanControl & control);
-  //void CreateTunnel(TincanControl & control);
   void CreateOverlay(TincanControl & control);
   void Echo(TincanControl & control);
   void InjectFrame(TincanControl & control);
@@ -61,8 +60,7 @@ private:
   void QueryCandidateAddressSet(TincanControl & control);
   void RemoveLink(TincanControl & control);
   void RemoveOverlay(TincanControl & control);
-  void RemoveVnet(TincanControl & control);
-  void UpdateRoutes(TincanControl & control);
+  void UpdateRouteTable(TincanControl & control);
   LoggingSeverity GetLogLevel(const string & log_level);
   void SetNetworkIgnoreList(TincanControl & control);
   void SendIcc(TincanControl & control);

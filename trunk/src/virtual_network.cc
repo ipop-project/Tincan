@@ -83,11 +83,10 @@ VirtualNetwork::Shutdown()
 }
 
 void
-VirtualNetwork::UpdateRoute(
-  MacAddressType mac_dest,
-  MacAddressType mac_path)
+VirtualNetwork::UpdateRouteTable(
+  const Json::Value & rt_descr)
 {
-  peer_network_->UpdateRoute(mac_dest, mac_path);
+  //peer_network_->UpdateRouteTable(rt_descr);
 }
 
 
@@ -100,19 +99,19 @@ void VirtualNetwork::RemoveLink(
 void VirtualNetwork::QueryInfo(
   Json::Value & olay_info)
 {
-  olay_info["OverlayId"] = descriptor_->uid;
+  olay_info[TincanControl::OverlayId] = descriptor_->uid;
   olay_info[TincanControl::FPR] = Fingerprint();
   olay_info[TincanControl::TapName] = tap_desc_->name;
   olay_info[TincanControl::MAC] = MacAddress();
   olay_info[TincanControl::VIP4] = tap_desc_->ip4;
   olay_info["IP4PrefixLen"] = tap_desc_->prefix4;
-  olay_info["MTU4"] = tap_desc_->mtu4;
+  olay_info[TincanControl::MTU4] = tap_desc_->mtu4;
   //Add the uid for each vlink
-  olay_info["Vlinks"] = Json::Value(Json::arrayValue);
+  olay_info[TincanControl::Vlinks] = Json::Value(Json::arrayValue);
   vector<string> vlids = peer_network_->QueryVlinks();
   for(auto vl: vlids)
   {
-    olay_info["Vlinks"].append(vl);
+    olay_info[TincanControl::Vlinks].append(vl);
   }
 }
 
@@ -124,11 +123,11 @@ void VirtualNetwork::QueryLinkCas(
   {
     shared_ptr<VirtualLink> vl = peer_network_->GetVlink(vlink_id);
     if(vl->IceRole() == cricket::ICEROLE_CONTROLLING)
-      cas_info["IceRole"] = TincanControl::Controlling.c_str();
+      cas_info[TincanControl::IceRole] = TincanControl::Controlling.c_str();
     else if(vl->IceRole() == cricket::ICEROLE_CONTROLLED)
-      cas_info["IceRole"] = TincanControl::Controlled.c_str();
+      cas_info[TincanControl::IceRole] = TincanControl::Controlled.c_str();
 
-    cas_info["CAS"] = vl->Candidates();
+    cas_info[TincanControl::CAS] = vl->Candidates();
   }
 }
 
@@ -144,22 +143,22 @@ VirtualNetwork::QueryLinkInfo(
   const string & vlink_id,
   Json::Value & vlink_info)
 {
-  //vlink_info["OverlayId"] = descriptor_->uid;
+  //vlink_info[TincanControl::OverlayId] = descriptor_->uid;
   if(peer_network_->Exists(vlink_id))
   {
     shared_ptr<VirtualLink> vl = peer_network_->GetVlinkById(vlink_id);
     if(vl && vl->IsReady())
     {
-      LinkStatsMsgData md;
+      LinkInfoMsgData md;
       md.vl = vl;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
       md.msg_event.Wait(Event::kForever);
-      vlink_info[TincanControl::Stats].swap(md.stats);
+      vlink_info[TincanControl::Stats].swap(md.info);
       vlink_info[TincanControl::Status] = "online";
       if(vl->IceRole() == cricket::ICEROLE_CONTROLLING)
-        vlink_info["IceRole"] = TincanControl::Controlling;
+        vlink_info[TincanControl::IceRole] = TincanControl::Controlling;
       else
-        vlink_info["IceRole"] = TincanControl::Controlled;
+        vlink_info[TincanControl::IceRole] = TincanControl::Controlled;
     }
     else
     {
@@ -186,7 +185,7 @@ VirtualNetwork::SendIcc(
   icc->Message((uint8_t*)data.c_str(), (uint16_t)data.length());
   unique_ptr<TransmitMsgData> md = make_unique<TransmitMsgData>();
   md->frm = move(icc);
-  md->tnl = peer_network_->GetVlinkById(vlink_id);
+  md->vl = peer_network_->GetVlinkById(vlink_id);
   net_worker_.Post(RTC_FROM_HERE, this, MSGID_SEND_ICC, md.release());
 }
 
@@ -231,7 +230,7 @@ VirtualNetwork::VlinkReadComplete(
       shared_ptr<VirtualLink> vl = peer_network_->GetRoute(fp.DestinationMac());
       TransmitMsgData *md = new TransmitMsgData;
       md->frm = move(frame);
-      md->tnl = vl;
+      md->vl = vl;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_FWD_FRAME, md);
     }
     else
@@ -239,7 +238,7 @@ VirtualNetwork::VlinkReadComplete(
       unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
       ctrl->SetControlType(TincanControl::CTTincanRequest);
       Json::Value & req = ctrl->GetRequest();
-      req[TincanControl::Command] = TincanControl::UpdateRoutes;
+      req[TincanControl::Command] = TincanControl::ReqRouteUpdate;
       req[TincanControl::TapName] = tap_desc_->name;
       req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
         frame->PayloadEnd());
@@ -300,20 +299,20 @@ VirtualNetwork::TapReadComplete(
   if(peer_network_->IsAdjacent(mac))
   {
     frame->Header(kDtfMagic);
-    frame->Dump("Unicast");
+    //frame->Dump("Unicast");
     shared_ptr<VirtualLink> vl = peer_network_->GetVlink(mac);
     TransmitMsgData *md = new TransmitMsgData;
     md->frm.reset(frame);
-    md->tnl = vl;
+    md->vl = vl;
     net_worker_.Post(RTC_FROM_HERE, this, MSGID_TRANSMIT, md);
   }
   else if(peer_network_->IsRouteExists(mac))
   {
     frame->Header(kFwdMagic);
-    frame->Dump("Frame FWD");
+    //frame->Dump("Frame FWD");
     TransmitMsgData *md = new TransmitMsgData;
     md->frm.reset(frame);
-    md->tnl = peer_network_->GetRoute(mac);
+    md->vl = peer_network_->GetRoute(mac);
     net_worker_.Post(RTC_FROM_HERE, this, MSGID_FWD_FRAME, md);
   }
   else
@@ -323,7 +322,7 @@ VirtualNetwork::TapReadComplete(
     unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
-    req[TincanControl::Command] = TincanControl::UpdateRoutes;
+    req[TincanControl::Command] = TincanControl::ReqRouteUpdate;
     req[TincanControl::TapName] = tap_desc_->name;
     req[TincanControl::OverlayId] = descriptor_->uid;
     req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
@@ -348,54 +347,4 @@ VirtualNetwork::TapWriteComplete(
   delete frame;
 }
 
-void VirtualNetwork::OnMessage(Message * msg)
-{
-  switch(msg->message_id)
-  {
-  case MSGID_TRANSMIT:
-  {
-    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
-    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->tnl;
-    vl->Transmit(*frame);
-    delete msg->pdata;
-    frame->Initialize(frame->Payload(), frame->PayloadCapacity());
-    if(0 == tdev_->Read(*frame))
-      frame.release();
-  }
-  break;
-  case MSGID_SEND_ICC:
-  {
-    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
-    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->tnl;
-    vl->Transmit(*frame);
-    //LOG(TC_DBG) << "Sent ICC to=" <<vl->PeerInfo().vip4 << " data=\n" <<
-    //  string((char*)(frame->begin()+4), *(uint16_t*)(frame->begin()+2));
-    delete msg->pdata;
-  }
-  break;
-  case MSGID_QUERY_NODE_INFO:
-  {
-    shared_ptr<VirtualLink> vl = ((LinkStatsMsgData*)msg->pdata)->vl;
-    vl->GetStats(((LinkStatsMsgData*)msg->pdata)->stats);
-    ((LinkStatsMsgData*)msg->pdata)->msg_event.Set();
-  }
-  break;
-  case MSGID_FWD_FRAME:
-  case MSGID_FWD_FRAME_RD:
-  {
-    unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
-    shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->tnl;
-    vl->Transmit(*frame);
-    //LOG(TC_DBG) << "FWDing frame to " << vl->PeerInfo().vip4;
-    if(msg->message_id == MSGID_FWD_FRAME_RD)
-    {
-      frame->Initialize(frame->Payload(), frame->PayloadCapacity());
-      if(0 == tdev_->Read(*frame))
-        frame.release();
-    }
-    delete msg->pdata;
-  }
-  break;
-  }
-}
 } //namespace tincan

@@ -202,8 +202,8 @@ Overlay::InjectFame(
   if(data.length() > 2 * kTapBufferSize)
   {
     stringstream oss;
-    oss << "Inject Frame operation failed - frame size " << data.length() / 2 <<
-      " is larger than maximum accepted " << kTapBufferSize;
+    oss << "Inject Frame operation failed - frame size " << data.length() / 2
+      << " is larger than maximum accepted " << kTapBufferSize;
     throw TCEXCEPT(oss.str().c_str());
   }
   size_t len = StringToByteArray(data, tf->Payload(), tf->End());

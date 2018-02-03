@@ -44,7 +44,7 @@ public:
   bool IsRouteExists(const MacAddressType& mac);
   vector<string> QueryVlinks();
   void Remove(const string & link_id);
-  void UpdateRoute(MacAddressType & dest, MacAddressType & route);
+  void UpdateRouteTable(MacAddressType & dest, MacAddressType & route);
 private:
   struct MacAddressHasher
   {

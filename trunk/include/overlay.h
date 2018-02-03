@@ -127,6 +127,10 @@ public:
 
   virtual void RemoveLink(
     const string & vlink_id) = 0;
+
+  virtual void UpdateRouteTable(
+    const Json::Value & rt_descr) = 0;
+
   //
   //FrameHandler implementation
   virtual void VlinkReadComplete(

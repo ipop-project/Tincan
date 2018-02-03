@@ -60,13 +60,13 @@ Tunnel::CreateVlink(
 void Tunnel::QueryInfo(
   Json::Value & olay_info)
 {
-  olay_info["OverlayId"] = descriptor_->uid;
+  olay_info[TincanControl::OverlayId] = descriptor_->uid;
   olay_info[TincanControl::FPR] = Fingerprint();
   olay_info[TincanControl::TapName] = tap_desc_->name;
   olay_info[TincanControl::MAC] = MacAddress();
   olay_info[TincanControl::VIP4] = tap_desc_->ip4;
   olay_info["IP4PrefixLen"] = tap_desc_->prefix4;
-  olay_info["MTU4"] = tap_desc_->mtu4;
+  olay_info[TincanControl::MTU4] = tap_desc_->mtu4;
   olay_info["LinkIds"] = Json::Value(Json::arrayValue);
   if(vlink_)
   {
@@ -81,11 +81,11 @@ void Tunnel::QueryLinkCas(
   if(vlink_)
   {
     if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
-      cas_info["IceRole"] = TincanControl::Controlling.c_str();
+      cas_info[TincanControl::IceRole] = TincanControl::Controlling.c_str();
     else if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLED)
-      cas_info["IceRole"] = TincanControl::Controlled.c_str();
+      cas_info[TincanControl::IceRole] = TincanControl::Controlled.c_str();
 
-    cas_info["CAS"] = vlink_->Candidates();
+    cas_info[TincanControl::CAS] = vlink_->Candidates();
   }
 }
 
@@ -101,13 +101,13 @@ void Tunnel::QueryLinkInfo(
 {
   if(vlink_)
   {
-    vlink_info["LinkId"] = vlink_->Id();
+    vlink_info[TincanControl::LinkId] = vlink_->Id();
     if(vlink_->IsReady())
     {
       if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
-        vlink_info["IceRole"] = TincanControl::Controlling;
+        vlink_info[TincanControl::IceRole] = TincanControl::Controlling;
       else
-        vlink_info["IceRole"] = TincanControl::Controlled;
+        vlink_info[TincanControl::IceRole] = TincanControl::Controlled;
       LinkInfoMsgData md;
       md.vl = vlink_;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
@@ -166,6 +166,11 @@ void Tunnel::RemoveLink(
   vlink_->Disconnect();
   vlink_.reset();
 }
+
+void
+Tunnel::UpdateRouteTable(
+  const Json::Value & rt_descr)
+{}
 
 /*
 When the overlay is a tunnel, the only operations are sending ICCs and normal IO

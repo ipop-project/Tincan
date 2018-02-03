@@ -74,10 +74,8 @@ public:
   void SetIpopControllerLink(
     shared_ptr<IpopControllerLink> ctrl_handle) override;
 
-  //void UpdateRoute(
-  //  const string & tap_name,
-  //  const string & dest_mac,
-  //  const string & path_mac) override;
+  void UpdateRouteTable(
+    const Json::Value & rts_desc) override;
 //
 //
   void OnLocalCasUpdated(
@@ -90,10 +88,6 @@ public:
 
   void Run();
 private:
-  //void GetLocalNodeInfo(
-  //  VirtualNetwork & vnet,
-  //  Json::Value & node_info);
-
   bool IsOverlayExisit(
     const string & oid);
 

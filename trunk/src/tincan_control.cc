@@ -25,55 +25,51 @@
 #include "tincan_exception.h"
 namespace tincan
 {
-const Json::StaticString TincanControl::AddRoutes("AddRoutes");
 const Json::StaticString TincanControl::Command("Command");
 const Json::StaticString TincanControl::CAS("CAS");
-const Json::StaticString TincanControl::ConnectTunnel("ConnectTunnel");
 const Json::StaticString TincanControl::ControlType("ControlType");
 const Json::StaticString TincanControl::Controlled("Controlled");
 const Json::StaticString TincanControl::Controlling("Controlling");
 const Json::StaticString TincanControl::CreateCtrlRespLink("CreateCtrlRespLink");
-const Json::StaticString TincanControl::CreateTunnel("CreateTunnel");
 const Json::StaticString TincanControl::CreateOverlay("CreateOverlay");
 const Json::StaticString TincanControl::Data("Data");
 const Json::StaticString TincanControl::Echo("Echo");
 const Json::StaticString TincanControl::EncryptionEnabled("EncryptionEnabled");
 const Json::StaticString TincanControl::FPR("FPR");
 const Json::StaticString TincanControl::ICC("ICC");
+const Json::StaticString TincanControl::IceRole("IceRole");
 const Json::StaticString TincanControl::IgnoredNetInterfaces("IgnoredNetInterfaces");
-const Json::StaticString TincanControl::TapName("TapName");
 const Json::StaticString TincanControl::IPOP("IPOP");
 const Json::StaticString TincanControl::LinkId("LinkId");
-const Json::StaticString TincanControl::LogLevel("LogLevel");
+const Json::StaticString TincanControl::Level("Level");
 const Json::StaticString TincanControl::MAC("MAC");
 const Json::StaticString TincanControl::Message("Message");
+const Json::StaticString TincanControl::MTU4("MTU4");
 const Json::StaticString TincanControl::OverlayId("OverlayId");
 const Json::StaticString TincanControl::PeerInfo("PeerInfo");
 const Json::StaticString TincanControl::ProtocolVersion("ProtocolVersion");
 const Json::StaticString TincanControl::QueryOverlayInfo("QueryOverlayInfo");
 const Json::StaticString TincanControl::QueryCandidateAddressSet("QueryCandidateAddressSet");
 const Json::StaticString TincanControl::RemoveOverlay("RemoveOverlay");
-const Json::StaticString TincanControl::RemoveRoutes("RemoveRoutes");
+const Json::StaticString TincanControl::ReqRouteUpdate("ReqRouteUpdate");
 const Json::StaticString TincanControl::Request("Request");
-//const Json::StaticString TincanControl::RecipientMac("RecipientMac");
 const Json::StaticString TincanControl::Response("Response");
 const Json::StaticString TincanControl::Role("Role");
-const Json::StaticString TincanControl::Routes("Routes");
-const Json::StaticString TincanControl::UpdateRoutes("UpdateRoutes");
-const Json::StaticString TincanControl::Sender("Sender");
 const Json::StaticString TincanControl::SetIgnoredNetInterfaces("SetIgnoredNetInterfaces");
 const Json::StaticString TincanControl::SetLoggingLevel("SetLoggingLevel");
 const Json::StaticString TincanControl::Stats("Stats");
 const Json::StaticString TincanControl::Status("Status");
 const Json::StaticString TincanControl::Success("Success");
+const Json::StaticString TincanControl::TapName("TapName");
 const Json::StaticString TincanControl::TincanRequest("TincanRequest");
 const Json::StaticString TincanControl::TincanResponse("TincanResponse");
 const Json::StaticString TincanControl::TransactionId("TransactionId");
 const Json::StaticString TincanControl::Type("Type");
 const Json::StaticString TincanControl::UID("UID");
+const Json::StaticString TincanControl::UpdateRouteTable("UpdateRouteTable");
 const Json::StaticString TincanControl::VIP4("VIP4");
-//const Json::StaticString TincanControl::VIP6("VIP6");
 const Json::StaticString TincanControl::VnetDescription("VnetDescription");
+const Json::StaticString TincanControl::Vlinks("Vlinks");
 
 TincanControl::TincanControl() :
   proto_ver_(kTincanControlVer),

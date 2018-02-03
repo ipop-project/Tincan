@@ -89,10 +89,8 @@ namespace tincan {
     virtual void SetIpopControllerLink(
       shared_ptr<IpopControllerLink> ctrl_link) = 0;
 
-    //virtual void UpdateRoute(
-    //  const string & tap_name,
-    //  const string & dest_mac,
-    //  const string & path_mac) = 0;
+    virtual void UpdateRouteTable(
+      const Json::Value & rts_desc) = 0;
 };
 }  // namespace tincan
 #endif  // TINCAN_CONTROLLER_HANDLE_H_

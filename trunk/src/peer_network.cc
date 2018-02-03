@@ -226,11 +226,20 @@ PeerNetwork::Run(Thread* thread)
   }
 }
 
-void PeerNetwork::UpdateRoute(
+void PeerNetwork::UpdateRouteTable(
   MacAddressType & dest,
   MacAddressType & route)
 {
   lock_guard<mutex> lg(mac_map_mtx_);
+  //for(uint32_t i = 0; i < rts_desc["Table"].size(); i++)
+  //{
+  //  Json::Value & entry = rts_desc[i];
+  //  entry["Identifier"]
+  //    entry["Action"]
+  //    entry["Destination"]
+  //    entry["Path"]
+  //}
+
   if(dest == route || mac_map_.count(route) == 0 ||
     (mac_map_.count(route) && !mac_map_.at(route)->is_valid_))
   {
