@@ -25,7 +25,7 @@
 namespace tincan
 {
 using namespace rtc;
-ControlListener::ControlListener(unique_ptr<ControlDispatch> control_dispatch) :
+ControlListener::ControlListener(unique_ptr<ControlDispatch> control_dispatch):
   ctrl_dispatch_(move(control_dispatch)),
   packet_options_(DSCP_DEFAULT)
 {

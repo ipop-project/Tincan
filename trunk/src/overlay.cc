@@ -103,7 +103,10 @@ Overlay::StartIo()
     tf->Initialize();
     tf->BufferToTransfer(tf->Payload());
     tf->BytesToTransfer(tf->PayloadCapacity());
-    tdev_->Read(*tf.release());
+    if(0 == tdev_->Read(*tf))
+      tf.release();
+    else
+      LOG(LS_ERROR) << "A TAP read opertaion failed to start!";
   }
 }
 

@@ -206,20 +206,22 @@ PeerNetwork::Run(Thread* thread)
         ml.push_back(i.first);
       else
       {
-        std::chrono::duration<double, milli> elapsed = steady_clock::now() - i.second.accessed;
+        std::chrono::duration<double, milli> elapsed = steady_clock::now()
+          - i.second.accessed;
         if(elapsed > expiry_period)
           ml.push_back(i.first);
       }
     }
     for(auto & mac : ml)
     {
-      LOG(TC_DBG) << "Scavenging route to " << ByteArrayToString(mac.begin(), mac.end());
+      LOG(TC_DBG) << "Scavenging route to "
+        << ByteArrayToString(mac.begin(), mac.end());
       mac_routes_.erase(mac);
     }
     if(LOG_CHECK_LEVEL(LS_VERBOSE))
     {
-      LOG(LS_VERBOSE) << "PeerNetwork scavenge took " <<
-        (steady_clock::now() - accessed).count() << " nanosecs.";
+      LOG(LS_VERBOSE) << "PeerNetwork scavenge took "
+        << (steady_clock::now() - accessed).count() << " nanosecs.";
     }
   }
 }

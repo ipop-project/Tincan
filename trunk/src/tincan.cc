@@ -331,7 +331,8 @@ Tincan::OverlayFromId(
   lock_guard<mutex> lg(ovlays_mutex_);
   for(auto const & vnet : ovlays_)
   {
-    if(vnet->Descriptor().uid.compare(oid) == 0)//list of vnets will be small enough where a linear search is best
+    //list of vnets will be small enough where a linear search is satifactory
+    if(vnet->Descriptor().uid.compare(oid) == 0)
       return *vnet.get();
   }
   string msg("No virtual network exists by this name: ");

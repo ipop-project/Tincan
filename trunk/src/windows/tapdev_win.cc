@@ -28,11 +28,11 @@
 #include <wchar.h>
 #include <winioctl.h>
 #include "windows/win_exception.h"
-namespace tincan 
+namespace tincan
 {
 namespace windows
 {
-const char * const TapDevWin::NETWORK_PATH_ = 
+const char * const TapDevWin::NETWORK_PATH_ =
 "SYSTEM\\CurrentControlSet\\Control\\Network\\"
 "{4D36E972-E325-11CE-BFC1-08002BE10318}"; //registry path to network class guid
 const char * const TapDevWin::USER_MODE_DEVICE_DIR_ = "\\\\.\\Global\\";
@@ -105,7 +105,7 @@ TapDevWin::TapDevWin() :
   cmpl_prt_handle_(0),
   dev_handle_(INVALID_HANDLE_VALUE),
   media_status_(0),
-  io_thread_pool_(NumCpu())
+  io_thread_pool_()
 {}
 
 TapDevWin::~TapDevWin()
@@ -128,7 +128,8 @@ TapDevWin::Open(
       memmove(ip4_.data(), &vip4_addr.S_un.S_addr, sizeof(ip4_));
     }
     else
-      LOG(WARNING) << "Failed to convert IP4 string in Tap Descriptor=" << tap_desc.ip4;
+      LOG(WARNING) << "Failed to convert IP4 string in Tap Descriptor="
+      << tap_desc.ip4;
 
     NetDeviceNameToGuid(tap_name_, device_guid);
     string device_path(USER_MODE_DEVICE_DIR_);
@@ -138,7 +139,8 @@ TapDevWin::Open(
       FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
     if(INVALID_HANDLE_VALUE == dev_handle_)
     {
-      throw WINEXCEPT("The TAP open operation failed to create the device handle.");
+      throw WINEXCEPT("The TAP open operation failed to create the "
+        "device handle.");
     }
     cmpl_prt_handle_ = CreateIoCompletionPort(DeviceHandle(),
       CompletionPortHandle(), (ULONG_PTR)this, NumCpu());
@@ -149,8 +151,7 @@ TapDevWin::Open(
       throw WINEXCEPT(emsg.c_str());
     }
     io_thread_pool_.Attach(cmpl_prt_handle_);
-  }
-  catch(exception & e)
+  } catch(exception & e)
   {
     CloseHandle(dev_handle_);
     CloseHandle(cmpl_prt_handle_);
@@ -178,7 +179,7 @@ TapDevWin::Read(
     NULL,
     (LPOVERLAPPED)&aio_rd);
   DWORD rv = GetLastError();
-  if(rv != ERROR_IO_PENDING)
+  if(rv != ERROR_IO_PENDING && rv != ERROR_SUCCESS)
   {
     LOG(LS_ERROR) << "The TAP device read request operation failed.";
     return rv;
@@ -190,18 +191,9 @@ uint32_t
 TapDevWin::Write(
   AsyncIo & aio_wr)
 {
-  lock_guard<mutex> lg(rw_mutex_);
-  WriteFile(dev_handle_,
-    aio_wr.BufferToTransfer(),
-    (unsigned long)aio_wr.BytesToTransfer(),
-    NULL,
-    (LPOVERLAPPED)&aio_wr);
-  DWORD rv = GetLastError();
-  if(rv != ERROR_IO_PENDING && rv != ERROR_SUCCESS)
-  {
-    LOG(LS_WARNING) << "The TAP device write request operation failed.";
-    return rv;
-  }
+  TapMessageData *tp = new TapMessageData;
+  tp->aio_ = &aio_wr;
+  writer_.Post(RTC_FROM_HERE, this, MSGID_WRITE, tp);
   return 0;
 }
 
@@ -216,16 +208,19 @@ TapDevWin::NetDeviceNameToGuid(
   HKEY key_0 = 0, key_1 = 0;
   char guid_buf[256], name_buf[256];
   string full_path;
-  try {
-    /* Open up Networking in the registry */
+  try
+  {
+/* Open up Networking in the registry */
     if(ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, NETWORK_PATH_, 0,
-      KEY_READ, &key_0)) {
+      KEY_READ, &key_0))
+    {
       string emsg("Failed to open registry key");
       emsg.append(NETWORK_PATH_);
       throw WINEXCEPT(emsg.c_str());
     }
-    while(!is_found) {
-      /* Enumerate through the different keys under Network\{4D36E972-E325-11CE-BFC1-08002BE10318} */
+    while(!is_found)
+    {
+/* Enumerate through the different keys under Network\{4D36E972-E325-11CE-BFC1-08002BE10318} */
       guid_buf_len = 256;
       DWORD rv = RegEnumKeyEx(key_0, i_0++, guid_buf, &guid_buf_len,
         NULL, NULL, NULL, NULL);
@@ -233,19 +228,22 @@ TapDevWin::NetDeviceNameToGuid(
         throw WINEXCEPT("Failed to resolve IPOP TAP GUID in system registry");
       if(rv != ERROR_SUCCESS)
         continue;
-      full_path.assign(NETWORK_PATH_).append("\\").append(guid_buf).append("\\Connection");
+      full_path.assign(NETWORK_PATH_).append("\\")
+        .append(guid_buf).append("\\Connection");
       if(ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, full_path.c_str(),
-        0, KEY_READ, &key_1)) 
+        0, KEY_READ, &key_1))
         continue;
       name_buf_len = 256;
       if(ERROR_SUCCESS != RegQueryValueEx(key_1, "Name", NULL, NULL,
-        (LPBYTE)name_buf, &name_buf_len)) {
+        (LPBYTE)name_buf, &name_buf_len))
+      {
         RegCloseKey(key_1);
         key_1 = nullptr;
         continue;
       }
       /* Check if the name matches */
-      if(name.compare(name_buf) == 0) {
+      if(name.compare(name_buf) == 0)
+      {
         guid.assign(guid_buf, guid_buf_len);
         is_found = true;
       }
@@ -253,8 +251,8 @@ TapDevWin::NetDeviceNameToGuid(
       key_1 = nullptr;
     }
     RegCloseKey(key_0);
-  }
-  catch(exception & e) {
+  } catch(exception & e)
+  {
     RegCloseKey(key_1);
     RegCloseKey(key_0);
     e.what();
@@ -273,8 +271,7 @@ MacAddressType
 TapDevWin::MacAddress()
 {
   lock_guard<mutex> lg(rw_mutex_);
-  if(memcmp(mac_address_.data(), "\x0\x0\x0\x0\x0\x0", 6) == 0)
-    GetMacAddress();
+  GetMacAddress();
   return mac_address_;
 }
 
@@ -288,13 +285,42 @@ TapDevWin::GetMacAddress()
 }
 
 void
-TapDevWin::Up() {
+TapDevWin::OnMessage(
+  Message * msg)
+{
+  switch(msg->message_id)
+  {
+  case MSGID_WRITE:
+  {
+    AsyncIo* aio_wr = ((TapMessageData*)msg->pdata)->aio_;
+    lock_guard<mutex> lg(rw_mutex_);
+    WriteFile(dev_handle_, aio_wr->BufferToTransfer(),
+      (unsigned long)aio_wr->BytesToTransfer(), NULL, (LPOVERLAPPED)aio_wr);
+    DWORD rv = GetLastError();
+    if(rv != ERROR_IO_PENDING && rv != ERROR_SUCCESS)
+    {
+      LOG(LS_WARNING) << "The TAP device write request operation failed.";
+      delete static_cast<TapFrame*>(aio_wr->context_);
+    }
+  }
+  break;
+  default:
+    LOG(LS_WARNING) << "An invalid TAP Message ID was specified.";
+    break;
+  }
+  delete (TapMessageData*)msg->pdata;
+}
+
+void
+TapDevWin::Up()
+{
   lock_guard<mutex> lg(rw_mutex_);
   DWORD len = 0;
   media_status_ = 1;
   //Set interface as enabled
   if(!DeviceIoControl(dev_handle_, TAP_IOCTL_SET_MEDIA_STATUS,
-    &media_status_, sizeof(media_status_), &media_status_, sizeof(media_status_), (LPDWORD)&len, NULL))
+    &media_status_, sizeof(media_status_), &media_status_,
+    sizeof(media_status_), (LPDWORD)&len, NULL))
     throw WINEXCEPT("Device IO control to TAP failed to enable  IPOP TAP device");
   //Get drivers version
   ULONG info[3];
@@ -306,17 +332,21 @@ TapDevWin::Up() {
       (int)info[1] << (info[2] ? "(DEBUG)" : "");
   }
   uint16_t mtu = Mtu();
+  writer_.Start();
   LOG(LS_INFO) << "TAP device MTU " << mtu;
 }
 
 void
-TapDevWin::Down() {
+TapDevWin::Down()
+{
   lock_guard<mutex> lg(rw_mutex_);
   DWORD len = 0;
   media_status_ = 0;
+  writer_.Stop();
   if(!DeviceIoControl(dev_handle_, TAP_IOCTL_SET_MEDIA_STATUS, &media_status_,
-    sizeof(media_status_), &media_status_, sizeof(media_status_), (LPDWORD)&len, NULL))
-    throw WINEXCEPT("Device IO control to TAP failed to disable IPOP TAP device");
+    sizeof(media_status_), &media_status_, sizeof(media_status_),
+    (LPDWORD)&len, NULL))
+    throw WINEXCEPT("Device IO control failed to disable IPOP TAP device");
 }
 
 //void
@@ -334,7 +364,7 @@ uint16_t TapDevWin::Mtu()
   if(!DeviceIoControl(dev_handle_, TAP_IOCTL_GET_MTU, &mtu, sizeof(mtu),
     &mtu, sizeof(mtu), &len, NULL))
   {
-    LOG_ERR(LS_ERROR) << "The ioctl operation to query the TAP device MTU failed.";
+    LOG_ERR(LS_ERROR) << "The ioctl failed to query the TAP device MTU.";
   }
   return (uint16_t)mtu;
 }

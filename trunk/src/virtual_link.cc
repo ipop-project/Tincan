@@ -301,7 +301,8 @@ VirtualLink::SetupICE(
   }
   else
   {
-    throw TCEXCEPT("The Setup Ice operation failed as the peer UIDs are equal. A node will not create a vlink to itself");
+    LOG(LS_WARNING) << "Invalid ICE role specified: " << (uint32_t)ice_role_;
+    throw TCEXCEPT("Invalid ICE role specified");
   }
 }
 

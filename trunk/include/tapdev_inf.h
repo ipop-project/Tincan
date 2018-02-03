@@ -25,9 +25,14 @@
 #include "tincan_base.h"
 #include "async_io.h"
 #include "tap_frame.h"
+#include "webrtc/base/thread.h"
 
 namespace tincan
 {
+using rtc::Message;
+using rtc::MessageData;
+using rtc::MessageHandler;
+
 struct TapDescriptor
 {
   string name;
@@ -41,6 +46,18 @@ struct TapDescriptor
 class TapDevInf
 {
 public:
+  enum MSG_ID
+  {
+    MSGID_READ,
+    MSGID_WRITE,
+  };
+  class TapMessageData :
+    public MessageData
+  {
+  public:
+    AsyncIo * aio_;
+  };
+
   virtual ~TapDevInf() = default;
   virtual void Open(
     const TapDescriptor & tap_desc) = 0;

@@ -41,7 +41,8 @@ NOTE: A TapDev object cannot be reused, ie.,
 It must be deleted after it is closed and a new instance create.
 */
 class TapDevWin :
-  public TapDevInf
+  public TapDevInf,
+  public MessageHandler
 {
 public:
   struct IoThreadDescriptor
@@ -174,6 +175,8 @@ protected:
     const string & name,
     string & guid);
   void GetMacAddress();
+  void OnMessage(
+    Message * msg) override;
 
   static const char * const NETWORK_PATH_;
   static const char * const USER_MODE_DEVICE_DIR_;
@@ -187,6 +190,7 @@ protected:
   IoThreadPool io_thread_pool_;
   DWORD media_status_;
   IP4AddressType ip4_;
+  rtc::Thread writer_;
 };
 }  // namespace win
 }  // namespace tincan

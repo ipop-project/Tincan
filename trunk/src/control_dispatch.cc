@@ -137,7 +137,7 @@ ControlDispatch::ConfigureLogging(
   {
     LogMessage::LogToDebug(LS_WARNING);
     LogMessage::SetLogToStderr(true);
-    msg = "The configure logging operation failed. It defaults to Console/WARNING";
+    msg = "The configure logging operation failed. Using Console/WARNING";
     LOG(LS_WARNING) << msg;
     status = false;
   }

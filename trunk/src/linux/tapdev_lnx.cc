@@ -171,7 +171,7 @@ uint32_t TapDevLnx::Read(AsyncIo& aio_rd)
 {
   if(!is_good_)
     return 1; //indicates a failure to setup async operation
-  TapPayload *tp_ = new TapPayload;
+  TapMessageData *tp_ = new TapMessageData;
   tp_->aio_ = &aio_rd;
   reader_.Post(RTC_FROM_HERE, this, MSGID_READ, tp_);
   return 0;
@@ -181,7 +181,7 @@ uint32_t TapDevLnx::Write(AsyncIo& aio_wr)
 {
   if(!is_good_)
     return 1; //indicates a failure to setup async operation
-  TapPayload *tp_ = new TapPayload;
+  TapMessageData *tp_ = new TapMessageData;
   tp_->aio_ = &aio_wr;
   writer_.Post(RTC_FROM_HERE, this, MSGID_WRITE, tp_);
   return 0;
@@ -222,6 +222,8 @@ void TapDevLnx::Up()
 
 void TapDevLnx::Down()
 {
+  reader_.Stop();
+  writer_.Stop();
   //TODO: set the appropriate flags
   SetFlags(0, IFF_UP | IFF_RUNNING);
   LOG_F(LS_INFO) << "TAP DOWN";
@@ -234,10 +236,8 @@ void TapDevLnx::OnMessage(Message * msg)
   {
   case MSGID_READ:
   {
-    AsyncIo* aio_read = ((TapPayload*)msg->pdata)->aio_;
+    AsyncIo* aio_read = ((TapMessageData*)msg->pdata)->aio_;
     int nread = read(fd_, aio_read->BufferToTransfer(), aio_read->BytesToTransfer());
-
-
     if(nread < 0)
     {
       LOG_F(LS_WARNING) << "A TAP Read operation failed.";
@@ -251,10 +251,9 @@ void TapDevLnx::OnMessage(Message * msg)
     }
   }
   break;
-
   case MSGID_WRITE:
   {
-    AsyncIo* aio_write = ((TapPayload*)msg->pdata)->aio_;
+    AsyncIo* aio_write = ((TapMessageData*)msg->pdata)->aio_;
     int nwrite = write(fd_, aio_write->BufferToTransfer(), aio_write->BytesToTransfer());
     if(nwrite < 0)
     {
@@ -270,6 +269,7 @@ void TapDevLnx::OnMessage(Message * msg)
   }
   break;
   }
+  delete (TapMessageData*)msg->pdata;
 }
 
 IP4AddressType

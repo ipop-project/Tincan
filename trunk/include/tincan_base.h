@@ -119,7 +119,7 @@ static const char kLocalHost6[] = "::1";
 //
 static uint16_t kUdpPort = 5800;
 //
-static const uint8_t kLinkConcurrentAIO = 32;
+static const uint8_t kLinkConcurrentAIO = 4;
 //
 static const uint32_t kCacheIOMax = 32;
 

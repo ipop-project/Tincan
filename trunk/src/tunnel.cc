@@ -41,7 +41,8 @@ Tunnel::CreateVlink(
   {
     vlink_->PeerCandidates(peer_desc->cas);
     vlink_->StartConnections();
-    LOG(LS_INFO) << "Added remote CAS to vlink w/ peer " << vlink_->PeerInfo().uid;
+    LOG(LS_INFO) << "Added remote CAS to vlink w/ peer "
+      << vlink_->PeerInfo().uid;
   }
   else
   {
@@ -49,7 +50,8 @@ Tunnel::CreateVlink(
     if(local_fingerprint_->ToString() < peer_desc->fingerprint)
       ir = cricket::ICEROLE_CONTROLLING;
     string roles[] = { "CONTROLLED", "CONTROLLING" };
-    LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer " << peer_desc->uid;
+    LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer "
+      << peer_desc->uid;
     vlink_ = Overlay::CreateVlink(move(vlink_desc), move(peer_desc), ir);
   }
   return vlink_;
@@ -191,8 +193,10 @@ void Tunnel::VlinkReadComplete(
     req[TincanControl::Command] = TincanControl::ICC;
     req[TincanControl::OverlayId] = descriptor_->uid;
     req[TincanControl::LinkId] = vlink.Id();
-    req[TincanControl::Data] = string((char*)frame->Payload(), frame->PayloadLength());
-    //LOG(TC_DBG) << " Delivering ICC to ctrl, data=\n" << req[TincanControl::Data].asString();
+    req[TincanControl::Data] = string((char*)frame->Payload(),
+      frame->PayloadLength());
+    //LOG(TC_DBG) << " Delivering ICC to ctrl, data=\n"
+    //<< req[TincanControl::Data].asString();
     ctrl_link_->Deliver(move(ctrl));
   }
   else
