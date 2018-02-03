@@ -58,7 +58,8 @@ VirtualNetwork::CreateVlink(
     if(local_fingerprint_->ToString() < peer_desc->fingerprint)
       ir = cricket::ICEROLE_CONTROLLING;
     string roles[] = { "CONTROLLED", "CONTROLLING" };
-    LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer " << peer_desc->uid;
+    LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer "
+      << peer_desc->uid;
     vl = Overlay::CreateVlink(move(vlink_desc), move(peer_desc), ir);
     peer_network_->Add(vl);
   }
@@ -218,7 +219,8 @@ VirtualNetwork::VlinkReadComplete(
     Json::Value & req = ctrl->GetRequest();
     req[TincanControl::Command] = TincanControl::ICC;
     req[TincanControl::TapName] = descriptor_->uid;
-    req[TincanControl::Data] = string((char*)frame->Payload(), frame->PayloadLength());
+    req[TincanControl::Data] = string((char*)frame->Payload(),
+      frame->PayloadLength());
     //LOG(TC_DBG) << " Delivering ICC to ctrl, data=\n" << req[TincanControl::Data].asString();
     ctrl_link_->Deliver(move(ctrl));
   }
@@ -317,24 +319,13 @@ VirtualNetwork::TapReadComplete(
   else
   {
     frame->Header(kIccMagic);
-    if(fp.IsArpRequest())
-    {
-      frame->Dump("ARP Request");
-    }
-    else if(fp.IsArpResponse())
-    {
-      frame->Dump("ARP Response");
-    }
-    else if (memcmp(fp.DestinationMac().data(),"\xff\xff\xff\xff\xff\xff", 6) != 0)
-    {
-      frame->Dump("No Route Unicast");
-    }
     //Send to IPOP Controller to find a route for this frame
     unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
     req[TincanControl::Command] = TincanControl::UpdateRoutes;
     req[TincanControl::TapName] = tap_desc_->name;
+    req[TincanControl::OverlayId] = descriptor_->uid;
     req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
       frame->PayloadEnd());
     ctrl_link_->Deliver(move(ctrl));
