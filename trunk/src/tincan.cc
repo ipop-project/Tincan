@@ -118,12 +118,17 @@ Tincan::CreateVlink(
   Overlay & ol = OverlayFromId(olid);
   shared_ptr<VirtualLink> vlink =
     ol.CreateVlink(move(vl_desc), move(peer_desc));
-  //if(vlink->Candidates().empty())
+  if(vlink->Candidates().empty())
   {
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);
     inprogess_controls_.push_back(
       make_pair(link_desc["LinkId"].asString(), ctrl));
     vlink->SignalLocalCasReady.connect(this, &Tincan::OnLocalCasUpdated);
+  }
+  else
+  {
+    ctrl.SetResponse(vlink->Candidates(), true);
+    ctrl_link_->Deliver(ctrl);
   }
 }
 
@@ -272,7 +277,6 @@ Tincan::OnLocalCasUpdated(
   if(to_deliver)
   {
     ctrl->SetResponse(lcas, true);
-    LOG(LS_INFO) << "Sending updated CAS to Ctlr: " << ctrl->StyledString();
     ctrl_link_->Deliver(move(ctrl));
   }
 }

@@ -41,7 +41,7 @@ Tunnel::CreateVlink(
   {
     vlink_->PeerCandidates(peer_desc->cas);
     vlink_->StartConnections();
-    LOG(LS_INFO) << "Added remote CAS to vlink w/ peer " << peer_desc->uid;
+    LOG(LS_INFO) << "Added remote CAS to vlink w/ peer " << vlink_->PeerInfo().uid;
   }
   else
   {
@@ -97,7 +97,6 @@ void Tunnel::QueryLinkInfo(
   const string & vlink_id,
   Json::Value & vlink_info)
 {
-  //vlink_info["OverlayId"] = descriptor_->uid;
   if(vlink_)
   {
     vlink_info["LinkId"] = vlink_->Id();
@@ -150,8 +149,6 @@ void Tunnel::Shutdown()
     vlink_->Disconnect();
 }
 
-//void Tunnel::Start()
-//{}
 void
 Tunnel::StartIo()
 {
