@@ -225,8 +225,6 @@ void Tunnel::TapReadComplete(
     return;
   }
   frame->PayloadLength(frame->BytesTransferred());
-  TapFrameProperties fp(*frame);
-  MacAddressType mac = fp.DestinationMac();
   frame->BufferToTransfer(frame->Begin()); //write frame header + PL to vlink
   frame->BytesToTransfer(frame->Length());
   frame->Header(kDtfMagic);

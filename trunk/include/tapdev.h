@@ -32,7 +32,7 @@
 namespace tincan {
 //class TapDev : public
 #if defined(_IPOP_LINUX)
-TapDev = linux::TapDevLnx;
+using TapDev = linux::TapDevLnx;
 #elif defined(_IPOP_WIN)
 using TapDev = windows::TapDevWin;
 #endif

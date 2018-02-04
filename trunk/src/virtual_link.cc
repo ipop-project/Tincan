@@ -33,11 +33,11 @@ VirtualLink::VirtualLink(
   rtc::Thread* network_thread) :
   vlink_desc_(move(vlink_desc)),
   peer_desc_(move(peer_desc)),
-  packet_factory_(network_thread),
   tiebreaker_(rtc::CreateRandomId64()),
   conn_role_(cricket::CONNECTIONROLE_ACTPASS),
   channel_(nullptr),
   packet_options_(DSCP_DEFAULT),
+  packet_factory_(network_thread),
   cas_ready_(false),
   is_valid_(false),
   signaling_thread_(signaling_thread),
