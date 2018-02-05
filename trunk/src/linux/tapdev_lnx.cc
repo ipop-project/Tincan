@@ -206,13 +206,6 @@ MacAddressType TapDevLnx::MacAddress()
   return mac_;
 }
 
-  /**
-  * Sets and unsets some common flags used on a TAP device, namely, it sets the
-  * IFF_NOARP flag, and unsets IFF_MULTICAST and IFF_BROADCAST. Notably, if
-  * IFF_NOARP is not set, when using an IPv6 TAP, applications will have trouble
-  * routing their data through the TAP device (Because they'd expect an ARP
-  * response, which we aren't really willing to provide).
-  */
 void TapDevLnx::Up()
 {
   SetFlags(IFF_UP | IFF_RUNNING, 0);
@@ -222,7 +215,6 @@ void TapDevLnx::Up()
 
 void TapDevLnx::Down()
 {
-  //TODO: set the appropriate flags
   SetFlags(0, IFF_UP | IFF_RUNNING);
   LOG_F(LS_INFO) << "TAP DOWN";
 }
@@ -270,6 +262,7 @@ void TapDevLnx::OnMessage(Message * msg)
   }
   break;
   }
+  delete (TapPayload*)msg->pdata;
 }
 
 IP4AddressType
