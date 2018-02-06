@@ -150,7 +150,7 @@ TapDevWin::Open(
         "for the completion port.");
       throw WINEXCEPT(emsg.c_str());
     }
-    io_thread_pool_.Attach(cmpl_prt_handle_);
+    io_thread_pool_.Alloc();
   } catch(exception & e)
   {
     CloseHandle(dev_handle_);
@@ -163,8 +163,9 @@ TapDevWin::Open(
 void TapDevWin::Close()
 {
   lock_guard<mutex> lg(rw_mutex_);
-  CloseHandle(dev_handle_);
+  io_thread_pool_.Free();
   CloseHandle(cmpl_prt_handle_);
+  CloseHandle(dev_handle_);
 }
 
 
@@ -333,6 +334,7 @@ TapDevWin::Up()
   }
   uint16_t mtu = Mtu();
   writer_.Start();
+  io_thread_pool_.Attach(cmpl_prt_handle_);
   LOG(LS_INFO) << "TAP device MTU " << mtu;
 }
 
@@ -342,6 +344,7 @@ TapDevWin::Down()
   lock_guard<mutex> lg(rw_mutex_);
   DWORD len = 0;
   media_status_ = 0;
+  io_thread_pool_.Release();
   writer_.Stop();
   if(!DeviceIoControl(dev_handle_, TAP_IOCTL_SET_MEDIA_STATUS, &media_status_,
     sizeof(media_status_), &media_status_, sizeof(media_status_),
