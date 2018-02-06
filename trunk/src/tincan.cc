@@ -209,10 +209,15 @@ Tincan::SendIcc(
   const Json::Value & icc_desc)
 {
   const string olid = icc_desc[TincanControl::OverlayId].asString();
-  Overlay & ol = OverlayFromId(olid);
   const string & link_id = icc_desc[TincanControl::LinkId].asString();
-  const string & data = icc_desc[TincanControl::Data].asString();
-  ol.SendIcc(link_id, data);
+  if(icc_desc[TincanControl::Data].isString())
+  {
+    const string & data = icc_desc[TincanControl::Data].asString();
+    Overlay & ol = OverlayFromId(olid);
+    ol.SendIcc(link_id, data);
+  }
+  else
+    throw TCEXCEPT("Icc data is not represented as a string");
 }
 
 void
