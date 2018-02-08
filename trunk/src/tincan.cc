@@ -41,7 +41,8 @@ Tincan::SetIpopControllerLink(
 }
 
 void Tincan::CreateOverlay(
-  const Json::Value & olay_desc)
+  const Json::Value & olay_desc,
+  Json::Value & olay_info)
 {
   unique_ptr<OverlayDescriptor> ol_desc(new OverlayDescriptor);
   ol_desc->uid = olay_desc[TincanControl::OverlayId].asString();
@@ -53,11 +54,11 @@ void Tincan::CreateOverlay(
   ol_desc->turn_user = olay_desc["TurnUser"].asString();
   ol_desc->enable_ip_mapping = olay_desc["EnableIPMapping"].asBool();
   unique_ptr<Overlay> olay;
-  if(olay_desc["Type"].asString() == "VNET")
+  if(olay_desc[TincanControl::Type].asString() == "VNET")
   {
     olay = make_unique<VirtualNetwork>(move(ol_desc), ctrl_link_);
   }
-  else if(olay_desc["Type"].asString() == "TUNNEL")
+  else if(olay_desc[TincanControl::Type].asString() == "TUNNEL")
   {
     olay = make_unique<Tunnel>(move(ol_desc), ctrl_link_);
   }
@@ -71,6 +72,7 @@ void Tincan::CreateOverlay(
 
   olay->Configure(move(tap_desc));
   olay->Start();
+  olay->QueryInfo(olay_info);
   lock_guard<mutex> lg(ovlays_mutex_);
   ovlays_.push_back(move(olay));
 
@@ -80,8 +82,16 @@ void Tincan::CreateOverlay(
 void
 Tincan::CreateVlink(
   const Json::Value & link_desc,
-  TincanControl & ctrl)
+  const TincanControl & control)
 {
+  unique_ptr<VlinkDescriptor> vl_desc = make_unique<VlinkDescriptor>();
+  vl_desc->uid = link_desc[TincanControl::LinkId].asString();
+  unique_ptr<Json::Value> resp = make_unique<Json::Value>(Json::objectValue);
+  Json::Value & olay_info = (*resp)[TincanControl::Message];
+  if(!IsOverlayExisit(vl_desc->uid))
+  {
+    CreateOverlay(link_desc, olay_info);
+  }
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
   peer_desc->uid =
     link_desc[TincanControl::PeerInfo][TincanControl::UID].asString();
@@ -94,25 +104,29 @@ Tincan::CreateVlink(
   peer_desc->mac_address =
     link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
   string tap_name = link_desc[TincanControl::TapName].asString();
-  unique_ptr<VlinkDescriptor> vl_desc = make_unique<VlinkDescriptor>();
-  vl_desc->uid = link_desc[TincanControl::LinkId].asString();
+
   string olid = link_desc[TincanControl::OverlayId].asString();
   vl_desc->sec_enabled = link_desc[TincanControl::EncryptionEnabled].asBool();
 
   Overlay & ol = OverlayFromId(olid);
   shared_ptr<VirtualLink> vlink =
     ol.CreateVlink(move(vl_desc), move(peer_desc));
+  unique_ptr<TincanControl> ctrl = make_unique<TincanControl>(control);
   if(vlink->Candidates().empty())
   {
+    ctrl->SetResponse(move(resp));
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);
-    inprogess_controls_.push_back(
-      make_pair(link_desc[TincanControl::LinkId].asString(), ctrl));
+    inprogess_controls_[link_desc[TincanControl::LinkId].asString()]
+      = move(ctrl);
+
     vlink->SignalLocalCasReady.connect(this, &Tincan::OnLocalCasUpdated);
   }
   else
   {
-    ctrl.SetResponse(vlink->Candidates(), true);
-    ctrl_link_->Deliver(ctrl);
+    (*resp)["Message"]["CAS"] = vlink->Candidates();
+    (*resp)["Success"] = true;
+    ctrl->SetResponse(move(resp));
+    ctrl_link_->Deliver(move(ctrl));
   }
 }
 
@@ -257,7 +271,10 @@ Tincan::OnLocalCasUpdated(
       if(itr->first == link_id)
       {
         to_deliver = true;
-        ctrl = make_unique<TincanControl>(move(itr->second));
+        ctrl = move(itr->second);
+        Json::Value & resp = ctrl->GetResponse();
+        resp["Message"]["CAS"] = lcas;
+        resp["Success"] = true;
         inprogess_controls_.erase(itr);
         break;
       }
@@ -265,7 +282,6 @@ Tincan::OnLocalCasUpdated(
   }
   if(to_deliver)
   {
-    ctrl->SetResponse(lcas, true);
     ctrl_link_->Deliver(move(ctrl));
   }
 }

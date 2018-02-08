@@ -65,7 +65,7 @@ void Tunnel::QueryInfo(
   olay_info[TincanControl::TapName] = tap_desc_->name;
   olay_info[TincanControl::MAC] = MacAddress();
   olay_info[TincanControl::VIP4] = tap_desc_->ip4;
-  olay_info["IP4PrefixLen"] = tap_desc_->prefix4;
+  olay_info[TincanControl::IP4PrefixLen] = tap_desc_->prefix4;
   olay_info[TincanControl::MTU4] = tap_desc_->mtu4;
   olay_info["LinkIds"] = Json::Value(Json::arrayValue);
   if(vlink_)

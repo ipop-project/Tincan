@@ -200,22 +200,22 @@ void
 ControlDispatch::CreateOverlay(
   TincanControl & control)
 {
-  Json::Value & req = control.GetRequest(), resp;
-  string msg = "CreateOverlay succeeded.";
-  bool status = false;
+  Json::Value & req = control.GetRequest();
+  unique_ptr<Json::Value> resp = make_unique<Json::Value>(Json::objectValue);
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->CreateOverlay(req);
-    status = true;
-    msg = resp.toStyledString();
+    tincan_->CreateOverlay(req, (*resp)["Message"]);
+    (*resp)["Success"] = true;
   } catch(exception & e)
   {
-    msg = "The CreateOverlay operation failed.";
-    LOG(LS_ERROR) << e.what() << ". Control Data=\n" <<
+    string er_msg = "The CreateOverlay operation failed.";
+    LOG(LS_ERROR) << er_msg << e.what() << ". Control Data=\n" <<
       control.StyledString();
+    (*resp)["Message"] = er_msg;
+    (*resp)["Success"] = false;
   }
-  control.SetResponse(msg, status);
+  control.SetResponse(move(resp));
   ctrl_link_->Deliver(control);
 }
 
@@ -303,22 +303,23 @@ void
 ControlDispatch::QueryLinkStats(
   TincanControl & control)
 {
-  Json::Value & req = control.GetRequest(), stat_info;
-  string resp;
-  bool status = false;
+  Json::Value & req = control.GetRequest();
+  unique_ptr<Json::Value> resp = make_unique<Json::Value>(Json::objectValue);
+  (*resp)["Success"] = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->QueryLinkStats(req, stat_info);
-    resp = stat_info.toStyledString();
-    status = true;
+    tincan_->QueryLinkStats(req, (*resp)["Message"]);
+    (*resp)["Success"] = true;
   } catch(exception & e)
   {
-    resp = "The QueryLinkStats operation failed. ";
-    LOG(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
+    string er_msg = "The QueryLinkStats operation failed. ";
+    LOG(LS_WARNING) << er_msg << e.what() << ". Control Data=\n" <<
       control.StyledString();
+    (*resp)["Message"] = er_msg;
+    (*resp)["Success"] = false;
   }
-  control.SetResponse(resp, status);
+  control.SetResponse(move(resp));
   ctrl_link_->Deliver(control);
 }
 

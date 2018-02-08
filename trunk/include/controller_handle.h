@@ -53,11 +53,12 @@ namespace tincan {
     virtual ~TincanDispatchInterface() = default;
 
     virtual void CreateOverlay(
-      const Json::Value & vnet_desc) = 0;
+      const Json::Value & olay_desc,
+      Json::Value & olay_info) = 0;
 
     virtual void CreateVlink(
       const Json::Value & link_desc,
-      TincanControl & ctrl) = 0;
+      const TincanControl & control) = 0;
 
     virtual void InjectFrame(
       const Json::Value & frame_desc) = 0;

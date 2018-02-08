@@ -43,10 +43,11 @@ public:
 
   void CreateVlink(
     const Json::Value & link_desc,
-    TincanControl & ctrl) override;
+    const TincanControl & control) override;
 
   void CreateOverlay(
-    const Json::Value & olay_desc) override;
+    const Json::Value & olay_desc,
+    Json::Value & olay_info) override;
   
   void InjectFrame(
     const Json::Value & frame_desc) override;
@@ -105,7 +106,7 @@ private:
   vector<unique_ptr<Overlay>> ovlays_;
   shared_ptr<ControlListener> ctrl_listener_;
   shared_ptr<IpopControllerLink> ctrl_link_;
-  list<pair<string, TincanControl>> inprogess_controls_;
+  map<string, unique_ptr<TincanControl>> inprogess_controls_;
   Thread ctl_thread_;
   static Tincan * self_;
   std::mutex ovlays_mutex_;

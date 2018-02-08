@@ -39,6 +39,7 @@ const Json::StaticString TincanControl::FPR("FPR");
 const Json::StaticString TincanControl::ICC("ICC");
 const Json::StaticString TincanControl::IceRole("IceRole");
 const Json::StaticString TincanControl::IgnoredNetInterfaces("IgnoredNetInterfaces");
+const Json::StaticString TincanControl::IP4PrefixLen("IP4PrefixLen");
 const Json::StaticString TincanControl::IPOP("IPOP");
 const Json::StaticString TincanControl::LinkId("LinkId");
 const Json::StaticString TincanControl::Level("Level");
