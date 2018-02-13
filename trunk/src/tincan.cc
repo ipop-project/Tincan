@@ -88,7 +88,8 @@ Tincan::CreateVlink(
   vl_desc->uid = link_desc[TincanControl::LinkId].asString();
   unique_ptr<Json::Value> resp = make_unique<Json::Value>(Json::objectValue);
   Json::Value & olay_info = (*resp)[TincanControl::Message];
-  if(!IsOverlayExisit(vl_desc->uid))
+  string olid = link_desc[TincanControl::OverlayId].asString();
+  if(!IsOverlayExisit(olid))
   {
     CreateOverlay(link_desc, olay_info);
   }
@@ -105,7 +106,6 @@ Tincan::CreateVlink(
     link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
   string tap_name = link_desc[TincanControl::TapName].asString();
 
-  string olid = link_desc[TincanControl::OverlayId].asString();
   vl_desc->sec_enabled = link_desc[TincanControl::EncryptionEnabled].asBool();
 
   Overlay & ol = OverlayFromId(olid);
