@@ -198,6 +198,37 @@ size_t StringToByteArray(
   return count;
 }
 ///////////////////////////////////////////////////////////////////////////////
+//ArpOffset
+class ArpOffsets
+{
+public:
+  ArpOffsets(uint8_t * arp_packet) :
+    pkt_(arp_packet)
+  {}
+  uint8_t* HardwareType()
+  {
+    return pkt_;
+  }
+  uint8_t* ProtocolLen()
+  {
+    return &pkt_[5];
+  }
+  uint8_t* ArpOperation()
+  {
+    return &pkt_[6];
+  }
+  uint8_t* SourceIp()
+  {
+    return &pkt_[14];
+  }
+  uint8_t* DestinationIp()
+  {
+    return &pkt_[24];
+  }
+private:
+  uint8_t * pkt_;
+};
+///////////////////////////////////////////////////////////////////////////////
 //IpOffsets
 class IpOffsets
 {
