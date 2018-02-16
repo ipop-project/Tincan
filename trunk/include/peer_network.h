@@ -24,6 +24,10 @@
 #define _TINCAN_PEER_NETWORK_H_
 #include "tincan_base.h"
 #include "virtual_link.h"
+#include <sparsepp/spp.h>
+
+using spp::sparse_hash_map;
+
 namespace tincan
 {
 class PeerNetwork :
@@ -58,6 +62,15 @@ private:
       return h;
     }
   };
+  struct Width6t8
+  {
+    size_t operator()(const MacAddressType& mac) const
+    {
+      size_t h = 0;
+      memcpy(&h, mac.data(), 6);
+      return h;
+    }
+  };
   struct HubEx
   {
     HubEx() : accessed(steady_clock::now())
@@ -67,7 +80,8 @@ private:
   };
   mutex mac_map_mtx_;
   unordered_map<string, shared_ptr<VirtualLink>> link_map_;
-  unordered_map<MacAddressType, shared_ptr<VirtualLink>, MacAddressHasher> mac_map_;
+  //unordered_map<MacAddressType, shared_ptr<VirtualLink>, MacAddressHasher> mac_map_;
+  sparse_hash_map<MacAddressType, shared_ptr<VirtualLink>, MacAddressHasher>mac_map_;
   unordered_map<MacAddressType, HubEx, MacAddressHasher> mac_routes_;
   void Run(Thread* thread) override;
   milliseconds const scavenge_interval;
