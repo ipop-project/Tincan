@@ -67,7 +67,7 @@ void Tincan::CreateOverlay(
   unique_ptr<TapDescriptor> tap_desc = make_unique<TapDescriptor>();
   tap_desc->name = olay_desc["TapName"].asString();
   tap_desc->ip4 = olay_desc["IP4"].asString();
-  tap_desc->prefix4 = olay_desc["PrefixLen4"].asUInt();
+  tap_desc->prefix4 = olay_desc["IP4PrefixLen"].asUInt();
   tap_desc->mtu4 = olay_desc[TincanControl::MTU4].asUInt();
 
   olay->Configure(move(tap_desc));
