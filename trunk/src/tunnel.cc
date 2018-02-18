@@ -112,17 +112,17 @@ void Tunnel::QueryLinkInfo(
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
       md.msg_event.Wait(Event::kForever);
       vlink_info[TincanControl::Stats].swap(md.info);
-      vlink_info[TincanControl::Status] = "online";
+      vlink_info[TincanControl::Status] = "ONLINE";
     }
     else
     {
-      vlink_info[TincanControl::Status] = "offline";
+      vlink_info[TincanControl::Status] = "OFFLINE";
       vlink_info[TincanControl::Stats] = Json::Value(Json::objectValue);
     }
   }
   else
   {
-    vlink_info[TincanControl::Status] = "unknown";
+    vlink_info[TincanControl::Status] = "UNKNOWN";
     vlink_info[TincanControl::Stats] = Json::Value(Json::objectValue);
   }
 
