@@ -239,7 +239,7 @@ VirtualLink::GetStats(Json::Value & stats)
       stat["sent_bytes_second"] = (Json::UInt64)info.sent_bytes_second;
       stat["recv_total_bytes"] = (Json::UInt64)info.recv_total_bytes;
       stat["recv_bytes_second"] = (Json::UInt64)info.recv_bytes_second;
-      stats.append(stat);
+      stats = stat;
       break;
     }
   }

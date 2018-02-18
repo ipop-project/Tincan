@@ -159,12 +159,11 @@ Tincan::QueryLinkStats(
   {
     vector<string>link_ids;
     string olid = overlay_ids["OverlayIds"][i].asString();
-    stat_info[olid] = Json::Value(Json::objectValue);
     Overlay & ol = OverlayFromId(olid);
     ol.QueryLinkIds(link_ids);
     for(auto vlid : link_ids)
     {
-      ol.QueryLinkInfo(vlid, stat_info[olid]);
+      ol.QueryLinkInfo(vlid, stat_info[olid][vlid]);
     }
   }
 

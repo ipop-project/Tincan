@@ -101,7 +101,6 @@ void Tunnel::QueryLinkInfo(
 {
   if(vlink_)
   {
-    vlink_info[TincanControl::LinkId] = vlink_->Id();
     if(vlink_->IsReady())
     {
       if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
@@ -118,13 +117,13 @@ void Tunnel::QueryLinkInfo(
     else
     {
       vlink_info[TincanControl::Status] = "offline";
-      vlink_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
+      vlink_info[TincanControl::Stats] = Json::Value(Json::objectValue);
     }
   }
   else
   {
     vlink_info[TincanControl::Status] = "unknown";
-    vlink_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
+    vlink_info[TincanControl::Stats] = Json::Value(Json::objectValue);
   }
 
 }

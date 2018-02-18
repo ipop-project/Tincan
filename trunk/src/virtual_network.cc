@@ -104,7 +104,7 @@ void VirtualNetwork::QueryInfo(
   olay_info[TincanControl::TapName] = tap_desc_->name;
   olay_info[TincanControl::MAC] = MacAddress();
   olay_info[TincanControl::VIP4] = tap_desc_->ip4;
-  olay_info["IP4PrefixLen"] = tap_desc_->prefix4;
+  olay_info[TincanControl::IP4PrefixLen] = tap_desc_->prefix4;
   olay_info[TincanControl::MTU4] = tap_desc_->mtu4;
   //Add the uid for each vlink
   olay_info[TincanControl::Vlinks] = Json::Value(Json::arrayValue);
