@@ -143,10 +143,13 @@ VirtualNetwork::QueryLinkInfo(
   const string & vlink_id,
   Json::Value & vlink_info)
 {
-  //vlink_info[TincanControl::OverlayId] = descriptor_->uid;
   if(peer_network_->Exists(vlink_id))
   {
     shared_ptr<VirtualLink> vl = peer_network_->GetVlinkById(vlink_id);
+    if(vl->IceRole() == cricket::ICEROLE_CONTROLLING)
+      vlink_info[TincanControl::IceRole] = TincanControl::Controlling;
+    else
+      vlink_info[TincanControl::IceRole] = TincanControl::Controlled;
     if(vl && vl->IsReady())
     {
       LinkInfoMsgData md;
@@ -155,21 +158,17 @@ VirtualNetwork::QueryLinkInfo(
       md.msg_event.Wait(Event::kForever);
       vlink_info[TincanControl::Stats].swap(md.info);
       vlink_info[TincanControl::Status] = "ONLINE";
-      if(vl->IceRole() == cricket::ICEROLE_CONTROLLING)
-        vlink_info[TincanControl::IceRole] = TincanControl::Controlling;
-      else
-        vlink_info[TincanControl::IceRole] = TincanControl::Controlled;
     }
     else
     {
       vlink_info[TincanControl::Status] = "OFFLINE";
-      vlink_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
+      vlink_info[TincanControl::Stats] = Json::Value(Json::objectValue);
     }
   }
   else
   {
     vlink_info[TincanControl::Status] = "UNKNOWN";
-    vlink_info[TincanControl::Stats] = Json::Value(Json::arrayValue);
+    vlink_info[TincanControl::Stats] = Json::Value(Json::objectValue);
   }
 }
 
@@ -207,7 +206,7 @@ void
 VirtualNetwork::VlinkReadComplete(
   uint8_t * data,
   uint32_t data_len,
-  VirtualLink &)
+  VirtualLink & vlink)
 {
   unique_ptr<TapFrame> frame = make_unique<TapFrame>(data, data_len);
   TapFrameProperties fp(*frame);
@@ -217,7 +216,8 @@ VirtualNetwork::VlinkReadComplete(
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
     req[TincanControl::Command] = TincanControl::ICC;
-    req[TincanControl::TapName] = descriptor_->uid;
+    req[TincanControl::OverlayId] = descriptor_->uid;
+    req[TincanControl::LinkId] = vlink.Id();
     req[TincanControl::Data] = string((char*)frame->Payload(),
       frame->PayloadLength());
     //LOG(TC_DBG) << " Delivering ICC to ctrl, data=\n" << req[TincanControl::Data].asString();
@@ -239,7 +239,7 @@ VirtualNetwork::VlinkReadComplete(
       ctrl->SetControlType(TincanControl::CTTincanRequest);
       Json::Value & req = ctrl->GetRequest();
       req[TincanControl::Command] = TincanControl::ReqRouteUpdate;
-      req[TincanControl::TapName] = tap_desc_->name;
+      req[TincanControl::OverlayId] = descriptor_->uid;
       req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
         frame->PayloadEnd());
       LOG(TC_DBG) << "FWDing frame to ctrl, data=\n" <<
@@ -323,7 +323,6 @@ VirtualNetwork::TapReadComplete(
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
     req[TincanControl::Command] = TincanControl::ReqRouteUpdate;
-    req[TincanControl::TapName] = tap_desc_->name;
     req[TincanControl::OverlayId] = descriptor_->uid;
     req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
       frame->PayloadEnd());

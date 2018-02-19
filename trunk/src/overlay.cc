@@ -90,8 +90,38 @@ Overlay::CreateVlink(
   vl->Initialize(net_manager_, move(sslid_copy), *local_fingerprint_.get(),
     ice_role);
   vl->SignalMessageReceived.connect(this, &Overlay::VlinkReadComplete);
-  vl->SignalLinkUp.connect(this, &Overlay::StartIo);
+  vl->SignalLinkUp.connect(this, &Overlay::VLinkUp);
+  vl->SignalLinkDown.connect(this, &Overlay::VLinkDown);
   return vl;
+}
+
+void
+Overlay::VLinkUp(
+  string vlink_id)
+{
+  StartIo();
+  unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
+  ctrl->SetControlType(TincanControl::CTTincanRequest);
+  Json::Value & req = ctrl->GetRequest();
+  req[TincanControl::Command] = TincanControl::LinkStateChange;
+  req[TincanControl::OverlayId] = descriptor_->uid;
+  req[TincanControl::LinkId] = vlink_id;
+  req[TincanControl::Data] = "LINK_STATE_UP";
+  ctrl_link_->Deliver(move(ctrl));
+}
+
+void
+Overlay::VLinkDown(
+  string vlink_id)
+{
+  unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
+  ctrl->SetControlType(TincanControl::CTTincanRequest);
+  Json::Value & req = ctrl->GetRequest();
+  req[TincanControl::Command] = TincanControl::LinkStateChange;
+  req[TincanControl::OverlayId] = descriptor_->uid;
+  req[TincanControl::LinkId] = vlink_id;
+  req[TincanControl::Data] = "LINK_STATE_DOWN";
+  ctrl_link_->Deliver(move(ctrl));
 }
 
 void
@@ -188,6 +218,12 @@ void Overlay::OnMessage(Message * msg)
         frame.release();
     }
     delete msg->pdata;
+  }
+  break;
+  case MSGID_DISC_LINK:
+  {
+    shared_ptr<VirtualLink> vl = ((LinkMsgData*)msg->pdata)->vl;
+    vl->Disconnect();
   }
   break;
   }

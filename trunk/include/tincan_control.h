@@ -93,6 +93,7 @@ const array<const char*, 3> ControlTypeStrings = { {"TincanRequest", "TincanResp
   static const Json::StaticString IP4PrefixLen;
   static const Json::StaticString IPOP;
   static const Json::StaticString LinkId;
+  static const Json::StaticString LinkStateChange;
   static const Json::StaticString Level;
   static const Json::StaticString MAC;
   static const Json::StaticString Message;

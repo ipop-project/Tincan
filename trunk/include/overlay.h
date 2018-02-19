@@ -57,6 +57,7 @@ public:
     MSGID_QUERY_NODE_INFO,
     MSGID_FWD_FRAME,
     MSGID_FWD_FRAME_RD,
+    MSGID_DISC_LINK,
   };
   class TransmitMsgData : public MessageData
   {
@@ -72,6 +73,15 @@ public:
     rtc::Event msg_event;
     LinkInfoMsgData() : info(Json::arrayValue), msg_event(false, false) {}
     ~LinkInfoMsgData() = default;
+  };
+  class LinkMsgData : public MessageData
+  {
+  public:
+    shared_ptr<VirtualLink> vl;
+    rtc::Event msg_event;
+    LinkMsgData() : msg_event(false, false)
+    {}
+    ~LinkMsgData() = default;
   };
 
   Overlay(
@@ -152,6 +162,10 @@ protected:
     unique_ptr<VlinkDescriptor> vlink_desc,
     unique_ptr<PeerDescriptor>
     peer_desc, cricket::IceRole ice_role);
+  virtual void VLinkUp(
+    string vlink_id);
+  virtual void VLinkDown(
+    string vlink_id);
   unique_ptr<TapDev> tdev_;
   unique_ptr<TapDescriptor> tap_desc_;
   unique_ptr<OverlayDescriptor> descriptor_;

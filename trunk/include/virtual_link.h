@@ -107,8 +107,8 @@ public:
     return ice_role_;
   }
 
-  sigslot::signal0<single_threaded> SignalLinkUp;
-  sigslot::signal0<single_threaded> SignalLinkDown;
+  sigslot::signal1<string, single_threaded> SignalLinkUp;
+  sigslot::signal1<string, single_threaded> SignalLinkDown;
   sigslot::signal2<string, string> SignalLocalCasReady;
   sigslot::signal3<uint8_t *, uint32_t, VirtualLink&> SignalMessageReceived;
 private:

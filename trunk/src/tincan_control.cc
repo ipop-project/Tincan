@@ -42,6 +42,7 @@ const Json::StaticString TincanControl::IgnoredNetInterfaces("IgnoredNetInterfac
 const Json::StaticString TincanControl::IP4PrefixLen("IP4PrefixLen");
 const Json::StaticString TincanControl::IPOP("IPOP");
 const Json::StaticString TincanControl::LinkId("LinkId");
+const Json::StaticString TincanControl::LinkStateChange("LinkStateChange");
 const Json::StaticString TincanControl::Level("Level");
 const Json::StaticString TincanControl::MAC("MAC");
 const Json::StaticString TincanControl::Message("Message");

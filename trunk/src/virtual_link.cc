@@ -160,13 +160,13 @@ void VirtualLink::OnWriteableState(
 {
   if(transport->writable())
   {
-    LOG(TC_DBG) << "Connection established to: " << peer_desc_->mac_address;
-    SignalLinkUp();
+    LOG(TC_DBG) << "Connection established to: " << peer_desc_->uid;
+    SignalLinkUp(vlink_desc_->uid);
   }
   else
   {
-    LOG(TC_DBG) << "Link NOT writeable: " << peer_desc_->mac_address;
-    SignalLinkDown();
+    LOG(TC_DBG) << "Link NOT writeable: " << peer_desc_->uid;
+    SignalLinkDown(vlink_desc_->uid);
   }
 }
 
@@ -176,6 +176,8 @@ VirtualLink::RegisterLinkEventHandlers()
   channel_->SignalReadPacket.connect(this, &VirtualLink::OnReadPacket);
   channel_->SignalSentPacket.connect(this, &VirtualLink::OnSentPacket);
   channel_->SignalWritableState.connect(this, &VirtualLink::OnWriteableState);
+  //channel_->SignalReadyToSend.connect(this, &VirtualLink::OnWriteableState);
+
   transport_ctlr_->SignalCandidatesGathered.connect(
     this, &VirtualLink::OnCandidatesGathered);
   transport_ctlr_->SignalGatheringState.connect(

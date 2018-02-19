@@ -101,12 +101,12 @@ void Tunnel::QueryLinkInfo(
 {
   if(vlink_)
   {
+    if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
+      vlink_info[TincanControl::IceRole] = TincanControl::Controlling;
+    else
+      vlink_info[TincanControl::IceRole] = TincanControl::Controlled;
     if(vlink_->IsReady())
     {
-      if(vlink_->IceRole() == cricket::ICEROLE_CONTROLLING)
-        vlink_info[TincanControl::IceRole] = TincanControl::Controlling;
-      else
-        vlink_info[TincanControl::IceRole] = TincanControl::Controlled;
       LinkInfoMsgData md;
       md.vl = vlink_;
       net_worker_.Post(RTC_FROM_HERE, this, MSGID_QUERY_NODE_INFO, &md);
@@ -145,9 +145,14 @@ void Tunnel::SendIcc(
 
 void Tunnel::Shutdown()
 {
+  if(vlink_ && vlink_->IsReady())
+  {
+    LinkInfoMsgData md;
+    md.vl = vlink_;
+    net_worker_.Post(RTC_FROM_HERE, this, MSGID_DISC_LINK, &md);
+    md.msg_event.Wait(Event::kForever);
+  }
   Overlay::Shutdown();
-  if (vlink_)
-    vlink_->Disconnect();
 }
 
 void
@@ -160,9 +165,17 @@ Tunnel::StartIo()
 void Tunnel::RemoveLink(
   const string & vlink_id)
 {
+  if(!vlink_)
+    return;
   if(vlink_->Id() != vlink_id)
     throw TCEXCEPT("The specified VLink ID does not match this Tunnel");
-  vlink_->Disconnect();
+  if(vlink_->IsReady())
+  {
+    LinkInfoMsgData md;
+    md.vl = vlink_;
+    net_worker_.Post(RTC_FROM_HERE, this, MSGID_DISC_LINK, &md);
+    md.msg_event.Wait(Event::kForever);
+  }
   vlink_.reset();
 }
 

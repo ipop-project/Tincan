@@ -52,7 +52,7 @@ void Tincan::CreateOverlay(
   ol_desc->turn_addr = olay_desc["TurnAddress"].asString();
   ol_desc->turn_pass = olay_desc["TurnPass"].asString();
   ol_desc->turn_user = olay_desc["TurnUser"].asString();
-  ol_desc->enable_ip_mapping = olay_desc["EnableIPMapping"].asBool();
+  ol_desc->enable_ip_mapping = false;
   unique_ptr<Overlay> olay;
   if(olay_desc[TincanControl::Type].asString() == "VNET")
   {
