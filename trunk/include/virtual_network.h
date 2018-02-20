@@ -30,14 +30,6 @@ class VirtualNetwork :
   public Overlay
 {
 public:
-  enum MSG_ID
-  {
-    MSGID_TRANSMIT,
-    MSGID_SEND_ICC,
-    MSGID_QUERY_NODE_INFO,
-    MSGID_FWD_FRAME,
-    MSGID_FWD_FRAME_RD,
-  };
   //ctor
    VirtualNetwork(
      unique_ptr<OverlayDescriptor> descriptor,

@@ -151,6 +151,7 @@ void Tunnel::Shutdown()
     md.vl = vlink_;
     net_worker_.Post(RTC_FROM_HERE, this, MSGID_DISC_LINK, &md);
     md.msg_event.Wait(Event::kForever);
+    vlink_.reset();
   }
   Overlay::Shutdown();
 }
@@ -227,7 +228,7 @@ void Tunnel::TapReadComplete(
   AsyncIo * aio_rd)
 {
   TapFrame * frame = static_cast<TapFrame*>(aio_rd->context_);
-  if(!aio_rd->good_)
+  if(!aio_rd->good_ || !vlink_)
   {
     frame->Initialize();
     frame->BufferToTransfer(frame->Payload());

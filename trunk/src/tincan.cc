@@ -193,9 +193,10 @@ Tincan::RemoveOverlay(
     {
       (*ol)->Shutdown();
       ovlays_.erase(ol);
+      return;
     }
   }
-  LOG(LS_WARNING) << "No such virtual network exists " << olid;
+  LOG(LS_WARNING) << "RemoveOverlay: No such virtual network exists " << olid;
 }
 
 void
