@@ -86,7 +86,7 @@ public:
 
   Overlay(
     unique_ptr<OverlayDescriptor> descriptor,
-    shared_ptr<IpopControllerLink> ctrl_handle);
+    IpopControllerLink * ctrl_handle);
 
   virtual ~Overlay();
 
@@ -169,7 +169,8 @@ protected:
   unique_ptr<TapDev> tdev_;
   unique_ptr<TapDescriptor> tap_desc_;
   unique_ptr<OverlayDescriptor> descriptor_;
-  shared_ptr<IpopControllerLink> ctrl_link_;
+  //shared_ptr<IpopControllerLink> ctrl_link_;
+  IpopControllerLink * ctrl_link_;
   unique_ptr<rtc::SSLIdentity> sslid_;
   unique_ptr<rtc::SSLFingerprint> local_fingerprint_;
   rtc::Thread net_worker_;

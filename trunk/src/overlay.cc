@@ -27,7 +27,8 @@ namespace tincan
 {
 Overlay::Overlay(
   unique_ptr<OverlayDescriptor> descriptor,
-  shared_ptr<IpopControllerLink> ctrl_handle) :
+  //shared_ptr<IpopControllerLink> ctrl_handle) :
+  IpopControllerLink * ctrl_handle) :
   tdev_(nullptr),
   descriptor_(move(descriptor)),
   ctrl_link_(ctrl_handle)
@@ -224,6 +225,7 @@ void Overlay::OnMessage(Message * msg)
   {
     shared_ptr<VirtualLink> vl = ((LinkMsgData*)msg->pdata)->vl;
     vl->Disconnect();
+    ((LinkInfoMsgData*)msg->pdata)->msg_event.Set();
   }
   break;
   }

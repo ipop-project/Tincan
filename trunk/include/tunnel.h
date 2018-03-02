@@ -33,7 +33,7 @@ class Tunnel :
 public:
   Tunnel(
     unique_ptr<OverlayDescriptor> descriptor,
-    shared_ptr<IpopControllerLink> ctrl_handle);
+    IpopControllerLink * ctrl_handle);
   //virtual ~Tunnel() = default;
 
   shared_ptr<VirtualLink> CreateVlink(

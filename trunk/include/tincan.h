@@ -72,8 +72,10 @@ public:
   void SetIgnoredNetworkInterfaces(
     const Json::Value & ignore_list) override;
 
+  //void SetIpopControllerLink(
+  //  shared_ptr<IpopControllerLink> ctrl_handle) override;
   void SetIpopControllerLink(
-    shared_ptr<IpopControllerLink> ctrl_handle) override;
+    IpopControllerLink * ctrl_handle) override;
 
   void UpdateRouteTable(
     const Json::Value & rts_desc) override;
@@ -104,10 +106,10 @@ private:
 #endif // _IPOP_WIN
 
   vector<unique_ptr<Overlay>> ovlays_;
-  shared_ptr<ControlListener> ctrl_listener_;
-  shared_ptr<IpopControllerLink> ctrl_link_;
+  IpopControllerLink * ctrl_link_;
   map<string, unique_ptr<TincanControl>> inprogess_controls_;
   Thread ctl_thread_;
+  shared_ptr<ControlListener> ctrl_listener_; //must be destroyed before ctl_thread
   static Tincan * self_;
   std::mutex ovlays_mutex_;
   std::mutex inprogess_controls_mutex_;

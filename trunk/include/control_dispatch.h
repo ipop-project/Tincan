@@ -68,7 +68,7 @@ private:
   map<string, void (ControlDispatch::*)(TincanControl & control)>control_map_;
   DispatchToListenerInf * dtol_;
   TincanDispatchInterface * tincan_;
-  shared_ptr<IpopControllerLink> ctrl_link_;
+  IpopControllerLink * ctrl_link_;
   mutex disp_mutex_;
   unique_ptr<FileRotatingLogSink> log_sink_;
   class DisconnectedControllerHandle : virtual public IpopControllerLink {

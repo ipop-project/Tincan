@@ -35,7 +35,8 @@ Tincan::~Tincan()
 
 void 
 Tincan::SetIpopControllerLink(
-  shared_ptr<IpopControllerLink> ctrl_handle)
+  //shared_ptr<IpopControllerLink> ctrl_handle)
+  IpopControllerLink * ctrl_handle)
 {
   ctrl_link_ = ctrl_handle;
 }
@@ -106,7 +107,7 @@ Tincan::CreateVlink(
     link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
   string tap_name = link_desc[TincanControl::TapName].asString();
 
-  vl_desc->sec_enabled = link_desc[TincanControl::EncryptionEnabled].asBool();
+  vl_desc->sec_enabled = true;
 
   Overlay & ol = OverlayFromId(olid);
   shared_ptr<VirtualLink> vlink =

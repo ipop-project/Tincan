@@ -33,7 +33,7 @@ public:
   //ctor
    VirtualNetwork(
      unique_ptr<OverlayDescriptor> descriptor,
-     shared_ptr<IpopControllerLink> ctrl_handle);
+     IpopControllerLink * ctrl_handle);
 
   ~VirtualNetwork();
 

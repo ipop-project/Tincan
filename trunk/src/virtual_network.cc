@@ -27,7 +27,7 @@ namespace tincan
 {
 VirtualNetwork::VirtualNetwork(
   unique_ptr<OverlayDescriptor> descriptor,
-  shared_ptr<IpopControllerLink> ctrl_handle) :
+  IpopControllerLink * ctrl_handle) :
   Overlay(move(descriptor), ctrl_handle)
 {
   peer_network_ = make_unique<PeerNetwork>();

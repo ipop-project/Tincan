@@ -87,8 +87,10 @@ namespace tincan {
     virtual void SetIgnoredNetworkInterfaces(
       const Json::Value & ignore_list) = 0;
 
+    //virtual void SetIpopControllerLink(
+    //  shared_ptr<IpopControllerLink> ctrl_link) = 0;
     virtual void SetIpopControllerLink(
-      shared_ptr<IpopControllerLink> ctrl_link) = 0;
+      IpopControllerLink * ctrl_link) = 0;
 
     virtual void UpdateRouteTable(
       const Json::Value & rts_desc) = 0;

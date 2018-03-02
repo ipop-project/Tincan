@@ -30,7 +30,7 @@ namespace tincan
 using namespace rtc;
 ControlDispatch::ControlDispatch() :
   dtol_(nullptr),
-  ctrl_link_(make_shared<DisconnectedControllerHandle>())
+  ctrl_link_(new DisconnectedControllerHandle())
 {
   control_map_ = {
     { "ConfigureLogging", &ControlDispatch::ConfigureLogging },
@@ -182,7 +182,8 @@ void ControlDispatch::CreateIpopControllerRespLink(
   {
     unique_ptr<SocketAddress> ctrl_addr(new SocketAddress(ip, port));
     dtol_->CreateIpopControllerLink(move(ctrl_addr));
-    ctrl_link_.reset(&dtol_->GetIpopControllerLink());
+    delete ctrl_link_;
+    ctrl_link_ = &dtol_->GetIpopControllerLink();
     tincan_->SetIpopControllerLink(ctrl_link_);
     control.SetResponse(msg, true);
     ctrl_link_->Deliver(control);

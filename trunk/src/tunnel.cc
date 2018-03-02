@@ -28,7 +28,7 @@ namespace tincan
 {
 Tunnel::Tunnel(
   unique_ptr<OverlayDescriptor> descriptor,
-  shared_ptr<IpopControllerLink> ctrl_handle) :
+  IpopControllerLink * ctrl_handle) :
   Overlay(move(descriptor), ctrl_handle)
 {}
 
@@ -234,7 +234,10 @@ void Tunnel::TapReadComplete(
     frame->BufferToTransfer(frame->Payload());
     frame->BytesToTransfer(frame->PayloadCapacity());
     if(0 != tdev_->Read(*frame))
+    {
       delete frame;
+      //TODO: send a msg to control indicating tap needs to be reset
+    }
     return;
   }
   frame->PayloadLength(frame->BytesTransferred());
