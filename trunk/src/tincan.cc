@@ -94,6 +94,10 @@ Tincan::CreateVlink(
   {
     CreateOverlay(link_desc, olay_info);
   }
+  else
+  {
+    OverlayFromId(olid).QueryInfo(olay_info);
+  }
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
   peer_desc->uid =
     link_desc[TincanControl::PeerInfo][TincanControl::UID].asString();
