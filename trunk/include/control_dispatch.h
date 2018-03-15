@@ -49,29 +49,26 @@ public:
   void SetDispatchToListenerInf(DispatchToListenerInf * dtol);
 
 private:
-  void UpdateRoutes(TincanControl & control);
-  void ConnectToPeer(TincanControl & control);
-  void ConnectTunnel(TincanControl & control);
+  void ConfigureLogging(TincanControl & control);
+  void CreateLink(TincanControl & control);
   void CreateIpopControllerRespLink(TincanControl & control);
-  void CreateLinkListener(TincanControl & control);
-  void CreateTunnel(TincanControl & control);
-  void CreateVNet(TincanControl & control);
+  void CreateOverlay(TincanControl & control);
   void Echo(TincanControl & control);
   void InjectFrame(TincanControl & control);
-  void QueryTunnelStats(TincanControl & control);
-  void QueryNodeInfo(TincanControl & control);
+  void QueryLinkStats(TincanControl & control);
+  void QueryOverlayInfo(TincanControl & control);
   void QueryCandidateAddressSet(TincanControl & control);
-  void TrimLink(TincanControl & control);
-  void TrimTunnel(TincanControl & control);
-  void ConfigureLogging(TincanControl & control);
+  void RemoveLink(TincanControl & control);
+  void RemoveOverlay(TincanControl & control);
+  void UpdateRouteTable(TincanControl & control);
   LoggingSeverity GetLogLevel(const string & log_level);
   void SetNetworkIgnoreList(TincanControl & control);
-  void SendICC(TincanControl & control);
+  void SendIcc(TincanControl & control);
 
   map<string, void (ControlDispatch::*)(TincanControl & control)>control_map_;
   DispatchToListenerInf * dtol_;
   TincanDispatchInterface * tincan_;
-  shared_ptr<IpopControllerLink> ctrl_link_;
+  IpopControllerLink * ctrl_link_;
   mutex disp_mutex_;
   unique_ptr<FileRotatingLogSink> log_sink_;
   class DisconnectedControllerHandle : virtual public IpopControllerLink {

@@ -46,10 +46,13 @@ using cricket::TransportChannel;
 using cricket::ConnectionRole;
 using rtc::PacketTransportInterface;
 
+class PeerNetwork;
+
 struct  VlinkDescriptor
 {
   bool sec_enabled;
-  string name;
+  string uid;
+  //string name;
   string stun_addr;
   string turn_addr;
   string turn_user;
@@ -60,6 +63,7 @@ class VirtualLink :
   public sigslot::has_slots<>
 {
 public:
+  friend PeerNetwork;
   VirtualLink(
     unique_ptr<VlinkDescriptor> vlink_desc,
     unique_ptr<PeerDescriptor> peer_desc,
@@ -92,6 +96,10 @@ public:
 
   void PeerCandidates(const string & peer_cas);
 
+  string Id()
+  {
+    return vlink_desc_->uid;
+  }
   void GetStats(Json::Value & infos);
 
   cricket::IceRole IceRole()
@@ -99,11 +107,10 @@ public:
     return ice_role_;
   }
 
-  sigslot::signal1<int> SignalLinkUp;
-  sigslot::signal1<int> SignalLinkDown;
-  sigslot::signal1<string> SignalLocalCasReady;
-  sigslot::signal3<uint8_t *, uint32_t, VirtualLink&>
-    SignalMessageReceived;
+  sigslot::signal1<string, single_threaded> SignalLinkUp;
+  sigslot::signal1<string, single_threaded> SignalLinkDown;
+  sigslot::signal2<string, string> SignalLocalCasReady;
+  sigslot::signal3<uint8_t *, uint32_t, VirtualLink&> SignalMessageReceived;
 private:
   void SetupTURN(
     const string & turn_server,
@@ -141,9 +148,7 @@ private:
 
   unique_ptr<VlinkDescriptor> vlink_desc_;
   unique_ptr<PeerDescriptor> peer_desc_;
-  BasicPacketSocketFactory packet_factory_;
-  unique_ptr<cricket::BasicPortAllocator> port_allocator_;
-  unique_ptr<cricket::TransportController> transport_ctlr_;
+  std::mutex cas_mutex_;
   cricket::Candidates local_candidates_;
   const uint64_t tiebreaker_;
   cricket::IceRole ice_role_;
@@ -151,13 +156,15 @@ private:
   TransportChannel * channel_;
   unique_ptr<cricket::TransportDescription> local_description_;
   unique_ptr<cricket::TransportDescription> remote_description_;
-
   unique_ptr<SSLFingerprint> remote_fingerprint_;
   string content_name_;
   PacketOptions packet_options_;
+  BasicPacketSocketFactory packet_factory_;
+  unique_ptr<cricket::BasicPortAllocator> port_allocator_;
+  unique_ptr<cricket::TransportController> transport_ctlr_;
 
-  std::mutex cas_mutex_;
   bool cas_ready_;
+  bool is_valid_;
   rtc::Thread* signaling_thread_;
   rtc::Thread* network_thread_;
 };

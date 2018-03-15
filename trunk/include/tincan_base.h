@@ -40,6 +40,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <utility>
 #include <unordered_map>
 #include <vector>
 namespace tincan
@@ -57,6 +58,7 @@ using std::hash;
 using std::istringstream;
 using std::list;
 using std::lock_guard;
+using std::make_pair;
 using std::make_shared;
 using std::make_unique;
 using std::map;
@@ -64,6 +66,7 @@ using std::memcpy;
 using std::milli;
 using std::move;
 using std::mutex;
+using std::pair;
 using std::ostringstream;
 using std::out_of_range;
 using std::shared_ptr;
@@ -77,13 +80,13 @@ using std::vector;
 
 #define TC_DBG LS_ERROR
 ///////////////////////////////////////////////////////////////////////////////
-static const uint16_t kTincanVerMjr = 2;
+static const uint16_t kTincanVerMjr = 3;
 //
 static const uint16_t kTincanVerMnr = 0;
 //
 static const uint16_t kTincanVerRev = 0;
 //
-static const uint8_t kTincanControlVer = 4;
+static const uint8_t kTincanControlVer = 5;
 //
 static const uint8_t kTincanLinkVer = 1;
 //
@@ -96,9 +99,6 @@ static const uint16_t kEthHeaderSize = 14;
 static const uint16_t kEthernetSize = kEthHeaderSize + kMaxMtuSize;
 //
 static const uint16_t kTapBufferSize = kTapHeaderSize + kEthernetSize;
-//
-//Port Allocator Flags
-static const uint32_t kFlags = 0;
 
 static const uint8_t kFT_DTF = 0x0A;
 static const uint8_t kFT_FWD = 0x0B;
@@ -119,7 +119,7 @@ static const char kLocalHost6[] = "::1";
 //
 static uint16_t kUdpPort = 5800;
 //
-static const uint8_t kLinkConcurrentAIO = 1;
+static const uint8_t kLinkConcurrentAIO = 4;
 //
 static const uint32_t kCacheIOMax = 32;
 
@@ -197,6 +197,37 @@ size_t StringToByteArray(
   }
   return count;
 }
+///////////////////////////////////////////////////////////////////////////////
+//ArpOffset
+class ArpOffsets
+{
+public:
+  ArpOffsets(uint8_t * arp_packet) :
+    pkt_(arp_packet)
+  {}
+  uint8_t* HardwareType()
+  {
+    return pkt_;
+  }
+  uint8_t* ProtocolLen()
+  {
+    return &pkt_[5];
+  }
+  uint8_t* ArpOperation()
+  {
+    return &pkt_[6];
+  }
+  uint8_t* SourceIp()
+  {
+    return &pkt_[14];
+  }
+  uint8_t* DestinationIp()
+  {
+    return &pkt_[24];
+  }
+private:
+  uint8_t * pkt_;
+};
 ///////////////////////////////////////////////////////////////////////////////
 //IpOffsets
 class IpOffsets

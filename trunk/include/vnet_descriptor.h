@@ -41,5 +41,20 @@ struct VnetDescriptor
   bool l2tunnel_enabled;
   bool l3tunnel_enabled;
 };
+struct OverlayDescriptor
+{
+  string uid;
+  //string type;
+  //string name;
+  //string mac;
+  //string vlink_id;
+  //string description;
+  string stun_addr;
+  string turn_addr;
+  string turn_user;
+  string turn_pass;
+  bool enable_ip_mapping;
+  bool disable_encryption;
+};
 } // namespace tincan
 #endif // TINCAN_VNET_DESCRIPTOR_H_

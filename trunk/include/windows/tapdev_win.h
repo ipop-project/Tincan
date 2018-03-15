@@ -41,7 +41,8 @@ NOTE: A TapDev object cannot be reused, ie.,
 It must be deleted after it is closed and a new instance create.
 */
 class TapDevWin :
-  public TapDevInf
+  public TapDevInf,
+  public MessageHandler
 {
 public:
   struct IoThreadDescriptor
@@ -71,29 +72,41 @@ public:
     IoThreadPool(uint8_t max_threads = 1) :
       ref_(0),
       num_threads_(0),
-      max_threads_(max_threads)
+      max_threads_(max_threads), is_alloc(false)
+    {}
+    ~IoThreadPool()
+    {
+      if(is_alloc)
+        Free();
+    }
+    bool Alloc()
     {
       io_threads_ = new IoThreadDescriptor[max_threads_];
       for(uint16_t i = 0; i < max_threads_; i++)
       {
         io_threads_[i].num_ = i;
-        io_threads_[i].handle_ = CreateThread(0, 0, 
+        io_threads_[i].handle_ = CreateThread(0, 0,
           IoThreadDescriptor::IoCompletionThread, (void *)&io_threads_[i],
           CREATE_SUSPENDED, &io_threads_[i].id_);
         ++num_threads_;
       }
+      is_alloc = true;
+      return is_alloc;
     }
-    ~IoThreadPool()
+    void Free()
     {
       for(uint16_t i = 0; i < max_threads_; i++)
       {
         SetEvent(io_threads_[i].exit_ev_);
-        PostQueuedCompletionStatus(io_threads_[i].cmpl_prt_hdl_, 0, (DWORD)NULL, NULL);
+        PostQueuedCompletionStatus(io_threads_[i].cmpl_prt_hdl_, 0,
+          (DWORD)NULL, NULL);
         ResumeThread(io_threads_[i].handle_);
       }
       //wait for io threads to terminate, 10 seconds or bust
-      WaitForMultipleObjects(num_threads_, (const HANDLE*)io_threads_, TRUE, 10000);
-      delete []io_threads_;
+      WaitForMultipleObjects(num_threads_, (const HANDLE*)io_threads_,
+        TRUE, 10000);
+      delete[]io_threads_;
+      is_alloc = false;
     }
     void Attach(HANDLE completion_port_handle)
     {
@@ -107,23 +120,24 @@ public:
         }
       }
     }
-    //void Release()
-    //{
-    //  lock_guard<mutex> lg(iot_mutex_);
-    //  if(0 == --ref_)
-    //  {
-    //    for(uint16_t i = 0; i < max_threads_; i++)
-    //    {
-    //      SuspendThread(io_threads_[i].handle_);
-    //      io_threads_[i].cmpl_prt_hdl_ = 0;
-    //    }
-    //  }
-    //}
+    void Release()
+    {
+      lock_guard<mutex> lg(iot_mutex_);
+      if(0 == --ref_)
+      {
+        for(uint16_t i = 0; i < max_threads_; i++)
+        {
+          SuspendThread(io_threads_[i].handle_);
+          io_threads_[i].cmpl_prt_hdl_ = 0;
+        }
+      }
+    }
     IoThreadDescriptor* io_threads_;
     uint16_t ref_;
     uint16_t num_threads_;
     uint16_t max_threads_;
     mutex iot_mutex_;
+    bool is_alloc;
   };
 
   TapDevWin();
@@ -174,6 +188,8 @@ protected:
     const string & name,
     string & guid);
   void GetMacAddress();
+  void OnMessage(
+    Message * msg) override;
 
   static const char * const NETWORK_PATH_;
   static const char * const USER_MODE_DEVICE_DIR_;
@@ -187,6 +203,7 @@ protected:
   IoThreadPool io_thread_pool_;
   DWORD media_status_;
   IP4AddressType ip4_;
+  rtc::Thread writer_;
 };
 }  // namespace win
 }  // namespace tincan

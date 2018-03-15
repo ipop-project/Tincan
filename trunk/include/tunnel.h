@@ -23,43 +23,68 @@
 #ifndef TINCAN_TUNNEL_H_
 #define TINCAN_TUNNEL_H_
 #include "tincan_base.h"
-#include "virtual_link.h"
+#include "overlay.h"
+
 namespace tincan
 {
-class PeerNetwork;
 class Tunnel :
-  public sigslot::has_slots<>
+  public Overlay
 {
-  friend PeerNetwork;
 public:
-  Tunnel();
-  virtual ~Tunnel() = default;
-  void Transmit(TapFrame & frame);
-  void AddVlinkEndpoint(shared_ptr<VirtualLink> vlink);
-  void QueryCas(Json::Value & cas_info);
-  void Id(MacAddressType id);
-  MacAddressType Id();
-  shared_ptr<VirtualLink> Vlink()
-  {
-    return vlinks_[preferred_];
-  }
-  shared_ptr<VirtualLink> Controlling()
-  {
-    return vlinks_[0];
-  }
-  shared_ptr<VirtualLink> Controlled()
-  {
-    return vlinks_[1];
-  }
-  void ReleaseLink(int role);
-  sigslot::signal3<uint8_t *, uint32_t, VirtualLink&> SignalMessageReceived;
+  Tunnel(
+    unique_ptr<OverlayDescriptor> descriptor,
+    IpopControllerLink * ctrl_handle);
+  //virtual ~Tunnel() = default;
+
+  shared_ptr<VirtualLink> CreateVlink(
+    unique_ptr<VlinkDescriptor> vlink_desc,
+    unique_ptr<PeerDescriptor> peer_desc) override;
+
+  void QueryInfo(
+    Json::Value & olay_info) override;
+
+  void QueryLinkCas(
+    const string & vlink_id,
+    Json::Value & cas_info) override;
+
+  void QueryLinkIds(
+    vector<string> & link_ids) override;
+
+  void QueryLinkInfo(
+    const string & vlink_id,
+    Json::Value & vlink_info) override;
+
+  void SendIcc(
+    const string & recipient_mac,
+    const string & data) override;
+
+  //void Start();
+
+  void Shutdown() override;
+
+  void StartIo() override;
+
+  void RemoveLink(
+    const string & vlink_id) override;
+
+  void UpdateRouteTable(
+    const Json::Value & rt_descr) override;
+
+  //
+  //FrameHandler implementation
+  void VlinkReadComplete(
+    uint8_t * data,
+    uint32_t data_len,
+    VirtualLink & vlink) override;
+  //
+  //AsyncIOComplete
+  void TapReadComplete(
+    AsyncIo * aio_rd);
+  void TapWriteComplete(
+    AsyncIo * aio_wr) override;
+
 private:
-  void SetPreferredLink(int role);
-  void UpdatePreferredLink(int role);
-  array<shared_ptr<VirtualLink>, 2> vlinks_;
-  int preferred_;
-  MacAddressType id_;
-  bool is_valid_;
+  shared_ptr<VirtualLink> vlink_;
 };
 } //namespace tincan
 #endif  // TINCAN_TUNNEL_H_

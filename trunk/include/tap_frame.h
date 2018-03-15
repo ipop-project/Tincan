@@ -194,11 +194,32 @@ public:
     return memcmp(eth.DestinationMac(), "\xFF\xFF\xFF\xFF\xFF\xFF", 6) == 0;
   }
 
-  uint32_t DestinationIp4Address()
+  IP4AddressType & DestinationIp4Address()
   {
     EthOffsets eth = tf_.Payload();
     IpOffsets ipp = eth.Payload();
-    return *(uint32_t*)ipp.DestinationIp();
+    return *(IP4AddressType*)ipp.DestinationIp();
+  }
+
+  IP4AddressType & SourceIp4Address()
+  {
+    EthOffsets eth = tf_.Payload();
+    IpOffsets ipp = eth.Payload();
+    return *(IP4AddressType*)ipp.SourceIp();
+  }
+
+  IP4AddressType & ArpDestinationIp4Address()
+  {
+    EthOffsets eth = tf_.Payload();
+    ArpOffsets arp = eth.Payload();
+    return *(IP4AddressType*)arp.DestinationIp();
+  }
+
+  IP4AddressType & ArpSourceIp4Address()
+  {
+    EthOffsets eth = tf_.Payload();
+    ArpOffsets arp = eth.Payload();
+    return *(IP4AddressType*)arp.SourceIp();
   }
 
   MacAddressType & DestinationMac()
@@ -207,8 +228,57 @@ public:
     return *(MacAddressType *)(eth.DestinationMac());
   }
 
+  MacAddressType & SourceMac()
+  {
+    EthOffsets eth = tf_.Payload();
+    return *(MacAddressType *)(eth.SourceMac());
+  }
+
 private:
   TapFrame & tf_;
+};
+///////////////////////////////////////////////////////////////////////////////
+// IP4Mapper patches IP4 addresses
+class IP4AddressMapper
+{
+public:
+  IP4AddressMapper(
+    TapFrame & tf,
+    TapFrameProperties & fp) :
+    tf_(tf), fp_(fp)
+  {}
+
+  void CheckAndPatch(
+    const IP4AddressType& tunnel_ip4_src,
+    const IP4AddressType& local_ip4)
+  {
+    if (fp_.IsArpResponse() || fp_.IsArpRequest())
+  {
+      // ARP IPv4 Address Packet Patching
+    IP4AddressType& arp_pkt_src_ip = fp_.ArpSourceIp4Address();
+    IP4AddressType& arp_pkt_des_ip = fp_.ArpDestinationIp4Address();
+    if (arp_pkt_src_ip != tunnel_ip4_src)
+    {
+    arp_pkt_src_ip = tunnel_ip4_src;
+    arp_pkt_des_ip = local_ip4;
+    }
+  }
+  else if (fp_.IsIp4())
+  {
+    // IPv4 Address Packet Patching
+    IP4AddressType& ip_pkt_src = fp_.SourceIp4Address();
+    IP4AddressType& ip_pkt_des = fp_.DestinationIp4Address();
+    if (ip_pkt_src != tunnel_ip4_src)
+    {
+    ip_pkt_src = tunnel_ip4_src;
+    ip_pkt_des = local_ip4;
+    }
+  }
+  }
+
+private:
+  TapFrame & tf_;
+  TapFrameProperties & fp_;
 };
 } //namespace tincan
 #endif  // TINCAN_TAP_FRAME_H_

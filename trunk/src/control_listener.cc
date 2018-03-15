@@ -25,7 +25,7 @@
 namespace tincan
 {
 using namespace rtc;
-ControlListener::ControlListener(unique_ptr<ControlDispatch> control_dispatch) :
+ControlListener::ControlListener(unique_ptr<ControlDispatch> control_dispatch):
   ctrl_dispatch_(move(control_dispatch)),
   packet_options_(DSCP_DEFAULT)
 {
@@ -61,6 +61,7 @@ ControlListener::Deliver(
   TincanControl & ctrl_resp)
 {
   std::string msg = ctrl_resp.StyledString();
+  LOG(LS_VERBOSE) << "Sending CONTROL: " << msg;
   lock_guard<mutex> lg(skt_mutex_);
   snd_socket_->SendTo(msg.c_str(), msg.length(), *ctrl_addr_, packet_options_);
 }

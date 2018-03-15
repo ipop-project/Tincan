@@ -30,14 +30,12 @@
 #endif
 
 namespace tincan {
-class TapDev : public
+//class TapDev : public
 #if defined(_IPOP_LINUX)
-  linux::TapDevLnx
-#elif defined(_IPOP_OSX)
-  osx::TapDevOsx
+using TapDev = linux::TapDevLnx;
 #elif defined(_IPOP_WIN)
-  windows::TapDevWin
+using TapDev = windows::TapDevWin;
 #endif
-{};
+//{};
 }  // namespace tincan
 #endif  // TINCAN_TAPDEV_H_

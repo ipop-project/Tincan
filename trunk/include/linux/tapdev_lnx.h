@@ -71,17 +71,8 @@ public:
   void Down() override;
   MacAddressType MacAddress() override;
   IP4AddressType Ip4() override;
-  enum MSG_ID
-  {
-    MSGID_READ,
-    MSGID_WRITE,
-  };
-  class TapPayload :
-    public MessageData
-  {
-  public:
-    AsyncIo * aio_;
-  };
+protected:
+  void OnMessage(Message * msg) override;
 private:
   rtc::Thread reader_;
   rtc::Thread writer_;
@@ -95,7 +86,6 @@ private:
   void SetIpv4Addr(const char* a, unsigned int b);
   void SetFlags(short a, short b);
   void PlenToIpv4Mask(unsigned int a, struct sockaddr *b);
-  void OnMessage(Message * msg) override;
 };
 }
 }

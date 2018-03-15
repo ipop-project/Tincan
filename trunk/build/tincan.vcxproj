@@ -168,6 +168,7 @@
     <ClInclude Include="..\include\controller_handle.h" />
     <ClInclude Include="..\include\control_dispatch.h" />
     <ClInclude Include="..\include\control_listener.h" />
+    <ClInclude Include="..\include\overlay.h" />
     <ClInclude Include="..\include\peer_descriptor.h" />
     <ClInclude Include="..\include\peer_network.h" />
     <ClInclude Include="..\include\tapdev.h" />
@@ -187,6 +188,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\control_dispatch.cc" />
     <ClCompile Include="..\src\control_listener.cc" />
+    <ClCompile Include="..\src\overlay.cc" />
     <ClCompile Include="..\src\peer_network.cc" />
     <ClCompile Include="..\src\tap_frame.cc" />
     <ClCompile Include="..\src\tincan.cc" />

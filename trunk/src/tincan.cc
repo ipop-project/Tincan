@@ -26,38 +26,78 @@
 namespace tincan
 {
 Tincan::Tincan() :
-  ctrl_listener_(nullptr),
-
-  ctrl_link_(nullptr),
-
   exit_event_(false, false)
 {}
 
 Tincan::~Tincan()
 {
-  delete ctrl_listener_;
 }
 
-void Tincan::UpdateRoute(
-  const string & tap_name,
-  const string & dest_mac,
-  const string & path_mac)
+void 
+Tincan::SetIpopControllerLink(
+  //shared_ptr<IpopControllerLink> ctrl_handle)
+  IpopControllerLink * ctrl_handle)
 {
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  MacAddressType mac_dest, mac_path;
-  size_t cnt = StringToByteArray(dest_mac, mac_dest.begin(), mac_dest.end());
-  if(cnt != 6)
-    throw TCEXCEPT("UpdateRoute failed, destination MAC address was NOT successfully converted.");
-  cnt = StringToByteArray(path_mac, mac_path.begin(), mac_path.end());
-  if(cnt != 6)
-    throw TCEXCEPT("UpdateRoute failed, path MAC address was NOT successfully converted.");
-  vn.UpdateRoute(mac_dest, mac_path);
+  ctrl_link_ = ctrl_handle;
+}
+
+void Tincan::CreateOverlay(
+  const Json::Value & olay_desc,
+  Json::Value & olay_info)
+{
+  unique_ptr<OverlayDescriptor> ol_desc(new OverlayDescriptor);
+  ol_desc->uid = olay_desc[TincanControl::OverlayId].asString();
+  if(IsOverlayExisit(ol_desc->uid))
+    throw TCEXCEPT("The specified overlay identifier already exisits");
+  ol_desc->stun_addr = olay_desc["StunAddress"].asString();
+  ol_desc->turn_addr = olay_desc["TurnAddress"].asString();
+  ol_desc->turn_pass = olay_desc["TurnPass"].asString();
+  ol_desc->turn_user = olay_desc["TurnUser"].asString();
+  ol_desc->enable_ip_mapping = false;
+  unique_ptr<Overlay> olay;
+  if(olay_desc[TincanControl::Type].asString() == "VNET")
+  {
+    olay = make_unique<VirtualNetwork>(move(ol_desc), ctrl_link_);
+  }
+  else if(olay_desc[TincanControl::Type].asString() == "TUNNEL")
+  {
+    olay = make_unique<Tunnel>(move(ol_desc), ctrl_link_);
+  }
+  else
+    throw TCEXCEPT("Invalid Overlay type specified");
+  unique_ptr<TapDescriptor> tap_desc = make_unique<TapDescriptor>();
+  tap_desc->name = olay_desc["TapName"].asString();
+  tap_desc->ip4 = olay_desc["IP4"].asString();
+  tap_desc->prefix4 = olay_desc["IP4PrefixLen"].asUInt();
+  tap_desc->mtu4 = olay_desc[TincanControl::MTU4].asUInt();
+
+  olay->Configure(move(tap_desc));
+  olay->Start();
+  olay->QueryInfo(olay_info);
+  lock_guard<mutex> lg(ovlays_mutex_);
+  ovlays_.push_back(move(olay));
+
+  return;
 }
 
 void
-Tincan::ConnectTunnel(
-  const Json::Value & link_desc)
+Tincan::CreateVlink(
+  const Json::Value & link_desc,
+  const TincanControl & control)
 {
+  unique_ptr<VlinkDescriptor> vl_desc = make_unique<VlinkDescriptor>();
+  vl_desc->uid = link_desc[TincanControl::LinkId].asString();
+  unique_ptr<Json::Value> resp = make_unique<Json::Value>(Json::objectValue);
+  Json::Value & olay_info = (*resp)[TincanControl::Message];
+  string olid = link_desc[TincanControl::OverlayId].asString();
+  if(!IsOverlayExisit(olid))
+  {
+    CreateOverlay(link_desc, olay_info);
+  }
+  else
+  {
+    OverlayFromId(olid).QueryInfo(olay_info);
+  }
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
   peer_desc->uid =
     link_desc[TincanControl::PeerInfo][TincanControl::UID].asString();
@@ -66,58 +106,32 @@ Tincan::ConnectTunnel(
   peer_desc->cas =
     link_desc[TincanControl::PeerInfo][TincanControl::CAS].asString();
   peer_desc->fingerprint =
-    link_desc[TincanControl::PeerInfo][TincanControl::Fingerprint].asString();
+    link_desc[TincanControl::PeerInfo][TincanControl::FPR].asString();
   peer_desc->mac_address =
     link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
-  string tap_name = link_desc[TincanControl::InterfaceName].asString();
-  unique_ptr<VlinkDescriptor> vl_desc = make_unique<VlinkDescriptor>();
-  vl_desc->name = tap_name;
-  vl_desc->sec_enabled = link_desc[TincanControl::EncryptionEnabled].asBool();
+  string tap_name = link_desc[TincanControl::TapName].asString();
 
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  vn.ConnectTunnel(move(peer_desc), move(vl_desc));
-}
+  vl_desc->sec_enabled = true;
 
-void 
-Tincan::SetIpopControllerLink(
-  shared_ptr<IpopControllerLink> ctrl_handle)
-{
-  ctrl_link_ = ctrl_handle;
-}
-
-void Tincan::CreateVNet(unique_ptr<VnetDescriptor> lvecfg)
-{
-  lock_guard<mutex> lg(vnets_mutex_);
-  auto vnet = make_unique<VirtualNetwork>(move(lvecfg), ctrl_link_);
-  vnet->Configure();
-  vnet->Start();
-  vnets_.push_back(move(vnet));
-}
-
-void
-Tincan::CreateTunnel(
-  const Json::Value & link_desc,
-  TincanControl & ctrl)
-{
-  unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
-  peer_desc->uid = link_desc[TincanControl::PeerInfo][TincanControl::UID].asString();
-  peer_desc->vip4 = link_desc[TincanControl::PeerInfo][TincanControl::VIP4].asString();
-  //peer_desc->vip6 = link_desc[TincanControl::PeerInfo][TincanControl::VIP6].asString();
-  peer_desc->fingerprint = link_desc[TincanControl::PeerInfo][TincanControl::Fingerprint].asString();
-  peer_desc->mac_address = link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
-  string tap_name = link_desc[TincanControl::InterfaceName].asString();
-  unique_ptr<VlinkDescriptor> vl_desc = make_unique<VlinkDescriptor>();
-  vl_desc->name = tap_name;
-  vl_desc->sec_enabled = link_desc[TincanControl::EncryptionEnabled].asBool();
-  
-  VirtualNetwork & vn = VnetFromName(tap_name);
+  Overlay & ol = OverlayFromId(olid);
   shared_ptr<VirtualLink> vlink =
-    vn.CreateTunnel(move(peer_desc), move(vl_desc));
-  //if(vlink->Candidates().empty())
+    ol.CreateVlink(move(vl_desc), move(peer_desc));
+  unique_ptr<TincanControl> ctrl = make_unique<TincanControl>(control);
+  if(vlink->Candidates().empty())
   {
+    ctrl->SetResponse(move(resp));
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);
-    inprogess_controls_.push_back(make_unique<TincanControl>(move(ctrl)));
+    inprogess_controls_[link_desc[TincanControl::LinkId].asString()]
+      = move(ctrl);
+
     vlink->SignalLocalCasReady.connect(this, &Tincan::OnLocalCasUpdated);
+  }
+  else
+  {
+    (*resp)["Message"]["CAS"] = vlink->Candidates();
+    (*resp)["Success"] = true;
+    ctrl->SetResponse(move(resp));
+    ctrl_link_->Deliver(move(ctrl));
   }
 }
 
@@ -125,89 +139,126 @@ void
 Tincan::InjectFrame(
   const Json::Value & frame_desc)
 {
-  const string & tap_name = frame_desc[TincanControl::InterfaceName].asString();
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  vn.InjectFame(frame_desc[TincanControl::Data].asString());
+  const string & olid = frame_desc[TincanControl::OverlayId].asString();
+  Overlay & ol = OverlayFromId(olid);
+  ol.InjectFame(frame_desc[TincanControl::Data].asString());
 }
 
 void
-Tincan::QueryTunnelStats(
-  const string & tap_name,
-  const string & node_mac,
-  Json::Value & node_info)
+Tincan::QueryLinkCas(
+  const Json::Value & link_desc,
+  Json::Value & cas_info)
 {
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  node_info[TincanControl::Type] = "peer";
-  node_info[TincanControl::VnetDescription] = vn.Descriptor().description;
-  node_info[TincanControl::InterfaceName] = vn.Name();
-  vn.QueryTunnelStats(node_mac, node_info);
+  const string olid = link_desc[TincanControl::OverlayId].asString();
+  const string vlid = link_desc[TincanControl::LinkId].asString();
+  Overlay & ol = OverlayFromId(olid);
+  ol.QueryLinkCas(vlid, cas_info);
+}
+
+void
+Tincan::QueryLinkStats(
+  const Json::Value & overlay_ids,
+  Json::Value & stat_info)
+{
+  for(uint32_t i = 0; i < overlay_ids["OverlayIds"].size(); i++)
+  {
+    vector<string>link_ids;
+    string olid = overlay_ids["OverlayIds"][i].asString();
+    Overlay & ol = OverlayFromId(olid);
+    ol.QueryLinkIds(link_ids);
+    for(auto vlid : link_ids)
+    {
+      ol.QueryLinkInfo(vlid, stat_info[olid][vlid]);
+    }
+  }
 
 }
 
 void
-Tincan::QueryNodeInfo(
-  const string & tap_name,
-  const string & node_mac,
-  Json::Value & node_info)
+Tincan::QueryOverlayInfo(
+  const Json::Value & olay_desc,
+  Json::Value & olay_info)
 {
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  if(node_mac.length() == 0 || node_mac == vn.Descriptor().mac)
-  {
-    GetLocalNodeInfo(vn, node_info);
-  }
-  else
-  {
-    node_info[TincanControl::Type] = "peer";
-    node_info[TincanControl::VnetDescription] = vn.Descriptor().description;
-    node_info[TincanControl::InterfaceName] = vn.Name();
-    vn.QueryNodeInfo(node_mac, node_info);
-  }
+  Overlay & ol = OverlayFromId(olay_desc[TincanControl::OverlayId].asString());
+  ol.QueryInfo(olay_info);
 }
 
 void 
-Tincan::TrimTunnel(
-  const Json::Value & tnl_desc)
+Tincan::RemoveOverlay(
+  const Json::Value & olay_desc)
 {
-  const string & tap_name = tnl_desc[TincanControl::InterfaceName].asString();
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  const string & mac = tnl_desc[TincanControl::MAC].asString();
-  vn.TerminateTunnel(mac);
-
+  const string olid = olay_desc[TincanControl::OverlayId].asString();
+  if(olid.empty())
+    throw TCEXCEPT("No overlay id specified");
+  
+  lock_guard<mutex> lg(ovlays_mutex_);
+  for(auto ol = ovlays_.begin(); ol != ovlays_.end(); ol++)
+  {
+    if((*ol)->Descriptor().uid.compare(olid) == 0)
+    {
+      (*ol)->Shutdown();
+      ovlays_.erase(ol);
+      return;
+    }
+  }
+  LOG(LS_WARNING) << "RemoveOverlay: No such virtual network exists " << olid;
 }
 
 void
-Tincan::TrimVlink(
+Tincan::RemoveVlink(
   const Json::Value & link_desc)
 {
-  const string & tap_name = link_desc[TincanControl::InterfaceName].asString();
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  const string & mac = link_desc[TincanControl::MAC].asString();
-  const string & role = link_desc[TincanControl::Role].asString();
-  vn.TerminateLink(mac, role);
+  const string olid = link_desc[TincanControl::OverlayId].asString();
+  const string vlid = link_desc[TincanControl::LinkId].asString();
+  if(olid.empty() || vlid.empty())
+    throw TCEXCEPT("Required identifier not specified");
+
+  lock_guard<mutex> lg(ovlays_mutex_);
+  for(auto & ol : ovlays_)
+  {
+    if(ol->Descriptor().uid.compare(olid) == 0)
+    {
+      ol->RemoveLink(vlid);
+    }
+  }
 }
 
 void
 Tincan::SendIcc(
   const Json::Value & icc_desc)
 {
-  const string & tap_name = icc_desc[TincanControl::InterfaceName].asString();
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  const string & mac = icc_desc[TincanControl::RecipientMac].asString();
-  const string & data = icc_desc[TincanControl::Data].asString();
-  vn.SendIcc(mac, data);
+  const string olid = icc_desc[TincanControl::OverlayId].asString();
+  const string & link_id = icc_desc[TincanControl::LinkId].asString();
+  if(icc_desc[TincanControl::Data].isString())
+  {
+    const string & data = icc_desc[TincanControl::Data].asString();
+    Overlay & ol = OverlayFromId(olid);
+    ol.SendIcc(link_id, data);
+  }
+  else
+    throw TCEXCEPT("Icc data is not represented as a string");
 }
 
 void
 Tincan::SetIgnoredNetworkInterfaces(
-  const string & tap_name,
-  vector<string>& ignored_list)
+  const Json::Value & ignore_list)
 {
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  vn.IgnoredNetworkInterfaces(ignored_list);
+  int count = ignore_list[TincanControl::IgnoredNetInterfaces].size();
+  Json::Value network_ignore_list = 
+    ignore_list[TincanControl::IgnoredNetInterfaces];
+  vector<string> if_list(count);
+  for(int i = 0; i < count; i++)
+  {
+    if_list[i] = network_ignore_list[i].asString();
+  }
+
+  Overlay & oly = OverlayFromId(ignore_list[TincanControl::OverlayId].asString());
+  oly.IgnoredNetworkInterfaces(if_list);
 }
 
 void
 Tincan::OnLocalCasUpdated(
+  string link_id,
   string lcas)
 {
   if(lcas.empty())
@@ -215,20 +266,20 @@ Tincan::OnLocalCasUpdated(
     lcas = "No local candidates available on this vlink";
     LOG(LS_WARNING) << lcas;
   }
-  //this seemingly round-about code is to avoid locking the Deliver() call or
-  //setting up the excepton handler necessary for using the mutex directly.
   bool to_deliver = false;
-  list<unique_ptr<TincanControl>>::iterator itr;
   unique_ptr<TincanControl> ctrl;
   {
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);
-    itr = inprogess_controls_.begin();
+    auto itr = inprogess_controls_.begin();
     for(; itr != inprogess_controls_.end(); itr++)
     {
-      if((*itr)->GetCommand() == TincanControl::CreateTunnel.c_str())
+      if(itr->first == link_id)
       {
         to_deliver = true;
-        ctrl = move(*itr);
+        ctrl = move(itr->second);
+        Json::Value & resp = ctrl->GetResponse();
+        resp["Message"]["CAS"] = lcas;
+        resp["Success"] = true;
         inprogess_controls_.erase(itr);
         break;
       }
@@ -236,20 +287,16 @@ Tincan::OnLocalCasUpdated(
   }
   if(to_deliver)
   {
-    ctrl->SetResponse(lcas, true);
-    LOG(LS_INFO) << "Sending updated CAS to Ctlr: " << ctrl->StyledString();
     ctrl_link_->Deliver(move(ctrl));
   }
 }
 
-void
-Tincan::QueryTunnelCas(
-  const string & tap_name,
-  const string & tnl_id, //peer mac address
-  Json::Value & cas_info)
+void Tincan::UpdateRouteTable(
+  const Json::Value & rts_desc)
 {
-  VirtualNetwork & vn = VnetFromName(tap_name);
-  vn.QueryTunnelCas(tnl_id, cas_info);
+  string olid = rts_desc[TincanControl::OverlayId].asString();
+  Overlay & ol = OverlayFromId(olid);
+  ol.UpdateRouteTable(rts_desc["Table"]);
 }
 
 void
@@ -264,39 +311,38 @@ Tincan::Run()
   //Start tincan control to get config from Controller
   unique_ptr<ControlDispatch> ctrl_dispatch(new ControlDispatch);
   ctrl_dispatch->SetDispatchToTincanInf(this);
-  ctrl_listener_ = new ControlListener(move(ctrl_dispatch));
-  ctl_thread_.Start(ctrl_listener_);
+  ctrl_listener_ = make_shared<ControlListener>(move(ctrl_dispatch));
+  ctl_thread_.Start(ctrl_listener_.get());
   exit_event_.Wait(Event::kForever);
 }
 
-void Tincan::GetLocalNodeInfo(
-  VirtualNetwork & vnet,
-  Json::Value & node_info)
+bool
+Tincan::IsOverlayExisit(
+  const string & oid)
 {
-  VnetDescriptor & lcfg = vnet.Descriptor();
-  node_info[TincanControl::Type] = "local";
-  node_info[TincanControl::UID] = lcfg.uid;
-  node_info[TincanControl::VIP4] = lcfg.vip4;
-  node_info[TincanControl::VnetDescription] = lcfg.description;
-  node_info[TincanControl::MAC] = vnet.MacAddress();
-  node_info[TincanControl::Fingerprint] = vnet.Fingerprint();
-  node_info[TincanControl::InterfaceName] = vnet.Name();
+  lock_guard<mutex> lg(ovlays_mutex_);
+  for(auto const & vnet : ovlays_) {
+    if(vnet->Descriptor().uid.compare(oid) == 0)
+      return true;
+  }
+  return false;
 }
 
-VirtualNetwork & 
-Tincan::VnetFromName(
-  const string & tap_name)
+Overlay &
+Tincan::OverlayFromId(
+  const string & oid)
 {
-  lock_guard<mutex> lg(vnets_mutex_);
-  for(auto const & vnet : vnets_) {
-    if(vnet->Name().compare(tap_name) == 0)//list of vnets will be small enough where a linear search is best
+  lock_guard<mutex> lg(ovlays_mutex_);
+  for(auto const & vnet : ovlays_)
+  {
+    //list of vnets will be small enough where a linear search is satifactory
+    if(vnet->Descriptor().uid.compare(oid) == 0)
       return *vnet.get();
   }
   string msg("No virtual network exists by this name: ");
-  msg.append(tap_name);
+  msg.append(oid);
   throw TCEXCEPT(msg.c_str());
 }
-
 //-----------------------------------------------------------------------------
 void Tincan::OnStop() {
   Shutdown();
@@ -306,9 +352,9 @@ void Tincan::OnStop() {
 void
 Tincan::Shutdown()
 {
-  lock_guard<mutex> lg(vnets_mutex_);
-  ctl_thread_.Stop();
-  for(auto const & vnet : vnets_) {
+  lock_guard<mutex> lg(ovlays_mutex_);
+  ctl_thread_.Quit();
+  for(auto const & vnet : ovlays_) {
     vnet->Shutdown();
   }
 }

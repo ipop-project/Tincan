@@ -33,17 +33,17 @@ VirtualLink::VirtualLink(
   rtc::Thread* network_thread) :
   vlink_desc_(move(vlink_desc)),
   peer_desc_(move(peer_desc)),
-  packet_factory_(network_thread),
   tiebreaker_(rtc::CreateRandomId64()),
   conn_role_(cricket::CONNECTIONROLE_ACTPASS),
   channel_(nullptr),
   packet_options_(DSCP_DEFAULT),
+  packet_factory_(network_thread),
   cas_ready_(false),
+  is_valid_(false),
   signaling_thread_(signaling_thread),
   network_thread_(network_thread)
 {
-  content_name_.append(vlink_desc_->name).append("_").append(
-    peer_desc_->mac_address);
+  content_name_.append(vlink_desc_->uid);
 }
 
 VirtualLink::~VirtualLink()
@@ -66,7 +66,7 @@ VirtualLink::Initialize(
   stun_addr.FromString(vlink_desc_->stun_addr);
   port_allocator_.reset(new cricket::BasicPortAllocator(
     &network_manager, &packet_factory_, { stun_addr }));
-  port_allocator_->set_flags(kFlags);
+  port_allocator_->set_flags(cricket::PORTALLOCATOR_DISABLE_TCP);
   SetupTURN(vlink_desc_->turn_addr, vlink_desc_->turn_user, vlink_desc_->turn_pass);
   transport_ctlr_ = make_unique<TransportController>(signaling_thread_,
     network_thread_, port_allocator_.get());
@@ -151,7 +151,7 @@ void VirtualLink::OnGatheringState(
   cricket::IceGatheringState gather_state)
 {
   if(gather_state == cricket::kIceGatheringComplete)
-    SignalLocalCasReady(Candidates());
+    SignalLocalCasReady(vlink_desc_->uid, Candidates());
   return;
 }
 
@@ -160,13 +160,13 @@ void VirtualLink::OnWriteableState(
 {
   if(transport->writable())
   {
-    LOG(TC_DBG) << "Connection established to: " << peer_desc_->mac_address;
-    SignalLinkUp(ice_role_);
+    LOG(TC_DBG) << "Connection established to: " << peer_desc_->uid;
+    SignalLinkUp(vlink_desc_->uid);
   }
   else
   {
-    LOG(TC_DBG) << "Link NOT writeable: " << peer_desc_->mac_address;
-    SignalLinkDown(ice_role_);
+    LOG(TC_DBG) << "Link NOT writeable: " << peer_desc_->uid;
+    SignalLinkDown(vlink_desc_->uid);
   }
 }
 
@@ -176,6 +176,8 @@ VirtualLink::RegisterLinkEventHandlers()
   channel_->SignalReadPacket.connect(this, &VirtualLink::OnReadPacket);
   channel_->SignalSentPacket.connect(this, &VirtualLink::OnSentPacket);
   channel_->SignalWritableState.connect(this, &VirtualLink::OnWriteableState);
+  //channel_->SignalReadyToSend.connect(this, &VirtualLink::OnWriteableState);
+
   transport_ctlr_->SignalCandidatesGathered.connect(
     this, &VirtualLink::OnCandidatesGathered);
   transport_ctlr_->SignalGatheringState.connect(
@@ -239,7 +241,8 @@ VirtualLink::GetStats(Json::Value & stats)
       stat["sent_bytes_second"] = (Json::UInt64)info.sent_bytes_second;
       stat["recv_total_bytes"] = (Json::UInt64)info.recv_total_bytes;
       stat["recv_bytes_second"] = (Json::UInt64)info.recv_bytes_second;
-      stats.append(stat);
+      stats = stat;
+      break;
     }
   }
 }
@@ -301,7 +304,8 @@ VirtualLink::SetupICE(
   }
   else
   {
-    throw TCEXCEPT("The Setup Ice operation failed as the peer UIDs are equal. A node will not create a vlink to itself");
+    LOG(LS_WARNING) << "Invalid ICE role specified: " << (uint32_t)ice_role_;
+    throw TCEXCEPT("Invalid ICE role specified");
   }
 }
 
