@@ -18,7 +18,7 @@ BIN_DIR = $(OUT)/$(OPT)/$(ARCH)
 BINARY = ipop-tincan
 TARGET = $(patsubst %,$(BIN_DIR)/%,$(BINARY))
 
-defines = -DLINUX -D_IPOP_LINUX -DWEBRTC_POSIX -DWEBRTC_LINUX
+defines = -DLINUX -D_IPOP_LINUX -DWEBRTC_POSIX -DWEBRTC_LINUX -D_GLIBCXX_USE_CXX11_ABI=0
 
 cflags_cc = -std=c++14 -O3 -pthread -g2 -gsplit-dwarf -fno-strict-aliasing --param=ssp-buffer-size=4 -fstack-protector -funwind-tables -fPIC -pipe -Wall -fno-rtti
 
