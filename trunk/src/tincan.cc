@@ -109,9 +109,8 @@ Tincan::CreateVlink(
     link_desc[TincanControl::PeerInfo][TincanControl::FPR].asString();
   peer_desc->mac_address =
     link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
-  string tap_name = link_desc[TincanControl::TapName].asString();
 
-  vl_desc->sec_enabled = true;
+  vl_desc->dtl_enabled = true;
 
   Overlay & ol = OverlayFromId(olid);
   shared_ptr<VirtualLink> vlink =

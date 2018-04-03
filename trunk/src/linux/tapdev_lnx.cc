@@ -34,7 +34,9 @@ TapDevLnx::TapDevLnx() :
   fd_(-1),
   ip4_config_skt_(-1),
   is_good_(false)
-{}
+{
+  memset(&ifr_, 0x0, sizeof(ifr_));
+}
 
 TapDevLnx::~TapDevLnx()
 {}
@@ -53,6 +55,7 @@ void TapDevLnx::Open(
     throw TCEXCEPT(emsg.c_str());
   }
   strncpy(ifr_.ifr_name, tap_desc.name.c_str(), tap_desc.name.length());
+  ifr_.ifr_name[tap_desc.name.length()] = 0;
   //create the device
   if(ioctl(fd_, TUNSETIFF, (void *)&ifr_) < 0)
   {
