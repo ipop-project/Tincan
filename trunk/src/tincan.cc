@@ -110,7 +110,7 @@ Tincan::CreateVlink(
   peer_desc->mac_address =
     link_desc[TincanControl::PeerInfo][TincanControl::MAC].asString();
 
-  vl_desc->dtl_enabled = true;
+  vl_desc->dtls_enabled = true;
 
   Overlay & ol = OverlayFromId(olid);
   shared_ptr<VirtualLink> vlink =

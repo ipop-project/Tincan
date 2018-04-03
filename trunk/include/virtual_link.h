@@ -50,7 +50,7 @@ class PeerNetwork;
 
 struct  VlinkDescriptor
 {
-  bool sec_enabled;
+  bool dtls_enabled;
   string uid;
   //string name;
   string stun_addr;
