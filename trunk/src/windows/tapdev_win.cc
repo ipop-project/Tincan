@@ -345,7 +345,7 @@ TapDevWin::Down()
   DWORD len = 0;
   media_status_ = 0;
   io_thread_pool_.Release();
-  writer_.Stop();
+  writer_.Quit();
   if(!DeviceIoControl(dev_handle_, TAP_IOCTL_SET_MEDIA_STATUS, &media_status_,
     sizeof(media_status_), &media_status_, sizeof(media_status_),
     (LPDWORD)&len, NULL))

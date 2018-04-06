@@ -87,6 +87,7 @@ void TapDevLnx::Open(
 void TapDevLnx::Close()
 {
   close(fd_);
+  LOG_F(LS_VERBOSE) << "TAP device file handle closed";
 }
 
 void TapDevLnx::SetIpv4Addr(
@@ -121,7 +122,8 @@ void TapDevLnx::SetIpv4Addr(
   //configure the tap device with a netmask
   if(ioctl(ip4_config_skt_, SIOCSIFNETMASK, &ifr_) < 0)
   {
-    LOG_F(LS_VERBOSE) << " failed to set ipv4 netmask on tap device";
+    LOG_F(LS_WARNING) << " The TAP device (" << ifr_.ifr_name <<
+      ") IOCTL to set the IP v4 netmask failed.";
   }
 
 }
@@ -224,11 +226,11 @@ void TapDevLnx::Up()
 
 void TapDevLnx::Down()
 {
-  reader_.Stop();
-  writer_.Stop();
+  reader_.Quit();
+  writer_.Quit();
   //TODO: set the appropriate flags
   SetFlags(0, IFF_UP | IFF_RUNNING);
-  LOG_F(LS_INFO) << "TAP DOWN";
+  LOG_F(LS_VERBOSE) << "TAP device state set to DOWN";
 }
 
 
