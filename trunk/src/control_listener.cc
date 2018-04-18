@@ -45,7 +45,7 @@ ControlListener::ReadPacketHandler(
 {
   try {
     TincanControl ctrl(data, len);
-    LOG(LS_VERBOSE) << "Received CONTROL: " << ctrl.StyledString();
+    LOG(LS_INFO) << "Received CONTROL: " << ctrl.StyledString();
     (*ctrl_dispatch_)(ctrl);
   }
   catch(exception & e) {
@@ -61,7 +61,7 @@ ControlListener::Deliver(
   TincanControl & ctrl_resp)
 {
   std::string msg = ctrl_resp.StyledString();
-  LOG(LS_VERBOSE) << "Sending CONTROL: " << msg;
+  LOG(LS_INFO) << "Sending CONTROL: " << msg;
   lock_guard<mutex> lg(skt_mutex_);
   snd_socket_->SendTo(msg.c_str(), msg.length(), *ctrl_addr_, packet_options_);
 }

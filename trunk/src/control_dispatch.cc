@@ -241,10 +241,8 @@ ControlDispatch::GetLogLevel(
     lv = rtc::LS_ERROR;
   else if(log_level == "WARNING")
     lv = rtc::LS_WARNING;
-  else if(log_level == "INFO")
+  else if(log_level == "INFO" || log_level == "VERBOSE" || log_level == "DEBUG")
     lv = rtc::LS_INFO;
-  else if(log_level == "VERBOSE" || log_level == "DEBUG")
-    lv = rtc::LS_VERBOSE;
   else if(log_level == "SENSITIVE")
     lv = rtc::LS_SENSITIVE;
   else

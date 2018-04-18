@@ -218,9 +218,9 @@ PeerNetwork::Run(Thread* thread)
         << ByteArrayToString(mac.begin(), mac.end());
       mac_routes_.erase(mac);
     }
-    if(LOG_CHECK_LEVEL(LS_VERBOSE))
+    if(LOG_CHECK_LEVEL(LS_INFO))
     {
-      LOG(LS_VERBOSE) << "PeerNetwork scavenge took "
+      LOG(LS_INFO) << "PeerNetwork scavenge took "
         << (steady_clock::now() - accessed).count() << " nanosecs.";
     }
   }
