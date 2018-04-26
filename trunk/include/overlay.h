@@ -91,7 +91,8 @@ public:
   virtual ~Overlay();
 
   virtual void Configure(
-    unique_ptr<TapDescriptor> tap_desc);
+    unique_ptr<TapDescriptor> tap_desc,
+    const vector<string>& ignored_list);
 
   virtual shared_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,
@@ -100,9 +101,6 @@ public:
   virtual OverlayDescriptor & Descriptor();
  
   virtual string Fingerprint();
-
-  virtual void IgnoredNetworkInterfaces(
-    const vector<string>& ignored_list);
 
   virtual void InjectFame(
     string && data);
@@ -158,6 +156,9 @@ public:
   void OnMessage(
     Message* msg) override;
 protected:
+  void SetIgnoredNetworkInterfaces(
+    const vector<string>& ignored_list);
+
   unique_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,
     unique_ptr<PeerDescriptor>

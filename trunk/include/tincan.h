@@ -69,11 +69,6 @@ public:
   void SendIcc(
     const Json::Value & icc_desc) override;
 
-  void SetIgnoredNetworkInterfaces(
-    const Json::Value & ignore_list) override;
-
-  //void SetIpopControllerLink(
-  //  shared_ptr<IpopControllerLink> ctrl_handle) override;
   void SetIpopControllerLink(
     IpopControllerLink * ctrl_handle) override;
 

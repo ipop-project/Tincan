@@ -27,7 +27,6 @@ namespace tincan
 {
 Overlay::Overlay(
   unique_ptr<OverlayDescriptor> descriptor,
-  //shared_ptr<IpopControllerLink> ctrl_handle) :
   IpopControllerLink * ctrl_handle) :
   tdev_(nullptr),
   descriptor_(move(descriptor)),
@@ -41,7 +40,8 @@ Overlay::~Overlay()
 
 void
 Overlay::Configure(
-  unique_ptr<TapDescriptor> tap_desc)
+  unique_ptr<TapDescriptor> tap_desc,
+  const vector<string>& ignored_list)
 {
   tap_desc_ = move(tap_desc);
   //initialize the Tap Device
@@ -55,6 +55,7 @@ Overlay::Configure(
     SSLFingerprint::Create(rtc::DIGEST_SHA_1, sslid_.get()));
   if(!local_fingerprint_)
     throw TCEXCEPT("Failed to create the local finger print");
+  SetIgnoredNetworkInterfaces(ignored_list);
 }
 
 void
@@ -167,7 +168,7 @@ Overlay::Fingerprint()
 }
 
 void
-Overlay::IgnoredNetworkInterfaces(
+Overlay::SetIgnoredNetworkInterfaces(
   const vector<string>& ignored_list)
 {
   net_manager_.set_network_ignore_list(ignored_list);

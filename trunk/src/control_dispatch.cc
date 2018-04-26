@@ -45,7 +45,6 @@ ControlDispatch::ControlDispatch() :
     { "QueryOverlayInfo", &ControlDispatch::QueryOverlayInfo },
     { "RemoveOverlay", &ControlDispatch::RemoveOverlay },
     { "RemoveLink", &ControlDispatch::RemoveLink },
-    { "SetIgnoredNetInterfaces", &ControlDispatch::SetNetworkIgnoreList },
     { "UpdateMap", &ControlDispatch::UpdateRouteTable },
   };
 }
@@ -410,28 +409,6 @@ ControlDispatch::SendIcc(
     control.SetResponse(msg, false);
     ctrl_link_->Deliver(control);
   }
-}
-
-void
-ControlDispatch::SetNetworkIgnoreList(
-  TincanControl & control)
-{
-  Json::Value & req = control.GetRequest();
-  string resp;
-  bool status = false;
-  lock_guard<mutex> lg(disp_mutex_);
-  try
-  {
-    tincan_->SetIgnoredNetworkInterfaces(req);
-    status = true;
-  } catch(exception & e)
-  {
-    resp = "The SetNetworkIgnoreList operation failed.";
-    LOG(LS_WARNING) << e.what() << ". Control Data=\n" <<
-      control.StyledString();
-  }
-  control.SetResponse(resp, status);
-  ctrl_link_->Deliver(control);
 }
 
 void

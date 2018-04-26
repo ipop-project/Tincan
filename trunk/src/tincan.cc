@@ -71,7 +71,15 @@ void Tincan::CreateOverlay(
   tap_desc->prefix4 = olay_desc["IP4PrefixLen"].asUInt();
   tap_desc->mtu4 = olay_desc[TincanControl::MTU4].asUInt();
 
-  olay->Configure(move(tap_desc));
+  Json::Value network_ignore_list =
+    olay_desc[TincanControl::IgnoredNetInterfaces];
+  int count = network_ignore_list.size();
+  vector<string> if_list(count);
+  for (int i = 0; i < count; i++)
+  {
+    if_list[i] = network_ignore_list[i].asString();
+  }
+  olay->Configure(move(tap_desc), if_list);
   olay->Start();
   olay->QueryInfo(olay_info);
   lock_guard<mutex> lg(ovlays_mutex_);
@@ -239,23 +247,6 @@ Tincan::SendIcc(
 }
 
 void
-Tincan::SetIgnoredNetworkInterfaces(
-  const Json::Value & ignore_list)
-{
-  int count = ignore_list[TincanControl::IgnoredNetInterfaces].size();
-  Json::Value network_ignore_list = 
-    ignore_list[TincanControl::IgnoredNetInterfaces];
-  vector<string> if_list(count);
-  for(int i = 0; i < count; i++)
-  {
-    if_list[i] = network_ignore_list[i].asString();
-  }
-
-  Overlay & oly = OverlayFromId(ignore_list[TincanControl::OverlayId].asString());
-  oly.IgnoredNetworkInterfaces(if_list);
-}
-
-void
 Tincan::OnLocalCasUpdated(
   string link_id,
   string lcas)
@@ -356,6 +347,7 @@ Tincan::Shutdown()
   for(auto const & vnet : ovlays_) {
     vnet->Shutdown();
   }
+  ovlays_.clear();
 }
 
 /*

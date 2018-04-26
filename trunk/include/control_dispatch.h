@@ -62,7 +62,6 @@ private:
   void RemoveOverlay(TincanControl & control);
   void UpdateRouteTable(TincanControl & control);
   LoggingSeverity GetLogLevel(const string & log_level);
-  void SetNetworkIgnoreList(TincanControl & control);
   void SendIcc(TincanControl & control);
 
   map<string, void (ControlDispatch::*)(TincanControl & control)>control_map_;
