@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -209,26 +209,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -306,7 +306,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>ntdll.lib;kernel32.lib;user32.lib;advapi32.lib;shell32.lib;uuid.lib;odbc32.lib;%(AdditionalDependencies);iphlpapi.lib;ws2_32.lib;secur32.lib;winmm.lib;boringssl.lib;field_trial_default.lib;protobuf_full.lib;rtc_base.lib;rtc_base_approved.lib;rtc_p2p.lib;json_writer.obj;json_value.obj;json_reader.obj;</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\external\lib\debug\x64\win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\external\3rd-Party-Libs\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -354,7 +354,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>ntdll.lib;kernel32.lib;user32.lib;advapi32.lib;shell32.lib;uuid.lib;odbc32.lib;%(AdditionalDependencies);iphlpapi.lib;ws2_32.lib;secur32.lib;winmm.lib;field_trial_default.lib;protobuf_full.lib;rtc_base.lib;rtc_base_approved.lib;rtc_p2p.lib;json_writer.obj;json_value.obj;json_reader.obj;boringssl.lib;boringssl_asm.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\external\lib\release\x64\win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\external\3rd-Party-Libs\release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
