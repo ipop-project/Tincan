@@ -24,10 +24,27 @@
 #if defined (_IPOP_LINUX)
 #include "tapdev_lnx.h"
 #include "tincan_exception.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+
+extern "C"
+{
+  #include "iproute2/utils.h"
+  #include "iproute2/ip_common.h"
+  #include "iproute2/ll_map.h"
+  struct iplink_req {
+    struct nlmsghdr n;
+    struct ifinfomsg i;
+    char   buf[1024];
+  };
+
+}
+
 namespace tincan
 {
 namespace linux
 {
+
 static const char * const TUN_PATH = "/dev/net/tun";
 
 TapDevLnx::TapDevLnx() :
@@ -59,6 +76,7 @@ void TapDevLnx::Open(
   //create the device
   if(ioctl(fd_, TUNSETIFF, (void *)&ifr_) < 0)
   {
+    close(fd_);
     emsg.append("the device could not be created.");
     throw TCEXCEPT(emsg.c_str());
   }
@@ -80,14 +98,54 @@ void TapDevLnx::Open(
     SetIpv4Addr(tap_desc.ip4.c_str(), tap_desc.prefix4);
   if(tap_desc.mtu4 > 575)
     Mtu(tap_desc.mtu4);
+}
 
-  is_good_ = true;
+int TapDevLnx::DeleteTapDevice(
+  const string& TapName)
+{
+  struct rtnl_handle rth = { .fd = -1 };
+  if (rtnl_open(&rth, 0) < 0)
+  {
+    LOG(LS_ERROR) << "Failed to open the net link device";
+    return -1;
+  }
+
+  const char* dev = TapName.c_str();;
+  iplink_req req;
+  memset(&req, 0, sizeof(req));
+
+  req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+  req.n.nlmsg_flags = NLM_F_REQUEST;
+  req.n.nlmsg_type = RTM_DELLINK;
+  req.i.ifi_family = AF_PACKET;
+
+  ll_init_map(&rth);
+  req.i.ifi_index = ll_name_to_index(dev);
+  if (req.i.ifi_index == 0) {
+    LOG(LS_ERROR) << "Cannot enumerate TAP device " << dev;
+    rtnl_close(&rth);
+    return -1;
+  }
+  if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+  {
+    LOG(LS_ERROR) << "Failed to send NetLink msg to TAP device";
+    rtnl_close(&rth);
+    return -1;
+  }
+  rtnl_close(&rth);
+  return 0;
 }
 
 void TapDevLnx::Close()
 {
   close(fd_);
-  LOG_F(LS_VERBOSE) << "TAP device file handle closed";
+  if (DeleteTapDevice(ifr_.ifr_name) < 0)
+  {
+    string emsg = "The TAP delete operation failed. Please restart IPOP";
+    LOG(LS_ERROR) << emsg;
+    throw TCEXCEPT(emsg.c_str());
+  }
+  LOG(LS_INFO) << "TAP device successfully removed";
 }
 
 void TapDevLnx::SetIpv4Addr(
@@ -122,7 +180,7 @@ void TapDevLnx::SetIpv4Addr(
   //configure the tap device with a netmask
   if(ioctl(ip4_config_skt_, SIOCSIFNETMASK, &ifr_) < 0)
   {
-    LOG_F(LS_WARNING) << " The TAP device (" << ifr_.ifr_name <<
+    LOG(LS_WARNING) << " The TAP device (" << ifr_.ifr_name <<
       ") IOCTL to set the IP v4 netmask failed.";
   }
 
@@ -173,7 +231,7 @@ void TapDevLnx::SetFlags(
 
 uint32_t TapDevLnx::Read(AsyncIo& aio_rd)
 {
-  if(!is_good_)
+  if(!is_good_ || reader_.IsQuitting())
     return 1; //indicates a failure to setup async operation
   TapMessageData *tp_ = new TapMessageData;
   tp_->aio_ = &aio_rd;
@@ -183,7 +241,7 @@ uint32_t TapDevLnx::Read(AsyncIo& aio_rd)
 
 uint32_t TapDevLnx::Write(AsyncIo& aio_wr)
 {
-  if(!is_good_)
+  if(!is_good_ || writer_.IsQuitting())
     return 1; //indicates a failure to setup async operation
   TapMessageData *tp_ = new TapMessageData;
   tp_->aio_ = &aio_wr;
@@ -219,6 +277,7 @@ MacAddressType TapDevLnx::MacAddress()
   */
 void TapDevLnx::Up()
 {
+  is_good_ = true;
   SetFlags(IFF_UP | IFF_RUNNING, 0);
   reader_.Start();
   writer_.Start();
@@ -226,11 +285,11 @@ void TapDevLnx::Up()
 
 void TapDevLnx::Down()
 {
+  is_good_ = false;
   reader_.Quit();
   writer_.Quit();
-  //TODO: set the appropriate flags
-  SetFlags(0, IFF_UP | IFF_RUNNING);
-  LOG_F(LS_VERBOSE) << "TAP device state set to DOWN";
+  SetFlags(0, IFF_UP);
+  LOG(LS_INFO) << "TAP device state set to DOWN";
 }
 
 
@@ -244,7 +303,7 @@ void TapDevLnx::OnMessage(Message * msg)
     int nread = read(fd_, aio_read->BufferToTransfer(), aio_read->BytesToTransfer());
     if(nread < 0)
     {
-      LOG_F(LS_WARNING) << "A TAP Read operation failed.";
+      LOG(LS_WARNING) << "A TAP Read operation failed.";
       aio_read->good_ = false;
     }
     else
@@ -261,7 +320,7 @@ void TapDevLnx::OnMessage(Message * msg)
     int nwrite = write(fd_, aio_write->BufferToTransfer(), aio_write->BytesToTransfer());
     if(nwrite < 0)
     {
-      LOG_F(LS_WARNING) << "A TAP Write operation failed.";
+      LOG(LS_WARNING) << "A TAP Write operation failed.";
       aio_write->good_ = false;
     }
     else

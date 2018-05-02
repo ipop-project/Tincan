@@ -74,6 +74,8 @@ public:
 protected:
   void OnMessage(Message * msg) override;
 private:
+  int DeleteTapDevice(
+    const string& TapName);
   rtc::Thread reader_;
   rtc::Thread writer_;
   struct ifreq ifr_;
