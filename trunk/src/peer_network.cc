@@ -58,7 +58,6 @@ void PeerNetwork::Add(shared_ptr<VirtualLink> vlink)
     mac_map_[mac] = vlink;
     link_map_[vlink->Id()] = vlink;
   }
-  //LOG(TC_DBG) << "Added node " << vlink->PeerInfo().mac_address;
 }
 
 void PeerNetwork::Clear()
@@ -169,9 +168,6 @@ PeerNetwork::Remove(
   {
     lock_guard<mutex> lg(mac_map_mtx_);
     shared_ptr<VirtualLink> vl = link_map_.at(link_id);
-    LOG(TC_DBG) << "Removing node " << vl->PeerInfo().mac_address
-      << " tnl use count=" << vl.use_count() << " vlink obj=" <<
-      vl.get();
     vl->is_valid_ = false;
     //remove the MAC for the adjacent node when tnl goes out of scope ref count
     //is decr, if it is 0 it's deleted 
@@ -214,7 +210,7 @@ PeerNetwork::Run(Thread* thread)
     }
     for(auto & mac : ml)
     {
-      LOG(TC_DBG) << "Scavenging route to "
+      LOG(LS_INFO) << "Scavenging route to "
         << ByteArrayToString(mac.begin(), mac.end());
       mac_routes_.erase(mac);
     }
@@ -251,7 +247,7 @@ void PeerNetwork::UpdateRouteTable(
   }
   mac_routes_[dest].vl = mac_map_.at(route);
   mac_routes_[dest].accessed = steady_clock::now();
-  LOG(TC_DBG) << "Updated route to node=" <<
+  LOG(LS_INFO) << "Updated route to node=" <<
     ByteArrayToString(dest.begin(), dest.end()) << " through node=" <<
     ByteArrayToString(route.begin(), route.end()) << " vlink obj=" <<
     mac_routes_[dest].vl.get();

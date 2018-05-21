@@ -220,7 +220,6 @@ VirtualNetwork::VlinkReadComplete(
     req[TincanControl::LinkId] = vlink.Id();
     req[TincanControl::Data] = string((char*)frame->Payload(),
       frame->PayloadLength());
-    //LOG(TC_DBG) << " Delivering ICC to ctrl, data=\n" << req[TincanControl::Data].asString();
     ctrl_link_->Deliver(move(ctrl));
   }
   else if(fp.IsFwdMsg())
@@ -242,8 +241,6 @@ VirtualNetwork::VlinkReadComplete(
       req[TincanControl::OverlayId] = descriptor_->uid;
       req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
         frame->PayloadEnd());
-      LOG(TC_DBG) << "FWDing frame to ctrl, data=\n" <<
-        req[TincanControl::Data].asString();
       ctrl_link_->Deliver(move(ctrl));
     }
   }

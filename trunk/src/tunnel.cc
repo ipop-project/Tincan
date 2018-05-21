@@ -213,7 +213,7 @@ void Tunnel::VlinkReadComplete(
     req[TincanControl::LinkId] = vlink.Id();
     req[TincanControl::Data] = string((char*)frame->Payload(),
       frame->PayloadLength());
-    //LOG(TC_DBG) << " Delivering ICC to ctrl, data=\n"
+    //LOG(LS_INFO) << " Delivering ICC to ctrl, data=\n"
     //<< req[TincanControl::Data].asString();
     ctrl_link_->Deliver(move(ctrl));
   }

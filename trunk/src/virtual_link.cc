@@ -160,12 +160,12 @@ void VirtualLink::OnWriteableState(
 {
   if(transport->writable())
   {
-    LOG(TC_DBG) << "Connection established to: " << peer_desc_->uid;
+    LOG(LS_INFO) << "Connection established to: " << peer_desc_->uid;
     SignalLinkUp(vlink_desc_->uid);
   }
   else
   {
-    LOG(TC_DBG) << "Link NOT writeable: " << peer_desc_->uid;
+    LOG(LS_INFO) << "Link NOT writeable: " << peer_desc_->uid;
     SignalLinkDown(vlink_desc_->uid);
   }
 }

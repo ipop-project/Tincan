@@ -194,7 +194,7 @@ void Overlay::OnMessage(Message * msg)
     unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
     shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->vl;
     vl->Transmit(*frame);
-    //LOG(TC_DBG) << "Sent ICC to=" <<vl->PeerInfo().vip4 << " data=\n" <<
+    //LOG(LS_INFO) << "Sent ICC to=" <<vl->PeerInfo().vip4 << " data=\n" <<
     //  string((char*)(frame->begin()+4), *(uint16_t*)(frame->begin()+2));
     delete msg->pdata;
   }
@@ -212,7 +212,7 @@ void Overlay::OnMessage(Message * msg)
     unique_ptr<TapFrame> frame = move(((TransmitMsgData*)msg->pdata)->frm);
     shared_ptr<VirtualLink> vl = ((TransmitMsgData*)msg->pdata)->vl;
     vl->Transmit(*frame);
-    //LOG(TC_DBG) << "FWDing frame to " << vl->PeerInfo().vip4;
+    //LOG(LS_INFO) << "FWDing frame to " << vl->PeerInfo().vip4;
     if(msg->message_id == MSGID_FWD_FRAME_RD)
     {
       frame->Initialize(frame->Payload(), frame->PayloadCapacity());
@@ -254,6 +254,6 @@ Overlay::InjectFame(
   tf->BytesTransferred((uint32_t)len);
   tf->BytesToTransfer((uint32_t)len);
   tdev_->Write(*tf.release());
-  //LOG(TC_DBG) << "Frame injected=\n" << data;
+  //LOG(LS_INFO) << "Frame injected=\n" << data;
 }
 } //namespace tincan

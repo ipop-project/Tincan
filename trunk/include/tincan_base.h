@@ -77,9 +77,6 @@ using std::unique_ptr;
 using std::unordered_map;
 using std::vector;
 
-
-#define TC_DBG LS_ERROR
-///////////////////////////////////////////////////////////////////////////////
 static const uint16_t kTincanVerMjr = 3;
 //
 static const uint16_t kTincanVerMnr = 0;
