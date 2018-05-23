@@ -54,7 +54,7 @@ struct  VlinkDescriptor
   bool dtls_enabled;
   std::string uid;
   //string name;
-  std::string stun_addr;
+  std::vector<std::string> stun_servers;
   std::vector<TurnDescriptor> turn_descs;
 };
 

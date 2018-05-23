@@ -328,14 +328,14 @@ VirtualLink::SetupTURN(
       continue;
     }
 
-    std::vector<std::string> add_prt;
-    rtc::split(turn_desc.server_hostname, ':', &add_prt);
-    if(add_prt.size() != 2)
+    std::vector<std::string> addr_port;
+    rtc::split(turn_desc.server_hostname, ':', &addr_port);
+    if(addr_port.size() != 2)
     {
       LOG(LS_INFO) << "Invalid TURN Server address provided. Address must contain a port number separated by a\":\".";
       continue;
     }
-    cricket::RelayServerConfig relay_config_udp(add_prt[0], stoi(add_prt[1]),
+    cricket::RelayServerConfig relay_config_udp(addr_port[0], stoi(addr_port[1]),
         turn_desc.username, turn_desc.password, cricket::PROTO_UDP);
     port_allocator_->AddTurnServer(relay_config_udp);
   }
