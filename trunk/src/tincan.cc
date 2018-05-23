@@ -33,7 +33,7 @@ Tincan::~Tincan()
 {
 }
 
-void 
+void
 Tincan::SetIpopControllerLink(
   //shared_ptr<IpopControllerLink> ctrl_handle)
   IpopControllerLink * ctrl_handle)
@@ -49,10 +49,22 @@ void Tincan::CreateOverlay(
   ol_desc->uid = olay_desc[TincanControl::OverlayId].asString();
   if(IsOverlayExisit(ol_desc->uid))
     throw TCEXCEPT("The specified overlay identifier already exisits");
-  ol_desc->stun_addr = olay_desc["StunAddress"].asString();
-  ol_desc->turn_addr = olay_desc["TurnAddress"].asString();
-  ol_desc->turn_pass = olay_desc["TurnPass"].asString();
-  ol_desc->turn_user = olay_desc["TurnUser"].asString();
+
+  Json::Value stun_servers = olay_desc["StunServers"];
+  for (int i = 0; i < stun_servers.size(); ++i)
+  {
+    ol_desc->stun_servers.push_back(stun_servers[i].asString());
+  }
+
+  Json::Value turn_servers = olay_desc["TurnServers"];
+  for (int i = 0; i < turn_servers.size(); ++i)
+  {
+    Json::Value turn_server_creds = turn_servers[i];
+    TurnDescriptor turn_desc(turn_server_creds["Address"],
+        turn_server_creds["User"],
+        turn_server_creds["Password"]);
+    ol_desc->turn_descs.push_back(turn_desc);
+  }
   ol_desc->enable_ip_mapping = false;
   unique_ptr<Overlay> olay;
   if(olay_desc[TincanControl::Type].asString() == "VNET")

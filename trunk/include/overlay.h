@@ -42,6 +42,7 @@
 #include "tincan_exception.h"
 #include "vnet_descriptor.h"
 #include "virtual_link.h"
+#include "turn_descriptor.h"
 
 namespace tincan
 {

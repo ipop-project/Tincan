@@ -23,36 +23,35 @@
 #ifndef TINCAN_VNET_DESCRIPTOR_H_
 #define TINCAN_VNET_DESCRIPTOR_H_
 #include "tincan_base.h"
+#include "turn_descriptor.h"
 namespace tincan
 {
 struct VnetDescriptor
 {
-  string uid;
-  string name;
-  string mac;
-  string vip4;
+  std::string uid;
+  std::string name;
+  std::string mac;
+  std::string vip4;
   uint32_t prefix4;
   uint32_t mtu4;
-  string description;
-  string stun_addr;
-  string turn_addr;
-  string turn_user;
-  string turn_pass;
+  std::string description;
+  std::string stun_addr;
+  std::string turn_addr;
+  std::string turn_user;
+  std::string turn_pass;
   bool l2tunnel_enabled;
   bool l3tunnel_enabled;
 };
 struct OverlayDescriptor
 {
-  string uid;
+  std::string uid;
   //string type;
   //string name;
   //string mac;
   //string vlink_id;
   //string description;
-  string stun_addr;
-  string turn_addr;
-  string turn_user;
-  string turn_pass;
+  std::vector<std::string> stun_servers;
+  std::vector<TurnDescriptor> turn_descs;
   bool enable_ip_mapping;
   bool disable_encryption;
 };

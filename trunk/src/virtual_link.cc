@@ -23,6 +23,7 @@
 #include "virtual_link.h"
 #include "webrtc/base/stringencode.h"
 #include "tincan_exception.h"
+#include "turn_descriptor.h"
 namespace tincan
 {
 using namespace rtc;
@@ -49,7 +50,7 @@ VirtualLink::VirtualLink(
 VirtualLink::~VirtualLink()
 {}
 
-string VirtualLink::Name()
+std::string VirtualLink::Name()
 {
   return content_name_;
 }
@@ -67,7 +68,7 @@ VirtualLink::Initialize(
   port_allocator_.reset(new cricket::BasicPortAllocator(
     &network_manager, &packet_factory_, { stun_addr }));
   port_allocator_->set_flags(cricket::PORTALLOCATOR_DISABLE_TCP);
-  SetupTURN(vlink_desc_->turn_addr, vlink_desc_->turn_user, vlink_desc_->turn_pass);
+  SetupTURN(vlink_desc_->turn_descs);
   transport_ctlr_ = make_unique<TransportController>(signaling_thread_,
     network_thread_, port_allocator_.get());
 
@@ -312,29 +313,32 @@ VirtualLink::SetupICE(
 
 void
 VirtualLink::SetupTURN(
-  const string & turn_server,
-  const string & username,
-  const std::string & password)
+  const std::vector<TurnDescriptor> turn_descs)
 {
-  if(turn_server.empty()) {
+  if(turn_descs.empty()) {
     LOG(LS_INFO) << "No TURN Server address provided";
     return;
   }
-  if(!turn_server.empty() && (username.empty() || password.empty()))
+
+  for (auto turn_desc : turn_desc)
   {
-    LOG(LS_WARNING) << "TURN credentials were not provided";
-    return;
+    if (turn_desc.username.empty() || turn_desc.password.empty())
+    {
+      LOG(LS_WARNING) << "TURN credentials were not provided for hostname " << turn_desc.hostname;
+      continue;
+    }
+
+    std::vector<std::string> add_prt;
+    rtc::split(turn_desc.server_hostname, ':', &add_prt);
+    if(add_prt.size() != 2)
+    {
+      LOG(LS_INFO) << "Invalid TURN Server address provided. Address must contain a port number separated by a\":\".";
+      continue;
+    }
+    cricket::RelayServerConfig relay_config_udp(add_prt[0], stoi(add_prt[1]),
+        turn_desc.username, turn_desc.password, cricket::PROTO_UDP);
+    port_allocator_->AddTurnServer(relay_config_udp);
   }
-  vector<string> add_prt;
-  rtc::split(turn_server, ':', &add_prt);
-  if(add_prt.size() != 2)
-  {
-    LOG(LS_INFO) << "Invalid TURN Server address provided";
-    return;
-  }
-  cricket::RelayServerConfig relay_config_udp(add_prt[0], stoi(add_prt[1]),
-    username, password, cricket::PROTO_UDP);
-  port_allocator_->AddTurnServer(relay_config_udp);
 }
 
 void
