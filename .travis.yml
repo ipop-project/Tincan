@@ -5,7 +5,7 @@ os:
   - linux
 dist: "trusty"  
 install:
-  - sudo apt install -y git make libssl-dev g++-5
+  - sudo apt-get install -y git make libssl-dev g++-5
 git:
   depth: 1
 branches:
