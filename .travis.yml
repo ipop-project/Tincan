@@ -4,19 +4,15 @@ compiler:
 os:
   - linux
 dist: "trusty"  
-before_install:
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update -qq
 install:
-  - sudo rm /usr/bin/g++
-  - sudo apt-get install -y software-properties-common git make libssl-dev g++-4.9
-  - sudo ln -s /usr/bin/g++-4.9 /usr/bin/g++
+  - sudo apt install -y git make libssl-dev g++-5
 git:
   depth: 1
 branches:
   only:
     - master
 script:
-  - git clone -b ubuntu-x64 --single-branch https://github.com/ipop-project/3rd-Party-Libs.git external/3rd-Party-Libs
+  - git clone -b ubuntu-x64 --single-branch https://github.com/ipop-project/3rd-Party-Libs.git external/3rd-Party-Libs --depth 1
   - cd trunk/build
   - make
+  
