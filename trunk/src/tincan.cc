@@ -61,8 +61,8 @@ void Tincan::CreateOverlay(
   {
     Json::Value turn_server_creds = ;
     TurnDescriptor turn_desc(turn_servers[i]["Address"],
-		turn_servers[i]["User"],
-		turn_servers[i]["Password"]);
+      turn_servers[i]["User"],
+      turn_servers[i]["Password"]);
     ol_desc->turn_descs.push_back(turn_desc);
   }
   ol_desc->enable_ip_mapping = false;
