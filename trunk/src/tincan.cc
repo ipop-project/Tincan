@@ -60,7 +60,8 @@ void Tincan::CreateOverlay(
   Json::Value turn_servers = olay_desc["TurnServers"];
   for (Json::Value::ArrayIndex i = 0; i < turn_servers.size(); ++i)
   {
-    TurnDescriptor turn_desc(turn_servers[i]["Address"].asString(),
+    TurnDescriptor turn_desc(
+      turn_servers[i]["Address"].asString(),
       turn_servers[i]["User"].asString(),
       turn_servers[i]["Password"].asString());
     ol_desc->turn_descs.push_back(turn_desc);
