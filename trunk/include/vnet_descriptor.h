@@ -26,32 +26,16 @@
 #include "turn_descriptor.h"
 namespace tincan
 {
-struct VnetDescriptor
-{
-  std::string uid;
-  std::string name;
-  std::string mac;
-  std::string vip4;
-  uint32_t prefix4;
-  uint32_t mtu4;
-  std::string description;
-  std::string stun_addr;
-  std::string turn_addr;
-  std::string turn_user;
-  std::string turn_pass;
-  bool l2tunnel_enabled;
-  bool l3tunnel_enabled;
-};
 struct OverlayDescriptor
 {
-  std::string uid;
+  string uid;
   //string type;
   //string name;
   //string mac;
   //string vlink_id;
   //string description;
-  std::vector<std::string> stun_servers;
-  std::vector<TurnDescriptor> turn_descs;
+  vector<string> stun_servers;
+  vector<TurnDescriptor> turn_descs;
   bool enable_ip_mapping;
   bool disable_encryption;
 };

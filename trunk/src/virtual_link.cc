@@ -50,7 +50,7 @@ VirtualLink::VirtualLink(
 VirtualLink::~VirtualLink()
 {}
 
-std::string VirtualLink::Name()
+string VirtualLink::Name()
 {
   return content_name_;
 }
@@ -63,10 +63,17 @@ VirtualLink::Initialize(
   cricket::IceRole ice_role)
 {
   ice_role_ = ice_role;
-  rtc::SocketAddress stun_addr;
-  stun_addr.FromString(vlink_desc_->stun_addr);
+
+  cricket::ServerAddresses stun_addrs;
+  for (auto stun_server : vlink_desc_->stun_servers)
+  {
+    rtc::SocketAddress stun_addr;
+    stun_addr.FromString(stun_server);
+    stun_addrs.insert(stun_addr);
+  }
   port_allocator_.reset(new cricket::BasicPortAllocator(
-    &network_manager, &packet_factory_, { stun_addr }));
+  &network_manager, &packet_factory_, stun_addrs));
+
   port_allocator_->set_flags(cricket::PORTALLOCATOR_DISABLE_TCP);
   SetupTURN(vlink_desc_->turn_descs);
   transport_ctlr_ = make_unique<TransportController>(signaling_thread_,
@@ -92,9 +99,9 @@ VirtualLink::AddRemoteCandidates(
   std::istringstream iss(candidates);
   cricket::Candidates cas_vec;
   do {
-    std::string candidate_str;
+    string candidate_str;
     iss >> candidate_str;
-    std::vector<std::string> fields;
+    vector<string> fields;
     size_t len = rtc::split(candidate_str, ':', &fields);
     rtc::SocketAddress sa;
     if(len >= 10) {
@@ -139,7 +146,7 @@ VirtualLink::OnSentPacket(
 }
 
 void VirtualLink::OnCandidatesGathered(
-  const std::string &,
+  const string &,
   const cricket::Candidates & candidates)
 {
   std::unique_lock<std::mutex> lk(cas_mutex_);
@@ -274,7 +281,7 @@ VirtualLink::SetupICE(
   }
 
   local_description_.reset(new cricket::TransportDescription(
-    std::vector<std::string>(),
+    vector<string>(),
     kIceUfrag,
     kIcePwd,
     cricket::ICEMODE_FULL,
@@ -282,7 +289,7 @@ VirtualLink::SetupICE(
     & local_fingerprint));
 
   remote_description_.reset(new cricket::TransportDescription(
-    std::vector<std::string>(),
+    vector<string>(),
     kIceUfrag,
     kIcePwd,
     cricket::ICEMODE_FULL,
@@ -313,22 +320,22 @@ VirtualLink::SetupICE(
 
 void
 VirtualLink::SetupTURN(
-  const std::vector<TurnDescriptor> turn_descs)
+  const vector<TurnDescriptor> turn_descs)
 {
   if(turn_descs.empty()) {
     LOG(LS_INFO) << "No TURN Server address provided";
     return;
   }
 
-  for (auto turn_desc : turn_desc)
+  for (auto turn_desc : turn_descs)
   {
     if (turn_desc.username.empty() || turn_desc.password.empty())
     {
-      LOG(LS_WARNING) << "TURN credentials were not provided for hostname " << turn_desc.hostname;
+      LOG(LS_WARNING) << "TURN credentials were not provided for hostname " << turn_desc.server_hostname;
       continue;
     }
 
-    std::vector<std::string> addr_port;
+    vector<string> addr_port;
     rtc::split(turn_desc.server_hostname, ':', &addr_port);
     if(addr_port.size() != 2)
     {

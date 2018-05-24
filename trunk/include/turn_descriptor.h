@@ -28,11 +28,12 @@ namespace tincan
 
 struct TurnDescriptor
 {
-  std::string server_hostname;
-  std::string username;
-  std::string password;
+  string server_hostname;
+  string username;
+  string password;
 
-  TurnDescriptor(std::string server_hostname_, std::string username_, std::string password_) : server_hostname{server_hostname_}, username{username_}, password{password_}
+  TurnDescriptor(string server_hostname_, string username_, string password_) :
+	server_hostname(server_hostname_), username(username_), password(password_)
   {
   }
 };

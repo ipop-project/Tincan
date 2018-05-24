@@ -52,10 +52,10 @@ class PeerNetwork;
 struct  VlinkDescriptor
 {
   bool dtls_enabled;
-  std::string uid;
+  string uid;
   //string name;
-  std::vector<std::string> stun_servers;
-  std::vector<TurnDescriptor> turn_descs;
+  vector<string> stun_servers;
+  vector<TurnDescriptor> turn_descs;
 };
 
 class VirtualLink :
@@ -111,10 +111,10 @@ public:
   sigslot::signal2<string, string> SignalLocalCasReady;
   sigslot::signal3<uint8_t *, uint32_t, VirtualLink&> SignalMessageReceived;
 private:
-  void SetupTURN(std::vector<TurnDescriptor>);
+  void SetupTURN(vector<TurnDescriptor>);
 
   void OnCandidatesGathered(
-    const std::string & transport_name,
+    const string & transport_name,
     const cricket::Candidates & candidates);
 
   void OnGatheringState(
