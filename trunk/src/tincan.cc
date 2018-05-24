@@ -23,6 +23,7 @@
 
 #include "tincan.h"
 #include "tincan_exception.h"
+#include "turn_descriptor.h"
 namespace tincan
 {
 Tincan::Tincan() :
@@ -48,18 +49,17 @@ void Tincan::CreateOverlay(
   unique_ptr<OverlayDescriptor> ol_desc(new OverlayDescriptor);
   ol_desc->uid = olay_desc[TincanControl::OverlayId].asString();
   if(IsOverlayExisit(ol_desc->uid))
-    throw TCEXCEPT("The specified overlay identifier already exisits");
+    throw TCEXCEPT("The specified overlay identifier already exists");
 
   Json::Value stun_servers = olay_desc["StunServers"];
-  for (int i = 0; i < stun_servers.size(); ++i)
+  for (Json::Value::ArrayIndex i = 0; i < stun_servers.size(); ++i)
   {
     ol_desc->stun_servers.push_back(stun_servers[i].asString());
   }
 
   Json::Value turn_servers = olay_desc["TurnServers"];
-  for (int i = 0; i < turn_servers.size(); ++i)
+  for (Json::Value::ArrayIndex i = 0; i < turn_servers.size(); ++i)
   {
-    Json::Value turn_server_creds = ;
     TurnDescriptor turn_desc(turn_servers[i]["Address"],
       turn_servers[i]["User"],
       turn_servers[i]["Password"]);
