@@ -339,7 +339,7 @@ VirtualLink::SetupTURN(
     rtc::split(turn_desc.server_hostname, ':', &addr_port);
     if(addr_port.size() != 2)
     {
-      LOG(LS_INFO) << "Invalid TURN Server address provided. Address must contain a port number separated by a\":\".";
+      LOG(LS_INFO) << "Invalid TURN Server address provided. Address must contain a port number separated by a \":\".";
       continue;
     }
     cricket::RelayServerConfig relay_config_udp(addr_port[0], stoi(addr_port[1]),
