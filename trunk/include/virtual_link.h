@@ -36,6 +36,7 @@
 #include "webrtc/p2p/client/basicportallocator.h"
 #include "tap_frame.h"
 #include "peer_descriptor.h"
+#include "turn_descriptor.h"
 
 namespace tincan
 {
@@ -53,10 +54,8 @@ struct  VlinkDescriptor
   bool dtls_enabled;
   string uid;
   //string name;
-  string stun_addr;
-  string turn_addr;
-  string turn_user;
-  string turn_pass;
+  vector<string> stun_servers;
+  vector<TurnDescriptor> turn_descs;
 };
 
 class VirtualLink :
@@ -112,13 +111,10 @@ public:
   sigslot::signal2<string, string> SignalLocalCasReady;
   sigslot::signal3<uint8_t *, uint32_t, VirtualLink&> SignalMessageReceived;
 private:
-  void SetupTURN(
-    const string & turn_server,
-    const string & username,
-    const std::string & password);
+  void SetupTURN(vector<TurnDescriptor>);
 
   void OnCandidatesGathered(
-    const std::string & transport_name,
+    const string & transport_name,
     const cricket::Candidates & candidates);
 
   void OnGatheringState(
