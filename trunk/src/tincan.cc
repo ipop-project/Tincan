@@ -48,6 +48,7 @@ void Tincan::CreateOverlay(
 {
   unique_ptr<OverlayDescriptor> ol_desc(new OverlayDescriptor);
   ol_desc->uid = olay_desc[TincanControl::OverlayId].asString();
+  ol_desc->node_id = olay_desc[TincanControl::NodeId].asString();
   if(IsOverlayExisit(ol_desc->uid))
     throw TCEXCEPT("The specified overlay identifier already exists");
 

@@ -34,6 +34,7 @@ struct OverlayDescriptor
   //string mac;
   //string vlink_id;
   //string description;
+  string node_id;
   vector<string> stun_servers;
   vector<TurnDescriptor> turn_descs;
   bool enable_ip_mapping;
