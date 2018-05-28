@@ -23,6 +23,7 @@
 
 #include "tincan.h"
 #include "tincan_exception.h"
+#include "turn_descriptor.h"
 namespace tincan
 {
 Tincan::Tincan() :
@@ -33,7 +34,7 @@ Tincan::~Tincan()
 {
 }
 
-void 
+void
 Tincan::SetIpopControllerLink(
   //shared_ptr<IpopControllerLink> ctrl_handle)
   IpopControllerLink * ctrl_handle)
@@ -47,12 +48,25 @@ void Tincan::CreateOverlay(
 {
   unique_ptr<OverlayDescriptor> ol_desc(new OverlayDescriptor);
   ol_desc->uid = olay_desc[TincanControl::OverlayId].asString();
+  ol_desc->node_id = olay_desc[TincanControl::NodeId].asString();
   if(IsOverlayExisit(ol_desc->uid))
-    throw TCEXCEPT("The specified overlay identifier already exisits");
-  ol_desc->stun_addr = olay_desc["StunAddress"].asString();
-  ol_desc->turn_addr = olay_desc["TurnAddress"].asString();
-  ol_desc->turn_pass = olay_desc["TurnPass"].asString();
-  ol_desc->turn_user = olay_desc["TurnUser"].asString();
+    throw TCEXCEPT("The specified overlay identifier already exists");
+
+  Json::Value stun_servers = olay_desc["StunServers"];
+  for (Json::Value::ArrayIndex i = 0; i < stun_servers.size(); ++i)
+  {
+    ol_desc->stun_servers.push_back(stun_servers[i].asString());
+  }
+
+  Json::Value turn_servers = olay_desc["TurnServers"];
+  for (Json::Value::ArrayIndex i = 0; i < turn_servers.size(); ++i)
+  {
+    TurnDescriptor turn_desc(
+      turn_servers[i]["Address"].asString(),
+      turn_servers[i]["User"].asString(),
+      turn_servers[i]["Password"].asString());
+    ol_desc->turn_descs.push_back(turn_desc);
+  }
   ol_desc->enable_ip_mapping = false;
   unique_ptr<Overlay> olay;
   if(olay_desc[TincanControl::Type].asString() == "VNET")

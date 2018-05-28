@@ -47,7 +47,7 @@ Tunnel::CreateVlink(
   else
   {
     cricket::IceRole ir = cricket::ICEROLE_CONTROLLED;
-    if(local_fingerprint_->ToString() < peer_desc->fingerprint)
+    if(descriptor_->node_id < peer_desc->uid)
       ir = cricket::ICEROLE_CONTROLLING;
     string roles[] = { "CONTROLLED", "CONTROLLING" };
     LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer "

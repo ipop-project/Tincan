@@ -47,6 +47,7 @@ const Json::StaticString TincanControl::Level("Level");
 const Json::StaticString TincanControl::MAC("MAC");
 const Json::StaticString TincanControl::Message("Message");
 const Json::StaticString TincanControl::MTU4("MTU4");
+const Json::StaticString TincanControl::NodeId("NodeId");
 const Json::StaticString TincanControl::OverlayId("OverlayId");
 const Json::StaticString TincanControl::PeerInfo("PeerInfo");
 const Json::StaticString TincanControl::ProtocolVersion("ProtocolVersion");

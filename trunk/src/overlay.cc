@@ -82,10 +82,8 @@ Overlay::CreateVlink(
   unique_ptr<PeerDescriptor> peer_desc,
   cricket::IceRole ice_role)
 {
-  vlink_desc->stun_addr = descriptor_->stun_addr;
-  vlink_desc->turn_addr = descriptor_->turn_addr;
-  vlink_desc->turn_user = descriptor_->turn_user;
-  vlink_desc->turn_pass = descriptor_->turn_pass;
+  vlink_desc->stun_servers = descriptor_->stun_servers;
+  vlink_desc->turn_descs = descriptor_->turn_descs;
   unique_ptr<VirtualLink> vl = make_unique<VirtualLink>(
     move(vlink_desc), move(peer_desc), &sig_worker_, &net_worker_);
   unique_ptr<SSLIdentity> sslid_copy(sslid_->GetReference());
