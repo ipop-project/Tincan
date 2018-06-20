@@ -40,12 +40,12 @@
 #include "tapdev.h"
 #include "tap_frame.h"
 #include "tincan_exception.h"
-#include "vnet_descriptor.h"
+#include "tunnel_descriptor.h"
 #include "virtual_link.h"
 
 namespace tincan
 {
-class Overlay :
+class BasicTunnel :
   public sigslot::has_slots<>,
   public MessageHandler
 {
@@ -84,11 +84,11 @@ public:
     ~LinkMsgData() = default;
   };
 
-  Overlay(
-    unique_ptr<OverlayDescriptor> descriptor,
+  BasicTunnel(
+    unique_ptr<TunnelDescriptor> descriptor,
     IpopControllerLink * ctrl_handle);
 
-  virtual ~Overlay();
+  virtual ~BasicTunnel();
 
   virtual void Configure(
     unique_ptr<TapDescriptor> tap_desc,
@@ -98,7 +98,7 @@ public:
     unique_ptr<VlinkDescriptor> vlink_desc,
     unique_ptr<PeerDescriptor> peer_desc) = 0;
 
-  virtual OverlayDescriptor & Descriptor();
+  virtual TunnelDescriptor & Descriptor();
  
   virtual string Fingerprint();
 
@@ -169,7 +169,7 @@ protected:
     string vlink_id);
   unique_ptr<TapDev> tdev_;
   unique_ptr<TapDescriptor> tap_desc_;
-  unique_ptr<OverlayDescriptor> descriptor_;
+  unique_ptr<TunnelDescriptor> descriptor_;
   //shared_ptr<IpopControllerLink> ctrl_link_;
   IpopControllerLink * ctrl_link_;
   unique_ptr<rtc::SSLIdentity> sslid_;

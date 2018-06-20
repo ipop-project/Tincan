@@ -20,13 +20,13 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#include "overlay.h"
+#include "basic_tunnel.h"
 #include "webrtc/base/base64.h"
 #include "tincan_control.h"
 namespace tincan
 {
-Overlay::Overlay(
-  unique_ptr<OverlayDescriptor> descriptor,
+BasicTunnel::BasicTunnel(
+  unique_ptr<TunnelDescriptor> descriptor,
   IpopControllerLink * ctrl_handle) :
   tdev_(nullptr),
   descriptor_(move(descriptor)),
@@ -35,11 +35,11 @@ Overlay::Overlay(
   tdev_ = make_unique<TapDev>();
 }
 
-Overlay::~Overlay()
+BasicTunnel::~BasicTunnel()
 {}
 
 void
-Overlay::Configure(
+BasicTunnel::Configure(
   unique_ptr<TapDescriptor> tap_desc,
   const vector<string>& ignored_list)
 {
@@ -59,16 +59,16 @@ Overlay::Configure(
 }
 
 void
-Overlay::Start()
+BasicTunnel::Start()
 {
   net_worker_.Start();
   sig_worker_.Start();
-  tdev_->read_completion_.connect(this, &Overlay::TapReadComplete);
-  tdev_->write_completion_.connect(this, &Overlay::TapWriteComplete);
+  tdev_->read_completion_.connect(this, &BasicTunnel::TapReadComplete);
+  tdev_->write_completion_.connect(this, &BasicTunnel::TapWriteComplete);
 }
 
 void
-Overlay::Shutdown()
+BasicTunnel::Shutdown()
 {
   net_worker_.Quit();
   sig_worker_.Quit();
@@ -77,7 +77,7 @@ Overlay::Shutdown()
 }
 
 unique_ptr<VirtualLink>
-Overlay::CreateVlink(
+BasicTunnel::CreateVlink(
   unique_ptr<VlinkDescriptor> vlink_desc,
   unique_ptr<PeerDescriptor> peer_desc,
   cricket::IceRole ice_role)
@@ -89,14 +89,14 @@ Overlay::CreateVlink(
   unique_ptr<SSLIdentity> sslid_copy(sslid_->GetReference());
   vl->Initialize(net_manager_, move(sslid_copy), *local_fingerprint_.get(),
     ice_role);
-  vl->SignalMessageReceived.connect(this, &Overlay::VlinkReadComplete);
-  vl->SignalLinkUp.connect(this, &Overlay::VLinkUp);
-  vl->SignalLinkDown.connect(this, &Overlay::VLinkDown);
+  vl->SignalMessageReceived.connect(this, &BasicTunnel::VlinkReadComplete);
+  vl->SignalLinkUp.connect(this, &BasicTunnel::VLinkUp);
+  vl->SignalLinkDown.connect(this, &BasicTunnel::VLinkDown);
   return vl;
 }
 
 void
-Overlay::VLinkUp(
+BasicTunnel::VLinkUp(
   string vlink_id)
 {
   StartIo();
@@ -111,7 +111,7 @@ Overlay::VLinkUp(
 }
 
 void
-Overlay::VLinkDown(
+BasicTunnel::VLinkDown(
   string vlink_id)
 {
   unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
@@ -125,7 +125,7 @@ Overlay::VLinkDown(
 }
 
 void
-Overlay::StartIo()
+BasicTunnel::StartIo()
 {
   for(uint8_t i = 0; i < kLinkConcurrentAIO; i++)
   {
@@ -140,39 +140,39 @@ Overlay::StartIo()
   }
 }
 
-OverlayDescriptor &
-Overlay::Descriptor()
+TunnelDescriptor &
+BasicTunnel::Descriptor()
 {
   return *descriptor_.get();
 }
 
 string
-Overlay::Name()
+BasicTunnel::Name()
 {
   return descriptor_->uid;
 }
 
 string
-Overlay::MacAddress()
+BasicTunnel::MacAddress()
 {
   MacAddressType mac = tdev_->MacAddress();
   return ByteArrayToString(mac.begin(), mac.end(), 0);
 }
 
 string
-Overlay::Fingerprint()
+BasicTunnel::Fingerprint()
 {
   return local_fingerprint_->ToString();
 }
 
 void
-Overlay::SetIgnoredNetworkInterfaces(
+BasicTunnel::SetIgnoredNetworkInterfaces(
   const vector<string>& ignored_list)
 {
   net_manager_.set_network_ignore_list(ignored_list);
 }
 
-void Overlay::OnMessage(Message * msg)
+void BasicTunnel::OnMessage(Message * msg)
 {
   switch(msg->message_id)
   {
@@ -231,7 +231,7 @@ void Overlay::OnMessage(Message * msg)
 }
 
 void
-Overlay::InjectFame(
+BasicTunnel::InjectFame(
   string && data)
 {
   unique_ptr<TapFrame> tf = make_unique<TapFrame>();

@@ -42,15 +42,15 @@ Tincan::SetIpopControllerLink(
   ctrl_link_ = ctrl_handle;
 }
 
-void Tincan::CreateOverlay(
+void Tincan::CreateTunnel(
   const Json::Value & olay_desc,
   Json::Value & olay_info)
 {
-  unique_ptr<OverlayDescriptor> ol_desc(new OverlayDescriptor);
+  unique_ptr<TunnelDescriptor> ol_desc(new TunnelDescriptor);
   ol_desc->uid = olay_desc[TincanControl::OverlayId].asString();
   ol_desc->node_id = olay_desc[TincanControl::NodeId].asString();
-  if(IsOverlayExisit(ol_desc->uid))
-    throw TCEXCEPT("The specified overlay identifier already exists");
+  if(IsTunnelExisit(ol_desc->uid))
+    throw TCEXCEPT("The specified Tunnel identifier already exists");
 
   Json::Value stun_servers = olay_desc["StunServers"];
   for (Json::Value::ArrayIndex i = 0; i < stun_servers.size(); ++i)
@@ -68,17 +68,17 @@ void Tincan::CreateOverlay(
     ol_desc->turn_descs.push_back(turn_desc);
   }
   ol_desc->enable_ip_mapping = false;
-  unique_ptr<Overlay> olay;
+  unique_ptr<BasicTunnel> olay;
   if(olay_desc[TincanControl::Type].asString() == "VNET")
   {
-    olay = make_unique<VirtualNetwork>(move(ol_desc), ctrl_link_);
+    olay = make_unique<MultiLinkTunnel>(move(ol_desc), ctrl_link_);
   }
   else if(olay_desc[TincanControl::Type].asString() == "TUNNEL")
   {
-    olay = make_unique<Tunnel>(move(ol_desc), ctrl_link_);
+    olay = make_unique<SingleLinkTunnel>(move(ol_desc), ctrl_link_);
   }
   else
-    throw TCEXCEPT("Invalid Overlay type specified");
+    throw TCEXCEPT("Invalid Tunnel type specified");
   unique_ptr<TapDescriptor> tap_desc = make_unique<TapDescriptor>();
   tap_desc->name = olay_desc["TapName"].asString();
   tap_desc->ip4 = olay_desc["IP4"].asString();
@@ -96,8 +96,8 @@ void Tincan::CreateOverlay(
   olay->Configure(move(tap_desc), if_list);
   olay->Start();
   olay->QueryInfo(olay_info);
-  lock_guard<mutex> lg(ovlays_mutex_);
-  ovlays_.push_back(move(olay));
+  lock_guard<mutex> lg(tunnels_mutex_);
+  tunnels_.push_back(move(olay));
 
   return;
 }
@@ -111,14 +111,14 @@ Tincan::CreateVlink(
   vl_desc->uid = link_desc[TincanControl::LinkId].asString();
   unique_ptr<Json::Value> resp = make_unique<Json::Value>(Json::objectValue);
   Json::Value & olay_info = (*resp)[TincanControl::Message];
-  string olid = link_desc[TincanControl::OverlayId].asString();
-  if(!IsOverlayExisit(olid))
+  string tnl_id = link_desc[TincanControl::OverlayId].asString();
+  if(!IsTunnelExisit(tnl_id))
   {
-    CreateOverlay(link_desc, olay_info);
+    CreateTunnel(link_desc, olay_info);
   }
   else
   {
-    OverlayFromId(olid).QueryInfo(olay_info);
+    TunnelFromId(tnl_id).QueryInfo(olay_info);
   }
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
   peer_desc->uid =
@@ -134,7 +134,7 @@ Tincan::CreateVlink(
 
   vl_desc->dtls_enabled = true;
 
-  Overlay & ol = OverlayFromId(olid);
+  BasicTunnel & ol = TunnelFromId(tnl_id);
   shared_ptr<VirtualLink> vlink =
     ol.CreateVlink(move(vl_desc), move(peer_desc));
   unique_ptr<TincanControl> ctrl = make_unique<TincanControl>(control);
@@ -160,8 +160,8 @@ void
 Tincan::InjectFrame(
   const Json::Value & frame_desc)
 {
-  const string & olid = frame_desc[TincanControl::OverlayId].asString();
-  Overlay & ol = OverlayFromId(olid);
+  const string & tnl_id = frame_desc[TincanControl::OverlayId].asString();
+  BasicTunnel & ol = TunnelFromId(tnl_id);
   ol.InjectFame(frame_desc[TincanControl::Data].asString());
 }
 
@@ -170,76 +170,76 @@ Tincan::QueryLinkCas(
   const Json::Value & link_desc,
   Json::Value & cas_info)
 {
-  const string olid = link_desc[TincanControl::OverlayId].asString();
+  const string tnl_id = link_desc[TincanControl::OverlayId].asString();
   const string vlid = link_desc[TincanControl::LinkId].asString();
-  Overlay & ol = OverlayFromId(olid);
+  BasicTunnel & ol = TunnelFromId(tnl_id);
   ol.QueryLinkCas(vlid, cas_info);
 }
 
 void
 Tincan::QueryLinkStats(
-  const Json::Value & overlay_ids,
+  const Json::Value & tunnel_ids,
   Json::Value & stat_info)
 {
-  for(uint32_t i = 0; i < overlay_ids["OverlayIds"].size(); i++)
+  for(uint32_t i = 0; i < tunnel_ids["OverlayIds"].size(); i++)
   {
     vector<string>link_ids;
-    string olid = overlay_ids["OverlayIds"][i].asString();
-    Overlay & ol = OverlayFromId(olid);
+    string tnl_id = tunnel_ids["OverlayIds"][i].asString();
+    BasicTunnel & ol = TunnelFromId(tnl_id);
     ol.QueryLinkIds(link_ids);
     for(auto vlid : link_ids)
     {
-      ol.QueryLinkInfo(vlid, stat_info[olid][vlid]);
+      ol.QueryLinkInfo(vlid, stat_info[tnl_id][vlid]);
     }
   }
 
 }
 
 void
-Tincan::QueryOverlayInfo(
+Tincan::QueryTunnelInfo(
   const Json::Value & olay_desc,
   Json::Value & olay_info)
 {
-  Overlay & ol = OverlayFromId(olay_desc[TincanControl::OverlayId].asString());
+  BasicTunnel & ol = TunnelFromId(olay_desc[TincanControl::OverlayId].asString());
   ol.QueryInfo(olay_info);
 }
 
 void 
-Tincan::RemoveOverlay(
+Tincan::RemoveTunnel(
   const Json::Value & olay_desc)
 {
-  const string olid = olay_desc[TincanControl::OverlayId].asString();
-  if(olid.empty())
-    throw TCEXCEPT("No overlay id specified");
+  const string tnl_id = olay_desc[TincanControl::OverlayId].asString();
+  if(tnl_id.empty())
+    throw TCEXCEPT("No Tunnel ID was specified");
   
-  lock_guard<mutex> lg(ovlays_mutex_);
-  for(auto ol = ovlays_.begin(); ol != ovlays_.end(); ol++)
+  lock_guard<mutex> lg(tunnels_mutex_);
+  for(auto tnl = tunnels_.begin(); tnl != tunnels_.end(); tnl++)
   {
-    if((*ol)->Descriptor().uid.compare(olid) == 0)
+    if((*tnl)->Descriptor().uid.compare(tnl_id) == 0)
     {
-      (*ol)->Shutdown();
-      ovlays_.erase(ol);
+      (*tnl)->Shutdown();
+      tunnels_.erase(tnl);
       return;
     }
   }
-  LOG(LS_WARNING) << "RemoveOverlay: No such virtual network exists " << olid;
+  LOG(LS_WARNING) << "RemoveTunnel: No such virtual network exists " << tnl_id;
 }
 
 void
 Tincan::RemoveVlink(
   const Json::Value & link_desc)
 {
-  const string olid = link_desc[TincanControl::OverlayId].asString();
+  const string tnl_id = link_desc[TincanControl::OverlayId].asString();
   const string vlid = link_desc[TincanControl::LinkId].asString();
-  if(olid.empty() || vlid.empty())
+  if(tnl_id.empty() || vlid.empty())
     throw TCEXCEPT("Required identifier not specified");
 
-  lock_guard<mutex> lg(ovlays_mutex_);
-  for(auto & ol : ovlays_)
+  lock_guard<mutex> lg(tunnels_mutex_);
+  for(auto & tnl : tunnels_)
   {
-    if(ol->Descriptor().uid.compare(olid) == 0)
+    if(tnl->Descriptor().uid.compare(tnl_id) == 0)
     {
-      ol->RemoveLink(vlid);
+      tnl->RemoveLink(vlid);
     }
   }
 }
@@ -248,12 +248,12 @@ void
 Tincan::SendIcc(
   const Json::Value & icc_desc)
 {
-  const string olid = icc_desc[TincanControl::OverlayId].asString();
+  const string tnl_id = icc_desc[TincanControl::OverlayId].asString();
   const string & link_id = icc_desc[TincanControl::LinkId].asString();
   if(icc_desc[TincanControl::Data].isString())
   {
     const string & data = icc_desc[TincanControl::Data].asString();
-    Overlay & ol = OverlayFromId(olid);
+    BasicTunnel & ol = TunnelFromId(tnl_id);
     ol.SendIcc(link_id, data);
   }
   else
@@ -298,8 +298,8 @@ Tincan::OnLocalCasUpdated(
 void Tincan::UpdateRouteTable(
   const Json::Value & rts_desc)
 {
-  string olid = rts_desc[TincanControl::OverlayId].asString();
-  Overlay & ol = OverlayFromId(olid);
+  string tnl_id = rts_desc[TincanControl::OverlayId].asString();
+  BasicTunnel & ol = TunnelFromId(tnl_id);
   ol.UpdateRouteTable(rts_desc["Table"]);
 }
 
@@ -321,27 +321,27 @@ Tincan::Run()
 }
 
 bool
-Tincan::IsOverlayExisit(
+Tincan::IsTunnelExisit(
   const string & oid)
 {
-  lock_guard<mutex> lg(ovlays_mutex_);
-  for(auto const & vnet : ovlays_) {
-    if(vnet->Descriptor().uid.compare(oid) == 0)
+  lock_guard<mutex> lg(tunnels_mutex_);
+  for(auto const & tnl : tunnels_) {
+    if(tnl->Descriptor().uid.compare(oid) == 0)
       return true;
   }
   return false;
 }
 
-Overlay &
-Tincan::OverlayFromId(
+BasicTunnel &
+Tincan::TunnelFromId(
   const string & oid)
 {
-  lock_guard<mutex> lg(ovlays_mutex_);
-  for(auto const & vnet : ovlays_)
+  lock_guard<mutex> lg(tunnels_mutex_);
+  for(auto const & tnl : tunnels_)
   {
     //list of vnets will be small enough where a linear search is satifactory
-    if(vnet->Descriptor().uid.compare(oid) == 0)
-      return *vnet.get();
+    if(tnl->Descriptor().uid.compare(oid) == 0)
+      return *tnl.get();
   }
   string msg("No virtual network exists by this name: ");
   msg.append(oid);
@@ -356,12 +356,12 @@ void Tincan::OnStop() {
 void
 Tincan::Shutdown()
 {
-  lock_guard<mutex> lg(ovlays_mutex_);
+  lock_guard<mutex> lg(tunnels_mutex_);
   ctl_thread_.Quit();
-  for(auto const & vnet : ovlays_) {
-    vnet->Shutdown();
+  for(auto const & tnl : tunnels_) {
+    tnl->Shutdown();
   }
-  ovlays_.clear();
+  tunnels_.clear();
 }
 
 /*

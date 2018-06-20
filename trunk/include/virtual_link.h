@@ -53,7 +53,6 @@ struct  VlinkDescriptor
 {
   bool dtls_enabled;
   string uid;
-  //string name;
   vector<string> stun_servers;
   vector<TurnDescriptor> turn_descs;
 };

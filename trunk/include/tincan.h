@@ -26,9 +26,8 @@
 #include "webrtc/base/event.h"
 #include "control_listener.h"
 #include "control_dispatch.h"
-#include "overlay.h"
-#include "tunnel.h"
-#include "virtual_network.h"
+#include "single_link_tunnel.h"
+#include "multi_link_tunnel.h"
 
 namespace tincan {
 class Tincan :
@@ -45,7 +44,7 @@ public:
     const Json::Value & link_desc,
     const TincanControl & control) override;
 
-  void CreateOverlay(
+  void CreateTunnel(
     const Json::Value & olay_desc,
     Json::Value & olay_info) override;
   
@@ -56,11 +55,11 @@ public:
     const Json::Value & link_desc,
     Json::Value & node_info) override;
 
-  void QueryOverlayInfo(
+  void QueryTunnelInfo(
     const Json::Value & olay_desc,
     Json::Value & node_info) override;
 
-  void RemoveOverlay(
+  void RemoveTunnel(
     const Json::Value & tnl_desc) override;
 
   void RemoveVlink(
@@ -86,10 +85,10 @@ public:
 
   void Run();
 private:
-  bool IsOverlayExisit(
+  bool IsTunnelExisit(
     const string & oid);
 
-  Overlay & OverlayFromId(
+  BasicTunnel & TunnelFromId(
     const string & oid);
 
   void OnStop();
@@ -100,13 +99,13 @@ private:
     DWORD CtrlType);
 #endif // _IPOP_WIN
 
-  vector<unique_ptr<Overlay>> ovlays_;
+  vector<unique_ptr<BasicTunnel>> tunnels_;
   IpopControllerLink * ctrl_link_;
   map<string, unique_ptr<TincanControl>> inprogess_controls_;
   Thread ctl_thread_;
   shared_ptr<ControlListener> ctrl_listener_; //must be destroyed before ctl_thread
   static Tincan * self_;
-  std::mutex ovlays_mutex_;
+  std::mutex tunnels_mutex_;
   std::mutex inprogess_controls_mutex_;
   rtc::Event exit_event_;
 

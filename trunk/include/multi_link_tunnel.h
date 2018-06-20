@@ -23,19 +23,19 @@
 #ifndef TINCAN_VIRTUAL_NETWORK_H_
 #define TINCAN_VIRTUAL_NETWORK_H_
 #include "tincan_base.h"
-#include "overlay.h"
+#include "basic_tunnel.h"
 namespace tincan
 {
-class VirtualNetwork :
-  public Overlay
+class MultiLinkTunnel :
+  public BasicTunnel
 {
 public:
   //ctor
-   VirtualNetwork(
-     unique_ptr<OverlayDescriptor> descriptor,
+   MultiLinkTunnel(
+     unique_ptr<TunnelDescriptor> descriptor,
      IpopControllerLink * ctrl_handle);
 
-  ~VirtualNetwork();
+  ~MultiLinkTunnel();
 
   shared_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,

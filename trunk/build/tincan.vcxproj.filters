@@ -499,9 +499,6 @@
     <ClInclude Include="..\include\virtual_link.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\virtual_network.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\control_listener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -514,9 +511,6 @@
     <ClInclude Include="..\include\tincan_exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\vnet_descriptor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\async_io.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -526,10 +520,16 @@
     <ClInclude Include="..\include\tincan_base.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\tunnel.h">
+    <ClInclude Include="..\include\tunnel_descriptor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\overlay.h">
+    <ClInclude Include="..\include\single_link_tunnel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\basic_tunnel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\multi_link_tunnel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -552,9 +552,6 @@
     <ClCompile Include="..\src\virtual_link.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\virtual_network.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\control_dispatch.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -564,10 +561,13 @@
     <ClCompile Include="..\src\tap_frame.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tunnel.cc">
+    <ClCompile Include="..\src\single_link_tunnel.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\overlay.cc">
+    <ClCompile Include="..\src\basic_tunnel.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\multi_link_tunnel.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

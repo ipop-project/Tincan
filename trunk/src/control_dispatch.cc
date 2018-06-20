@@ -23,7 +23,7 @@
 #include "control_dispatch.h"
 #include "webrtc/base/json.h"
 #include "tincan_exception.h"
-#include "vnet_descriptor.h"
+#include "tunnel_descriptor.h"
 
 namespace tincan
 {
@@ -205,7 +205,7 @@ ControlDispatch::CreateOverlay(
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->CreateOverlay(req, (*resp)["Message"]);
+    tincan_->CreateTunnel(req, (*resp)["Message"]);
     (*resp)["Success"] = true;
   } catch(exception & e)
   {
@@ -331,7 +331,7 @@ ControlDispatch::QueryOverlayInfo(
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->QueryOverlayInfo(req, node_info);
+    tincan_->QueryTunnelInfo(req, node_info);
     resp = node_info.toStyledString();
     status = true;
   } catch(exception & e)
@@ -378,7 +378,7 @@ ControlDispatch::RemoveOverlay(
   lock_guard<mutex> lg(disp_mutex_);
   try
   {
-    tincan_->RemoveOverlay(req);
+    tincan_->RemoveTunnel(req);
     status = true;
     msg.append("succeeded.");
   } catch(exception & e)

@@ -24,7 +24,6 @@
 #define TINCAN_CONTROLLER_HANDLE_H_
 #include "tincan_base.h"
 #include "tincan_control.h"
-//#include "vnet_descriptor.h"
 
 namespace tincan {
   class IpopControllerLink
@@ -52,7 +51,7 @@ namespace tincan {
   public:
     virtual ~TincanDispatchInterface() = default;
 
-    virtual void CreateOverlay(
+    virtual void CreateTunnel(
       const Json::Value & olay_desc,
       Json::Value & olay_info) = 0;
 
@@ -67,7 +66,7 @@ namespace tincan {
       const Json::Value & link_desc,
       Json::Value & node_info) = 0;
 
-    virtual void QueryOverlayInfo(
+    virtual void QueryTunnelInfo(
       const Json::Value & olay_desc,
       Json::Value & state_data) = 0;
 
@@ -75,7 +74,7 @@ namespace tincan {
       const Json::Value & link_desc,
       Json::Value & cas_info) = 0;
 
-    virtual void RemoveOverlay(
+    virtual void RemoveTunnel(
       const Json::Value & tnl_desc) = 0;
 
     virtual void RemoveVlink(

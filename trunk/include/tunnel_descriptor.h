@@ -20,20 +20,15 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#ifndef TINCAN_VNET_DESCRIPTOR_H_
-#define TINCAN_VNET_DESCRIPTOR_H_
+#ifndef TINCAN_TUNNEL_DESCRIPTOR_H_
+#define TINCAN_TUNNEL_DESCRIPTOR_H_
 #include "tincan_base.h"
 #include "turn_descriptor.h"
 namespace tincan
 {
-struct OverlayDescriptor
+struct TunnelDescriptor
 {
   string uid;
-  //string type;
-  //string name;
-  //string mac;
-  //string vlink_id;
-  //string description;
   string node_id;
   vector<string> stun_servers;
   vector<TurnDescriptor> turn_descs;
@@ -41,4 +36,4 @@ struct OverlayDescriptor
   bool disable_encryption;
 };
 } // namespace tincan
-#endif // TINCAN_VNET_DESCRIPTOR_H_
+#endif // TINCAN_TUNNEL_DESCRIPTOR_H_

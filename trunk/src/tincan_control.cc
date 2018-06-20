@@ -53,7 +53,7 @@ const Json::StaticString TincanControl::PeerInfo("PeerInfo");
 const Json::StaticString TincanControl::ProtocolVersion("ProtocolVersion");
 const Json::StaticString TincanControl::QueryOverlayInfo("QueryOverlayInfo");
 const Json::StaticString TincanControl::QueryCandidateAddressSet("QueryCandidateAddressSet");
-const Json::StaticString TincanControl::RemoveOverlay("RemoveOverlay");
+const Json::StaticString TincanControl::RemoveTunnel("RemoveOverlay");
 const Json::StaticString TincanControl::ReqRouteUpdate("ReqRouteUpdate");
 const Json::StaticString TincanControl::Request("Request");
 const Json::StaticString TincanControl::Response("Response");

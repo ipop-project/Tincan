@@ -20,21 +20,21 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#ifndef TINCAN_TUNNEL_H_
-#define TINCAN_TUNNEL_H_
+#ifndef SINGLE_LINK_TUNNEL_H_
+#define SINGLE_LINK_TUNNEL_H_
 #include "tincan_base.h"
-#include "overlay.h"
+#include "basic_tunnel.h"
 
 namespace tincan
 {
-class Tunnel :
-  public Overlay
+class SingleLinkTunnel :
+  public BasicTunnel
 {
 public:
-  Tunnel(
-    unique_ptr<OverlayDescriptor> descriptor,
+  SingleLinkTunnel(
+    unique_ptr<TunnelDescriptor> descriptor,
     IpopControllerLink * ctrl_handle);
-  //virtual ~Tunnel() = default;
+  //virtual ~SingleLinkTunnel() = default;
 
   shared_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,
@@ -87,4 +87,4 @@ private:
   shared_ptr<VirtualLink> vlink_;
 };
 } //namespace tincan
-#endif  // TINCAN_TUNNEL_H_
+#endif  // SINGLE_LINK_TUNNEL_H_

@@ -20,20 +20,20 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#include "tunnel.h"
+#include "single_link_tunnel.h"
 #include "tincan_exception.h"
 #include "tincan_control.h"
 
 namespace tincan
 {
-Tunnel::Tunnel(
-  unique_ptr<OverlayDescriptor> descriptor,
+SingleLinkTunnel::SingleLinkTunnel(
+  unique_ptr<TunnelDescriptor> descriptor,
   IpopControllerLink * ctrl_handle) :
-  Overlay(move(descriptor), ctrl_handle)
+  BasicTunnel(move(descriptor), ctrl_handle)
 {}
 
 shared_ptr<VirtualLink>
-Tunnel::CreateVlink(
+SingleLinkTunnel::CreateVlink(
   unique_ptr<VlinkDescriptor> vlink_desc,
   unique_ptr<PeerDescriptor> peer_desc)
 {
@@ -52,12 +52,12 @@ Tunnel::CreateVlink(
     string roles[] = { "CONTROLLED", "CONTROLLING" };
     LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer "
       << peer_desc->uid;
-    vlink_ = Overlay::CreateVlink(move(vlink_desc), move(peer_desc), ir);
+    vlink_ = BasicTunnel::CreateVlink(move(vlink_desc), move(peer_desc), ir);
   }
   return vlink_;
 }
 
-void Tunnel::QueryInfo(
+void SingleLinkTunnel::QueryInfo(
   Json::Value & olay_info)
 {
   olay_info[TincanControl::OverlayId] = descriptor_->uid;
@@ -74,7 +74,7 @@ void Tunnel::QueryInfo(
   }
 }
 
-void Tunnel::QueryLinkCas(
+void SingleLinkTunnel::QueryLinkCas(
   const string & vlink_id,
   Json::Value & cas_info)
 {
@@ -89,13 +89,13 @@ void Tunnel::QueryLinkCas(
   }
 }
 
-void Tunnel::QueryLinkIds(vector<string>& link_ids)
+void SingleLinkTunnel::QueryLinkIds(vector<string>& link_ids)
 {
   if(vlink_)
     link_ids.push_back(vlink_->Id());
 }
 
-void Tunnel::QueryLinkInfo(
+void SingleLinkTunnel::QueryLinkInfo(
   const string & vlink_id,
   Json::Value & vlink_info)
 {
@@ -128,7 +128,7 @@ void Tunnel::QueryLinkInfo(
 
 }
 
-void Tunnel::SendIcc(
+void SingleLinkTunnel::SendIcc(
   const string & vlink_id,
   const string & data)
 {
@@ -143,7 +143,7 @@ void Tunnel::SendIcc(
 
 }
 
-void Tunnel::Shutdown()
+void SingleLinkTunnel::Shutdown()
 {
   if(vlink_ && vlink_->IsReady())
   {
@@ -153,17 +153,17 @@ void Tunnel::Shutdown()
     md.msg_event.Wait(Event::kForever);
     vlink_.reset();
   }
-  Overlay::Shutdown();
+  BasicTunnel::Shutdown();
 }
 
 void
-Tunnel::StartIo()
+SingleLinkTunnel::StartIo()
 {
   tdev_->Up();
-  Overlay::StartIo();
+  BasicTunnel::StartIo();
 }
 
-void Tunnel::RemoveLink(
+void SingleLinkTunnel::RemoveLink(
   const string & vlink_id)
 {
   if(!vlink_)
@@ -181,14 +181,14 @@ void Tunnel::RemoveLink(
 }
 
 void
-Tunnel::UpdateRouteTable(
+SingleLinkTunnel::UpdateRouteTable(
   const Json::Value & rt_descr)
 {}
 
 /*
 When the overlay is a tunnel, the only operations are sending ICCs and normal IO
 */
-void Tunnel::VlinkReadComplete(
+void SingleLinkTunnel::VlinkReadComplete(
   uint8_t * data,
   uint32_t data_len,
   VirtualLink & vlink)
@@ -224,7 +224,7 @@ void Tunnel::VlinkReadComplete(
   }
 }
 
-void Tunnel::TapReadComplete(
+void SingleLinkTunnel::TapReadComplete(
   AsyncIo * aio_rd)
 {
   TapFrame * frame = static_cast<TapFrame*>(aio_rd->context_);
@@ -250,7 +250,7 @@ void Tunnel::TapReadComplete(
   net_worker_.Post(RTC_FROM_HERE, this, MSGID_TRANSMIT, md);
 }
 
-void Tunnel::TapWriteComplete(
+void SingleLinkTunnel::TapWriteComplete(
   AsyncIo * aio_wr)
 {
   //TapFrame * frame = static_cast<TapFrame*>(aio_wr->context_);

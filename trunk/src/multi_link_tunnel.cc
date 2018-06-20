@@ -20,24 +20,24 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#include "virtual_network.h"
+#include "multi_link_tunnel.h"
 #include "webrtc/base/base64.h"
 #include "tincan_control.h"
 namespace tincan
 {
-VirtualNetwork::VirtualNetwork(
-  unique_ptr<OverlayDescriptor> descriptor,
+MultiLinkTunnel::MultiLinkTunnel(
+  unique_ptr<TunnelDescriptor> descriptor,
   IpopControllerLink * ctrl_handle) :
-  Overlay(move(descriptor), ctrl_handle)
+  BasicTunnel(move(descriptor), ctrl_handle)
 {
   peer_network_ = make_unique<PeerNetwork>();
 }
 
-VirtualNetwork::~VirtualNetwork()
+MultiLinkTunnel::~MultiLinkTunnel()
 {}
 
 shared_ptr<VirtualLink>
-VirtualNetwork::CreateVlink(
+MultiLinkTunnel::CreateVlink(
   unique_ptr<VlinkDescriptor> vlink_desc,
   unique_ptr<PeerDescriptor> peer_desc)
 {
@@ -60,43 +60,43 @@ VirtualNetwork::CreateVlink(
     string roles[] = { "CONTROLLED", "CONTROLLING" };
     LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer "
       << peer_desc->uid;
-    vl = Overlay::CreateVlink(move(vlink_desc), move(peer_desc), ir);
+    vl = BasicTunnel::CreateVlink(move(vlink_desc), move(peer_desc), ir);
     peer_network_->Add(vl);
   }
   return vl;
 }
 
 void
-VirtualNetwork::Start()
+MultiLinkTunnel::Start()
 {
-  Overlay::Start();
+  BasicTunnel::Start();
   tdev_->Up();
   peer_net_thread_.Start(peer_network_.get());
 }
 
 void
-VirtualNetwork::Shutdown()
+MultiLinkTunnel::Shutdown()
 {
-  Overlay::Shutdown();
+  BasicTunnel::Shutdown();
   peer_net_thread_.Quit();
   peer_network_->Clear();
 }
 
 void
-VirtualNetwork::UpdateRouteTable(
+MultiLinkTunnel::UpdateRouteTable(
   const Json::Value & rt_descr)
 {
   //peer_network_->UpdateRouteTable(rt_descr);
 }
 
 
-void VirtualNetwork::RemoveLink(
+void MultiLinkTunnel::RemoveLink(
   const string & vlink_id)
 {
     peer_network_->Remove(vlink_id);
 }
 
-void VirtualNetwork::QueryInfo(
+void MultiLinkTunnel::QueryInfo(
   Json::Value & olay_info)
 {
   olay_info[TincanControl::OverlayId] = descriptor_->uid;
@@ -115,7 +115,7 @@ void VirtualNetwork::QueryInfo(
   }
 }
 
-void VirtualNetwork::QueryLinkCas(
+void MultiLinkTunnel::QueryLinkCas(
   const string & vlink_id,
   Json::Value & cas_info)
 {
@@ -132,14 +132,14 @@ void VirtualNetwork::QueryLinkCas(
 }
 
 void
-VirtualNetwork::QueryLinkIds
+MultiLinkTunnel::QueryLinkIds
 (vector<string>& link_ids)
 {
   link_ids = peer_network_->QueryVlinks();
 }
 
 void
-VirtualNetwork::QueryLinkInfo(
+MultiLinkTunnel::QueryLinkInfo(
   const string & vlink_id,
   Json::Value & vlink_info)
 {
@@ -173,7 +173,7 @@ VirtualNetwork::QueryLinkInfo(
 }
 
 void
-VirtualNetwork::SendIcc(
+MultiLinkTunnel::SendIcc(
   const string & vlink_id,
   const string & data)
 {
@@ -203,7 +203,7 @@ Types of Transformation:
 
 */
 void
-VirtualNetwork::VlinkReadComplete(
+MultiLinkTunnel::VlinkReadComplete(
   uint8_t * data,
   uint32_t data_len,
   VirtualLink & vlink)
@@ -275,7 +275,7 @@ controller.
 Note: Avoid exceptions on the IO loop
 */
 void
-VirtualNetwork::TapReadComplete(
+MultiLinkTunnel::TapReadComplete(
   AsyncIo * aio_rd)
 {
   TapFrame * frame = static_cast<TapFrame*>(aio_rd->context_);
@@ -332,7 +332,7 @@ VirtualNetwork::TapReadComplete(
 }
 
 void
-VirtualNetwork::TapWriteComplete(
+MultiLinkTunnel::TapWriteComplete(
   AsyncIo * aio_wr)
 {
   TapFrame * frame = static_cast<TapFrame*>(aio_wr->context_);
