@@ -36,14 +36,14 @@ ControlDispatch::ControlDispatch() :
     { "ConfigureLogging", &ControlDispatch::ConfigureLogging },
     { "CreateCtrlRespLink", &ControlDispatch::CreateIpopControllerRespLink },
     { "CreateLink", &ControlDispatch::CreateLink },
-    { "CreateOverlay", &ControlDispatch::CreateOverlay },
+    { "CreateTunnel", &ControlDispatch::CreateTunnel },
     { "Echo", &ControlDispatch::Echo },
     { "SendIcc", &ControlDispatch::SendIcc },
     { "InjectFrame", &ControlDispatch::InjectFrame },
     { "QueryCandidateAddressSet", &ControlDispatch::QueryCandidateAddressSet },
     { "QueryLinkStats", &ControlDispatch::QueryLinkStats },
-    { "QueryOverlayInfo", &ControlDispatch::QueryOverlayInfo },
-    { "RemoveOverlay", &ControlDispatch::RemoveOverlay },
+    { "QueryTunnelInfo", &ControlDispatch::QueryTunnelInfo },
+    { "RemoveTunnel", &ControlDispatch::RemoveTunnel },
     { "RemoveLink", &ControlDispatch::RemoveLink },
     { "UpdateMap", &ControlDispatch::UpdateRouteTable },
   };
@@ -197,7 +197,7 @@ void ControlDispatch::CreateIpopControllerRespLink(
 }
 
 void
-ControlDispatch::CreateOverlay(
+ControlDispatch::CreateTunnel(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest();
@@ -209,7 +209,7 @@ ControlDispatch::CreateOverlay(
     (*resp)["Success"] = true;
   } catch(exception & e)
   {
-    string er_msg = "The CreateOverlay operation failed.";
+    string er_msg = "The CreateTunnel operation failed.";
     LOG(LS_ERROR) << er_msg << e.what() << ". Control Data=\n" <<
       control.StyledString();
     (*resp)["Message"] = er_msg;
@@ -322,11 +322,11 @@ ControlDispatch::QueryLinkStats(
 }
 
 void
-ControlDispatch::QueryOverlayInfo(
+ControlDispatch::QueryTunnelInfo(
   TincanControl & control)
 {
   Json::Value & req = control.GetRequest(), node_info;
-  string resp("The QueryOverlayInfo operation succeeded");
+  string resp("The QueryTunnelInfo operation succeeded");
   bool status = false;
   lock_guard<mutex> lg(disp_mutex_);
   try
@@ -336,7 +336,7 @@ ControlDispatch::QueryOverlayInfo(
     status = true;
   } catch(exception & e)
   {
-    resp = "The QueryOverlayInfo operation failed. ";
+    resp = "The QueryTunnelInfo operation failed. ";
     resp.append(e.what());
     LOG(LS_WARNING) << resp << e.what() << ". Control Data=\n" <<
       control.StyledString();
@@ -369,12 +369,12 @@ ControlDispatch::RemoveLink(
 }
 
 void
-ControlDispatch::RemoveOverlay(
+ControlDispatch::RemoveTunnel(
   TincanControl & control)
 {
   bool status = false;
   Json::Value & req = control.GetRequest();
-  string msg("The RemoveOverlay operation ");
+  string msg("The RemoveTunnel operation ");
   lock_guard<mutex> lg(disp_mutex_);
   try
   {

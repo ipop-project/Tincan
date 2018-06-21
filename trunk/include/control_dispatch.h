@@ -52,14 +52,14 @@ private:
   void ConfigureLogging(TincanControl & control);
   void CreateLink(TincanControl & control);
   void CreateIpopControllerRespLink(TincanControl & control);
-  void CreateOverlay(TincanControl & control);
+  void CreateTunnel(TincanControl & control);
   void Echo(TincanControl & control);
   void InjectFrame(TincanControl & control);
   void QueryLinkStats(TincanControl & control);
-  void QueryOverlayInfo(TincanControl & control);
+  void QueryTunnelInfo(TincanControl & control);
   void QueryCandidateAddressSet(TincanControl & control);
   void RemoveLink(TincanControl & control);
-  void RemoveOverlay(TincanControl & control);
+  void RemoveTunnel(TincanControl & control);
   void UpdateRouteTable(TincanControl & control);
   LoggingSeverity GetLogLevel(const string & log_level);
   void SendIcc(TincanControl & control);

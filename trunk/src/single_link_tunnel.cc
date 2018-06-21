@@ -60,7 +60,7 @@ SingleLinkTunnel::CreateVlink(
 void SingleLinkTunnel::QueryInfo(
   Json::Value & olay_info)
 {
-  olay_info[TincanControl::OverlayId] = descriptor_->uid;
+  olay_info[TincanControl::TunnelId] = descriptor_->uid;
   olay_info[TincanControl::FPR] = Fingerprint();
   olay_info[TincanControl::TapName] = tap_desc_->name;
   olay_info[TincanControl::MAC] = MacAddress();
@@ -186,7 +186,7 @@ SingleLinkTunnel::UpdateRouteTable(
 {}
 
 /*
-When the overlay is a tunnel, the only operations are sending ICCs and normal IO
+The only operations for single link tunnels are sending ICCs and normal IO
 */
 void SingleLinkTunnel::VlinkReadComplete(
   uint8_t * data,
@@ -209,7 +209,7 @@ void SingleLinkTunnel::VlinkReadComplete(
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
     req[TincanControl::Command] = TincanControl::ICC;
-    req[TincanControl::OverlayId] = descriptor_->uid;
+    req[TincanControl::TunnelId] = descriptor_->uid;
     req[TincanControl::LinkId] = vlink.Id();
     req[TincanControl::Data] = string((char*)frame->Payload(),
       frame->PayloadLength());

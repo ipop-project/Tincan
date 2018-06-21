@@ -81,7 +81,7 @@ const array<const char*, 3> ControlTypeStrings = { {"TincanRequest", "TincanResp
   static const Json::StaticString Controlling;
   static const Json::StaticString ControlType;
   static const Json::StaticString CreateCtrlRespLink;
-  static const Json::StaticString CreateOverlay;
+  static const Json::StaticString CreateTunnel;
   static const Json::StaticString Data;
   static const Json::StaticString Echo;
   static const Json::StaticString EncryptionEnabled;
@@ -99,10 +99,9 @@ const array<const char*, 3> ControlTypeStrings = { {"TincanRequest", "TincanResp
   static const Json::StaticString Message;
   static const Json::StaticString MTU4;
   static const Json::StaticString NodeId;
-  static const Json::StaticString OverlayId;
   static const Json::StaticString PeerInfo;
   static const Json::StaticString ProtocolVersion;
-  static const Json::StaticString QueryOverlayInfo;
+  static const Json::StaticString QueryTunnelInfo;
   static const Json::StaticString QueryCandidateAddressSet;
   static const Json::StaticString Recipient;
   static const Json::StaticString RecipientMac;
@@ -120,6 +119,7 @@ const array<const char*, 3> ControlTypeStrings = { {"TincanRequest", "TincanResp
   static const Json::StaticString TincanRequest;
   static const Json::StaticString TincanResponse;
   static const Json::StaticString TransactionId;
+  static const Json::StaticString TunnelId;
   static const Json::StaticString Type;
   static const Json::StaticString VIP4;
   static const Json::StaticString VIP6;

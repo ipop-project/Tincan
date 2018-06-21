@@ -20,8 +20,8 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#ifndef TINCAN_OVERLAY_H_
-#define TINCAN_OVERLAY_H_
+#ifndef BASIC_TUNNEL_H_
+#define BASIC_TUNNEL_H_
 #include "tincan_base.h"
 #include "webrtc/base/network.h"
 #ifdef min
@@ -179,4 +179,4 @@ protected:
   rtc::BasicNetworkManager net_manager_;
 };
 }  // namespace tincan
-#endif  // TINCAN_OVERLAY_H_
+#endif  // BASIC_TUNNEL_H_

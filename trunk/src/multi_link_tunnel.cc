@@ -99,7 +99,7 @@ void MultiLinkTunnel::RemoveLink(
 void MultiLinkTunnel::QueryInfo(
   Json::Value & olay_info)
 {
-  olay_info[TincanControl::OverlayId] = descriptor_->uid;
+  olay_info[TincanControl::TunnelId] = descriptor_->uid;
   olay_info[TincanControl::FPR] = Fingerprint();
   olay_info[TincanControl::TapName] = tap_desc_->name;
   olay_info[TincanControl::MAC] = MacAddress();
@@ -216,14 +216,14 @@ MultiLinkTunnel::VlinkReadComplete(
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
     req[TincanControl::Command] = TincanControl::ICC;
-    req[TincanControl::OverlayId] = descriptor_->uid;
+    req[TincanControl::TunnelId] = descriptor_->uid;
     req[TincanControl::LinkId] = vlink.Id();
     req[TincanControl::Data] = string((char*)frame->Payload(),
       frame->PayloadLength());
     ctrl_link_->Deliver(move(ctrl));
   }
   else if(fp.IsFwdMsg())
-  { // a frame to be routed on the overlay
+  { // a frame to be routed
     if(peer_network_->IsRouteExists(fp.DestinationMac()))
     {
       shared_ptr<VirtualLink> vl = peer_network_->GetRoute(fp.DestinationMac());
@@ -238,7 +238,7 @@ MultiLinkTunnel::VlinkReadComplete(
       ctrl->SetControlType(TincanControl::CTTincanRequest);
       Json::Value & req = ctrl->GetRequest();
       req[TincanControl::Command] = TincanControl::ReqRouteUpdate;
-      req[TincanControl::OverlayId] = descriptor_->uid;
+      req[TincanControl::TunnelId] = descriptor_->uid;
       req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
         frame->PayloadEnd());
       ctrl_link_->Deliver(move(ctrl));
@@ -320,7 +320,7 @@ MultiLinkTunnel::TapReadComplete(
     ctrl->SetControlType(TincanControl::CTTincanRequest);
     Json::Value & req = ctrl->GetRequest();
     req[TincanControl::Command] = TincanControl::ReqRouteUpdate;
-    req[TincanControl::OverlayId] = descriptor_->uid;
+    req[TincanControl::TunnelId] = descriptor_->uid;
     req[TincanControl::Data] = ByteArrayToString(frame->Payload(),
       frame->PayloadEnd());
     ctrl_link_->Deliver(move(ctrl));

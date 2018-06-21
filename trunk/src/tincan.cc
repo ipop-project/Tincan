@@ -47,7 +47,7 @@ void Tincan::CreateTunnel(
   Json::Value & olay_info)
 {
   unique_ptr<TunnelDescriptor> ol_desc(new TunnelDescriptor);
-  ol_desc->uid = olay_desc[TincanControl::OverlayId].asString();
+  ol_desc->uid = olay_desc[TincanControl::TunnelId].asString();
   ol_desc->node_id = olay_desc[TincanControl::NodeId].asString();
   if(IsTunnelExisit(ol_desc->uid))
     throw TCEXCEPT("The specified Tunnel identifier already exists");
@@ -111,7 +111,7 @@ Tincan::CreateVlink(
   vl_desc->uid = link_desc[TincanControl::LinkId].asString();
   unique_ptr<Json::Value> resp = make_unique<Json::Value>(Json::objectValue);
   Json::Value & olay_info = (*resp)[TincanControl::Message];
-  string tnl_id = link_desc[TincanControl::OverlayId].asString();
+  string tnl_id = link_desc[TincanControl::TunnelId].asString();
   if(!IsTunnelExisit(tnl_id))
   {
     CreateTunnel(link_desc, olay_info);
@@ -160,7 +160,7 @@ void
 Tincan::InjectFrame(
   const Json::Value & frame_desc)
 {
-  const string & tnl_id = frame_desc[TincanControl::OverlayId].asString();
+  const string & tnl_id = frame_desc[TincanControl::TunnelId].asString();
   BasicTunnel & ol = TunnelFromId(tnl_id);
   ol.InjectFame(frame_desc[TincanControl::Data].asString());
 }
@@ -170,7 +170,7 @@ Tincan::QueryLinkCas(
   const Json::Value & link_desc,
   Json::Value & cas_info)
 {
-  const string tnl_id = link_desc[TincanControl::OverlayId].asString();
+  const string tnl_id = link_desc[TincanControl::TunnelId].asString();
   const string vlid = link_desc[TincanControl::LinkId].asString();
   BasicTunnel & ol = TunnelFromId(tnl_id);
   ol.QueryLinkCas(vlid, cas_info);
@@ -181,10 +181,10 @@ Tincan::QueryLinkStats(
   const Json::Value & tunnel_ids,
   Json::Value & stat_info)
 {
-  for(uint32_t i = 0; i < tunnel_ids["OverlayIds"].size(); i++)
+  for(uint32_t i = 0; i < tunnel_ids["TunnelIds"].size(); i++)
   {
     vector<string>link_ids;
-    string tnl_id = tunnel_ids["OverlayIds"][i].asString();
+    string tnl_id = tunnel_ids["TunnelIds"][i].asString();
     BasicTunnel & ol = TunnelFromId(tnl_id);
     ol.QueryLinkIds(link_ids);
     for(auto vlid : link_ids)
@@ -200,7 +200,7 @@ Tincan::QueryTunnelInfo(
   const Json::Value & olay_desc,
   Json::Value & olay_info)
 {
-  BasicTunnel & ol = TunnelFromId(olay_desc[TincanControl::OverlayId].asString());
+  BasicTunnel & ol = TunnelFromId(olay_desc[TincanControl::TunnelId].asString());
   ol.QueryInfo(olay_info);
 }
 
@@ -208,7 +208,7 @@ void
 Tincan::RemoveTunnel(
   const Json::Value & olay_desc)
 {
-  const string tnl_id = olay_desc[TincanControl::OverlayId].asString();
+  const string tnl_id = olay_desc[TincanControl::TunnelId].asString();
   if(tnl_id.empty())
     throw TCEXCEPT("No Tunnel ID was specified");
   
@@ -229,7 +229,7 @@ void
 Tincan::RemoveVlink(
   const Json::Value & link_desc)
 {
-  const string tnl_id = link_desc[TincanControl::OverlayId].asString();
+  const string tnl_id = link_desc[TincanControl::TunnelId].asString();
   const string vlid = link_desc[TincanControl::LinkId].asString();
   if(tnl_id.empty() || vlid.empty())
     throw TCEXCEPT("Required identifier not specified");
@@ -248,7 +248,7 @@ void
 Tincan::SendIcc(
   const Json::Value & icc_desc)
 {
-  const string tnl_id = icc_desc[TincanControl::OverlayId].asString();
+  const string tnl_id = icc_desc[TincanControl::TunnelId].asString();
   const string & link_id = icc_desc[TincanControl::LinkId].asString();
   if(icc_desc[TincanControl::Data].isString())
   {
@@ -298,7 +298,7 @@ Tincan::OnLocalCasUpdated(
 void Tincan::UpdateRouteTable(
   const Json::Value & rts_desc)
 {
-  string tnl_id = rts_desc[TincanControl::OverlayId].asString();
+  string tnl_id = rts_desc[TincanControl::TunnelId].asString();
   BasicTunnel & ol = TunnelFromId(tnl_id);
   ol.UpdateRouteTable(rts_desc["Table"]);
 }

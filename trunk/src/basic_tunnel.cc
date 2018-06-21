@@ -104,7 +104,7 @@ BasicTunnel::VLinkUp(
   ctrl->SetControlType(TincanControl::CTTincanRequest);
   Json::Value & req = ctrl->GetRequest();
   req[TincanControl::Command] = TincanControl::LinkStateChange;
-  req[TincanControl::OverlayId] = descriptor_->uid;
+  req[TincanControl::TunnelId] = descriptor_->uid;
   req[TincanControl::LinkId] = vlink_id;
   req[TincanControl::Data] = "LINK_STATE_UP";
   ctrl_link_->Deliver(move(ctrl));
@@ -118,7 +118,7 @@ BasicTunnel::VLinkDown(
   ctrl->SetControlType(TincanControl::CTTincanRequest);
   Json::Value & req = ctrl->GetRequest();
   req[TincanControl::Command] = TincanControl::LinkStateChange;
-  req[TincanControl::OverlayId] = descriptor_->uid;
+  req[TincanControl::TunnelId] = descriptor_->uid;
   req[TincanControl::LinkId] = vlink_id;
   req[TincanControl::Data] = "LINK_STATE_DOWN";
   ctrl_link_->Deliver(move(ctrl));
