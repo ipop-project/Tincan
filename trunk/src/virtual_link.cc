@@ -238,26 +238,32 @@ VirtualLink::GetStats(Json::Value & stats)
   channel_->GetStats(&infos);
   for(auto info : infos)
   {
-    if(info.best_connection)
-    {
       Json::Value stat(Json::objectValue);
-      stat["local_addr"] = info.local_candidate.address().ToString();
-      stat["rem_addr"] = info.remote_candidate.address().ToString();
-      stat["local_type"] = info.local_candidate.type();
-      stat["rem_type"] = info.remote_candidate.type();
       stat["best_conn"] = info.best_connection;
       stat["writable"] = info.writable;
+      stat["receiving"] = info.receiving;
       stat["timeout"] = info.timeout;
       stat["new_conn"] = info.new_connection;
+
       stat["rtt"] = (Json::UInt64)info.rtt;
       stat["sent_total_bytes"] = (Json::UInt64)info.sent_total_bytes;
       stat["sent_bytes_second"] = (Json::UInt64)info.sent_bytes_second;
+      stat["sent_discarded_packets"] = (Json::UInt64)info.sent_discarded_packets;
+      stat["sent_total_packets"] = (Json::UInt64)info.sent_total_packets;
+      stat["sent_ping_requests_total"] = (Json::UInt64)info.sent_ping_requests_total;
+      stat["sent_ping_requests_before_first_response"] = (Json::UInt64)info.sent_ping_requests_before_first_response;
+      stat["sent_ping_responses"] = (Json::UInt64)info.sent_ping_responses;
+
       stat["recv_total_bytes"] = (Json::UInt64)info.recv_total_bytes;
       stat["recv_bytes_second"] = (Json::UInt64)info.recv_bytes_second;
-      stat["receiving"] = info.receiving;
-      stats = stat;
-      break;
-    }
+      stat["recv_ping_requests"] = (Json::UInt64)info.recv_ping_requests;
+      stat["recv_ping_responses"] = (Json::UInt64)info.recv_ping_responses;
+
+      stat["local_candidate"] = info.local_candidate.ToString();
+      stat["remote_candidate"] = info.remote_candidate.ToString();
+      stat["state"] = (Json::UInt)info.state;
+      // http://tools.ietf.org/html/rfc5245#section-5.7.4
+    stats.append(stat);
   }
 }
 
