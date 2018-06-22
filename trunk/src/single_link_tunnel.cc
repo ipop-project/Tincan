@@ -49,28 +49,24 @@ SingleLinkTunnel::CreateVlink(
     cricket::IceRole ir = cricket::ICEROLE_CONTROLLED;
     if(descriptor_->node_id < peer_desc->uid)
       ir = cricket::ICEROLE_CONTROLLING;
-    string roles[] = { "CONTROLLED", "CONTROLLING" };
-    LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer "
-      << peer_desc->uid;
+    string roles[] = { "CONTROLLING", "CONTROLLED" };
+    LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer " << peer_desc->uid;
     vlink_ = BasicTunnel::CreateVlink(move(vlink_desc), move(peer_desc), ir);
   }
   return vlink_;
 }
 
 void SingleLinkTunnel::QueryInfo(
-  Json::Value & olay_info)
+  Json::Value & tnl_info)
 {
-  olay_info[TincanControl::TunnelId] = descriptor_->uid;
-  olay_info[TincanControl::FPR] = Fingerprint();
-  olay_info[TincanControl::TapName] = tap_desc_->name;
-  olay_info[TincanControl::MAC] = MacAddress();
-  olay_info[TincanControl::VIP4] = tap_desc_->ip4;
-  olay_info[TincanControl::IP4PrefixLen] = tap_desc_->prefix4;
-  olay_info[TincanControl::MTU4] = tap_desc_->mtu4;
-  olay_info["LinkIds"] = Json::Value(Json::arrayValue);
+  tnl_info[TincanControl::TunnelId] = descriptor_->uid;
+  tnl_info[TincanControl::FPR] = Fingerprint();
+  tnl_info[TincanControl::TapName] = tap_desc_->name;
+  tnl_info[TincanControl::MAC] = MacAddress();
+  tnl_info["LinkIds"] = Json::Value(Json::arrayValue);
   if(vlink_)
   {
-    olay_info["LinkIds"].append(vlink_->Id());
+    tnl_info["LinkIds"].append(vlink_->Id());
   }
 }
 

@@ -110,7 +110,7 @@ public:
   virtual string MacAddress();
 
   virtual void QueryInfo(
-    Json::Value & olay_info) = 0;
+    Json::Value & tnl_info) = 0;
 
   virtual void QueryLinkIds(
     vector<string> & link_ids) = 0;

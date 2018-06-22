@@ -57,9 +57,8 @@ MultiLinkTunnel::CreateVlink(
     cricket::IceRole ir = cricket::ICEROLE_CONTROLLED;
     if(local_fingerprint_->ToString() < peer_desc->fingerprint)
       ir = cricket::ICEROLE_CONTROLLING;
-    string roles[] = { "CONTROLLED", "CONTROLLING" };
-    LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer "
-      << peer_desc->uid;
+    string roles[] = { "CONTROLLING", "CONTROLLED" };
+    LOG(LS_INFO) << "Creating " << roles[ir] << " vlink w/ peer " << peer_desc->uid;
     vl = BasicTunnel::CreateVlink(move(vlink_desc), move(peer_desc), ir);
     peer_network_->Add(vl);
   }
@@ -97,21 +96,18 @@ void MultiLinkTunnel::RemoveLink(
 }
 
 void MultiLinkTunnel::QueryInfo(
-  Json::Value & olay_info)
+  Json::Value & tnl_info)
 {
-  olay_info[TincanControl::TunnelId] = descriptor_->uid;
-  olay_info[TincanControl::FPR] = Fingerprint();
-  olay_info[TincanControl::TapName] = tap_desc_->name;
-  olay_info[TincanControl::MAC] = MacAddress();
-  olay_info[TincanControl::VIP4] = tap_desc_->ip4;
-  olay_info[TincanControl::IP4PrefixLen] = tap_desc_->prefix4;
-  olay_info[TincanControl::MTU4] = tap_desc_->mtu4;
+  tnl_info[TincanControl::TunnelId] = descriptor_->uid;
+  tnl_info[TincanControl::FPR] = Fingerprint();
+  tnl_info[TincanControl::TapName] = tap_desc_->name;
+  tnl_info[TincanControl::MAC] = MacAddress();
   //Add the uid for each vlink
-  olay_info[TincanControl::Vlinks] = Json::Value(Json::arrayValue);
+  tnl_info[TincanControl::Vlinks] = Json::Value(Json::arrayValue);
   vector<string> vlids = peer_network_->QueryVlinks();
   for(auto vl: vlids)
   {
-    olay_info[TincanControl::Vlinks].append(vl);
+    tnl_info[TincanControl::Vlinks].append(vl);
   }
 }
 

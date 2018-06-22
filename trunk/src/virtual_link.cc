@@ -44,7 +44,7 @@ VirtualLink::VirtualLink(
   signaling_thread_(signaling_thread),
   network_thread_(network_thread)
 {
-  content_name_.append(vlink_desc_->uid);
+  content_name_.append(vlink_desc_->uid.substr(0, 7));
 }
 
 VirtualLink::~VirtualLink()
@@ -217,6 +217,11 @@ string VirtualLink::Candidates()
       << " ";
   }
   return oss.str();
+}
+
+string VirtualLink::PeerCandidates()
+{
+  return peer_desc_->cas;
 }
 
 void

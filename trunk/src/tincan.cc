@@ -43,61 +43,61 @@ Tincan::SetIpopControllerLink(
 }
 
 void Tincan::CreateTunnel(
-  const Json::Value & olay_desc,
-  Json::Value & olay_info)
+  const Json::Value & tnl_desc,
+  Json::Value & tnl_info)
 {
-  unique_ptr<TunnelDescriptor> ol_desc(new TunnelDescriptor);
-  ol_desc->uid = olay_desc[TincanControl::TunnelId].asString();
-  ol_desc->node_id = olay_desc[TincanControl::NodeId].asString();
-  if(IsTunnelExisit(ol_desc->uid))
+  unique_ptr<TunnelDescriptor> td(new TunnelDescriptor);
+  td->uid = tnl_desc[TincanControl::TunnelId].asString();
+  td->node_id = tnl_desc[TincanControl::NodeId].asString();
+  if(IsTunnelExisit(td->uid))
     throw TCEXCEPT("The specified Tunnel identifier already exists");
 
-  Json::Value stun_servers = olay_desc["StunServers"];
+  Json::Value stun_servers = tnl_desc["StunServers"];
   for (Json::Value::ArrayIndex i = 0; i < stun_servers.size(); ++i)
   {
-    ol_desc->stun_servers.push_back(stun_servers[i].asString());
+    td->stun_servers.push_back(stun_servers[i].asString());
   }
 
-  Json::Value turn_servers = olay_desc["TurnServers"];
+  Json::Value turn_servers = tnl_desc["TurnServers"];
   for (Json::Value::ArrayIndex i = 0; i < turn_servers.size(); ++i)
   {
     TurnDescriptor turn_desc(
       turn_servers[i]["Address"].asString(),
       turn_servers[i]["User"].asString(),
       turn_servers[i]["Password"].asString());
-    ol_desc->turn_descs.push_back(turn_desc);
+    td->turn_descs.push_back(turn_desc);
   }
-  ol_desc->enable_ip_mapping = false;
-  unique_ptr<BasicTunnel> olay;
-  if(olay_desc[TincanControl::Type].asString() == "VNET")
+  td->enable_ip_mapping = false;
+  unique_ptr<BasicTunnel> tnl;
+  if(tnl_desc[TincanControl::Type].asString() == "VNET")
   {
-    olay = make_unique<MultiLinkTunnel>(move(ol_desc), ctrl_link_);
+    tnl = make_unique<MultiLinkTunnel>(move(td), ctrl_link_);
   }
-  else if(olay_desc[TincanControl::Type].asString() == "TUNNEL")
+  else if(tnl_desc[TincanControl::Type].asString() == "TUNNEL")
   {
-    olay = make_unique<SingleLinkTunnel>(move(ol_desc), ctrl_link_);
+    tnl = make_unique<SingleLinkTunnel>(move(td), ctrl_link_);
   }
   else
     throw TCEXCEPT("Invalid Tunnel type specified");
   unique_ptr<TapDescriptor> tap_desc = make_unique<TapDescriptor>();
-  tap_desc->name = olay_desc["TapName"].asString();
-  tap_desc->ip4 = olay_desc["IP4"].asString();
-  tap_desc->prefix4 = olay_desc["IP4PrefixLen"].asUInt();
-  tap_desc->mtu4 = olay_desc[TincanControl::MTU4].asUInt();
+  tap_desc->name = tnl_desc["TapName"].asString();
+  tap_desc->ip4 = tnl_desc["IP4"].asString();
+  tap_desc->prefix4 = tnl_desc["IP4PrefixLen"].asUInt();
+  tap_desc->mtu4 = tnl_desc[TincanControl::MTU4].asUInt();
 
   Json::Value network_ignore_list =
-    olay_desc[TincanControl::IgnoredNetInterfaces];
+    tnl_desc[TincanControl::IgnoredNetInterfaces];
   int count = network_ignore_list.size();
   vector<string> if_list(count);
   for (int i = 0; i < count; i++)
   {
     if_list[i] = network_ignore_list[i].asString();
   }
-  olay->Configure(move(tap_desc), if_list);
-  olay->Start();
-  olay->QueryInfo(olay_info);
+  tnl->Configure(move(tap_desc), if_list);
+  tnl->Start();
+  tnl->QueryInfo(tnl_info);
   lock_guard<mutex> lg(tunnels_mutex_);
-  tunnels_.push_back(move(olay));
+  tunnels_.push_back(move(tnl));
 
   return;
 }
@@ -110,15 +110,15 @@ Tincan::CreateVlink(
   unique_ptr<VlinkDescriptor> vl_desc = make_unique<VlinkDescriptor>();
   vl_desc->uid = link_desc[TincanControl::LinkId].asString();
   unique_ptr<Json::Value> resp = make_unique<Json::Value>(Json::objectValue);
-  Json::Value & olay_info = (*resp)[TincanControl::Message];
+  Json::Value & tnl_info = (*resp)[TincanControl::Message];
   string tnl_id = link_desc[TincanControl::TunnelId].asString();
   if(!IsTunnelExisit(tnl_id))
   {
-    CreateTunnel(link_desc, olay_info);
+    CreateTunnel(link_desc, tnl_info);
   }
   else
   {
-    TunnelFromId(tnl_id).QueryInfo(olay_info);
+    TunnelFromId(tnl_id).QueryInfo(tnl_info);
   }
   unique_ptr<PeerDescriptor> peer_desc = make_unique<PeerDescriptor>();
   peer_desc->uid =
@@ -134,9 +134,9 @@ Tincan::CreateVlink(
 
   vl_desc->dtls_enabled = true;
 
-  BasicTunnel & ol = TunnelFromId(tnl_id);
+  BasicTunnel & tnl = TunnelFromId(tnl_id);
   shared_ptr<VirtualLink> vlink =
-    ol.CreateVlink(move(vl_desc), move(peer_desc));
+    tnl.CreateVlink(move(vl_desc), move(peer_desc));
   unique_ptr<TincanControl> ctrl = make_unique<TincanControl>(control);
   if(vlink->Candidates().empty())
   {
@@ -197,18 +197,18 @@ Tincan::QueryLinkStats(
 
 void
 Tincan::QueryTunnelInfo(
-  const Json::Value & olay_desc,
-  Json::Value & olay_info)
+  const Json::Value & tnl_desc,
+  Json::Value & tnl_info)
 {
-  BasicTunnel & ol = TunnelFromId(olay_desc[TincanControl::TunnelId].asString());
-  ol.QueryInfo(olay_info);
+  BasicTunnel & ol = TunnelFromId(tnl_desc[TincanControl::TunnelId].asString());
+  ol.QueryInfo(tnl_info);
 }
 
 void 
 Tincan::RemoveTunnel(
-  const Json::Value & olay_desc)
+  const Json::Value & tnl_desc)
 {
-  const string tnl_id = olay_desc[TincanControl::TunnelId].asString();
+  const string tnl_id = tnl_desc[TincanControl::TunnelId].asString();
   if(tnl_id.empty())
     throw TCEXCEPT("No Tunnel ID was specified");
   
@@ -322,11 +322,11 @@ Tincan::Run()
 
 bool
 Tincan::IsTunnelExisit(
-  const string & oid)
+  const string & tnl_id)
 {
   lock_guard<mutex> lg(tunnels_mutex_);
   for(auto const & tnl : tunnels_) {
-    if(tnl->Descriptor().uid.compare(oid) == 0)
+    if(tnl->Descriptor().uid.compare(tnl_id) == 0)
       return true;
   }
   return false;
@@ -334,17 +334,17 @@ Tincan::IsTunnelExisit(
 
 BasicTunnel &
 Tincan::TunnelFromId(
-  const string & oid)
+  const string & tnl_id)
 {
   lock_guard<mutex> lg(tunnels_mutex_);
   for(auto const & tnl : tunnels_)
   {
-    //list of vnets will be small enough where a linear search is satifactory
-    if(tnl->Descriptor().uid.compare(oid) == 0)
+    //list of tunnels will be small enough where a linear search is satifactory
+    if(tnl->Descriptor().uid.compare(tnl_id) == 0)
       return *tnl.get();
   }
   string msg("No virtual network exists by this name: ");
-  msg.append(oid);
+  msg.append(tnl_id);
   throw TCEXCEPT(msg.c_str());
 }
 //-----------------------------------------------------------------------------

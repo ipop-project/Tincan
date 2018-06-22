@@ -41,7 +41,7 @@ public:
     unique_ptr<PeerDescriptor> peer_desc) override;
 
   void QueryInfo(
-    Json::Value & olay_info) override;
+    Json::Value & tnl_info) override;
 
   void QueryLinkCas(
     const string & vlink_id,

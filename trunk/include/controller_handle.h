@@ -52,8 +52,8 @@ namespace tincan {
     virtual ~TincanDispatchInterface() = default;
 
     virtual void CreateTunnel(
-      const Json::Value & olay_desc,
-      Json::Value & olay_info) = 0;
+      const Json::Value & tnl_desc,
+      Json::Value & tnl_info) = 0;
 
     virtual void CreateVlink(
       const Json::Value & link_desc,
@@ -67,7 +67,7 @@ namespace tincan {
       Json::Value & node_info) = 0;
 
     virtual void QueryTunnelInfo(
-      const Json::Value & olay_desc,
+      const Json::Value & tnl_desc,
       Json::Value & state_data) = 0;
 
     virtual void QueryLinkCas(

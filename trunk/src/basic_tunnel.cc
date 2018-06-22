@@ -47,7 +47,7 @@ BasicTunnel::Configure(
   //initialize the Tap Device
   tdev_->Open(*tap_desc_.get());
   //create X509 identity for secure connections
-  string sslid_name = tap_desc_->name + descriptor_->uid;
+  string sslid_name = descriptor_->node_id + descriptor_->uid;
   sslid_.reset(SSLIdentity::Generate(sslid_name, rtc::KT_RSA));
   if(!sslid_)
     throw TCEXCEPT("Failed to generate SSL Identity");
@@ -92,6 +92,9 @@ BasicTunnel::CreateVlink(
   vl->SignalMessageReceived.connect(this, &BasicTunnel::VlinkReadComplete);
   vl->SignalLinkUp.connect(this, &BasicTunnel::VLinkUp);
   vl->SignalLinkDown.connect(this, &BasicTunnel::VLinkDown);
+  if (vl->PeerCandidates().length() != 0)
+    vl->StartConnections();
+
   return vl;
 }
 

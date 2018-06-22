@@ -92,6 +92,8 @@ public:
 
   string Candidates();
 
+  string PeerCandidates();
+
   void PeerCandidates(const string & peer_cas);
 
   string Id()

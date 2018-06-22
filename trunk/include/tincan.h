@@ -45,8 +45,8 @@ public:
     const TincanControl & control) override;
 
   void CreateTunnel(
-    const Json::Value & olay_desc,
-    Json::Value & olay_info) override;
+    const Json::Value & tnl_desc,
+    Json::Value & tnl_info) override;
   
   void InjectFrame(
     const Json::Value & frame_desc) override;
@@ -56,7 +56,7 @@ public:
     Json::Value & node_info) override;
 
   void QueryTunnelInfo(
-    const Json::Value & olay_desc,
+    const Json::Value & tnl_desc,
     Json::Value & node_info) override;
 
   void RemoveTunnel(
@@ -86,10 +86,10 @@ public:
   void Run();
 private:
   bool IsTunnelExisit(
-    const string & oid);
+    const string & tnl_id);
 
   BasicTunnel & TunnelFromId(
-    const string & oid);
+    const string & tnl_id);
 
   void OnStop();
   void Shutdown();
