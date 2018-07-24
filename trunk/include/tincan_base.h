@@ -77,75 +77,59 @@ using std::unique_ptr;
 using std::unordered_map;
 using std::vector;
 
-static const uint16_t kTincanVerMjr = 3;
-//
-static const uint16_t kTincanVerMnr = 0;
-//
-static const uint16_t kTincanVerRev = 0;
-//
-static const uint8_t kTincanControlVer = 5;
-//
-static const uint8_t kTincanLinkVer = 1;
-//
-static const uint16_t kMaxMtuSize = 1500;
-//
-static const uint16_t kTapHeaderSize = 2;
-
-static const uint16_t kEthHeaderSize = 14;
-
-static const uint16_t kEthernetSize = kEthHeaderSize + kMaxMtuSize;
-//
-static const uint16_t kTapBufferSize = kTapHeaderSize + kEthernetSize;
-
-static const uint8_t kFT_DTF = 0x0A;
-static const uint8_t kFT_FWD = 0x0B;
-static const uint8_t kFT_ICC = 0x0C;
-static const uint16_t kDtfMagic = 0x0A01;
-static const uint16_t kFwdMagic = 0x0B01;
-static const uint16_t kIccMagic = 0x0C01;
-
-static const char kCandidateDelim = ':';
-//
-static const char kIceUfrag[] = "_001IPOPICEUFRAG";
-//
-static const char kIcePwd[] = "_00000001IPOPICEPASSWORD";
-//
-static const char kLocalHost[] = "127.0.0.1";
-//
-static const char kLocalHost6[] = "::1";
-//
-static uint16_t kUdpPort = 5800;
-//
-static const uint8_t kLinkConcurrentAIO = 1;
-//
-static const uint32_t kCacheIOMax = 32;
 
 struct TincanParameters
 {
 public:
+  TincanParameters() :
+    kUdpPort(5800), kLinkConcurrentAIO(1), kVersionCheck(false), kNeedsHelp(false)
+  {}
   void ParseCmdlineArgs(
     int argc,
     char **args)
   {
+    if(argc == 2 && strncmp(args[1], "-p=", 3) == 0) {
+      kUdpPort = (uint16_t)atoi(args[1]+3);
+    }
+    if (argc == 2 && strncmp(args[1], "-i=", 3) == 0) {
+      char * val = args[1] + 3;
+      kLinkConcurrentAIO = (uint8_t)atoi(val);
+      if (kLinkConcurrentAIO > 32)
+        kLinkConcurrentAIO = 1;
+    }
     if(argc == 2 && strncmp(args[1], "-v", 2) == 0) {
       kVersionCheck = true;
     }
     else if(argc == 2 && strncmp(args[1], "-h", 2) == 0) {
       kNeedsHelp = true;
     }
-    if(argc == 2 && strncmp(args[1], "-p=", 3) == 0) {
-      kUdpPort = (uint16_t)atoi(args[1]+3);
-    }
   }
-
-  static bool kVersionCheck;
-
-  static bool kNeedsHelp;
-
+  bool kVersionCheck;
+  bool kNeedsHelp;
+  static const uint16_t kTincanVerMjr = 3;
+  static const uint16_t kTincanVerMnr = 0;
+  static const uint16_t kTincanVerRev = 0;
+  static const uint8_t kTincanControlVer = 5;
+  static const uint8_t kTincanLinkVer = 1;
+  static const uint16_t kMaxMtuSize = 1500;
+  static const uint16_t kTapHeaderSize = 2;
+  static const uint16_t kEthHeaderSize = 14;
+  static const uint16_t kEthernetSize = kEthHeaderSize + kMaxMtuSize;
+  static const uint16_t kTapBufferSize = kTapHeaderSize + kEthernetSize;
+  static const uint8_t kFT_DTF = 0x0A;
+  static const uint8_t kFT_FWD = 0x0B;
+  static const uint8_t kFT_ICC = 0x0C;
+  static const uint16_t kDtfMagic = 0x0A01;
+  static const uint16_t kFwdMagic = 0x0B01;
+  static const uint16_t kIccMagic = 0x0C01;
+  static const char kCandidateDelim = ':';
+  const char * const kIceUfrag = "_001IPOPICEUFRAG";
+  const char * const kIcePwd = "_00000001IPOPICEPASSWORD";
+  const char * const kLocalHost = "127.0.0.1";
+  const char * const kLocalHost6 = "::1";
+  uint16_t kUdpPort;
+  uint8_t kLinkConcurrentAIO;
 };
-#if !defined(TINCAN_MAIN)
-extern TincanParameters tp;
-#endif
 ///////////////////////////////////////////////////////////////////////////////
 template<typename InputIter>
 string ByteArrayToString(

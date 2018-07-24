@@ -20,8 +20,9 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#include "control_listener.h"
 #include "webrtc/base/nethelpers.h"
+#include "control_listener.h"
+#include "tincan_exception.h"
 namespace tincan
 {
 using namespace rtc;
@@ -88,12 +89,16 @@ void
 ControlListener::Run(Thread* thread) {
   BasicPacketSocketFactory packet_factory;
   in6_addr addr6;
-  if(rtc::inet_pton(AF_INET6, kLocalHost6, &addr6) != 0)
-    rcv_socket_.reset(packet_factory.CreateUdpSocket(
-      SocketAddress(kLocalHost6, kUdpPort), 0, 0));
+  if (rtc::inet_pton(AF_INET6, tp.kLocalHost6, &addr6) != 0) {
+  rcv_socket_.reset(packet_factory.CreateUdpSocket(
+    SocketAddress(tp.kLocalHost6, tp.kUdpPort), 0, 0));
+    LOG(LS_INFO) << "Tincan listening on " << tp.kLocalHost6 << " UDP port " << tp.kUdpPort;
+  }
   else
     rcv_socket_.reset(packet_factory.CreateUdpSocket(
-      SocketAddress(kLocalHost, kUdpPort), 0, 0));
+      SocketAddress(tp.kLocalHost, tp.kUdpPort), 0, 0));
+  if (!rcv_socket_)
+    throw TCEXCEPT("Failed to create control listener socket");
   rcv_socket_->SignalReadPacket.connect(this,
     &ControlListener::ReadPacketHandler);
   thread->ProcessMessages(-1); //run until stopped

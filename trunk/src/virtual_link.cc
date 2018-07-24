@@ -206,14 +206,14 @@ string VirtualLink::Candidates()
   for (auto & cnd : local_candidates_)
   {
     oss << cnd.component()
-      << kCandidateDelim << cnd.protocol()
-      << kCandidateDelim << cnd.address().ToString()
-      << kCandidateDelim << cnd.priority()
-      << kCandidateDelim << cnd.username()
-      << kCandidateDelim << cnd.password()
-      << kCandidateDelim << cnd.type()
-      << kCandidateDelim << cnd.generation()
-      << kCandidateDelim << cnd.foundation()
+      << tp.kCandidateDelim << cnd.protocol()
+      << tp.kCandidateDelim << cnd.address().ToString()
+      << tp.kCandidateDelim << cnd.priority()
+      << tp.kCandidateDelim << cnd.username()
+      << tp.kCandidateDelim << cnd.password()
+      << tp.kCandidateDelim << cnd.type()
+      << tp.kCandidateDelim << cnd.generation()
+      << tp.kCandidateDelim << cnd.foundation()
       << " ";
   }
   return oss.str();
@@ -293,16 +293,16 @@ VirtualLink::SetupICE(
 
   local_description_.reset(new cricket::TransportDescription(
     vector<string>(),
-    kIceUfrag,
-    kIcePwd,
+    tp.kIceUfrag,
+    tp.kIcePwd,
     cricket::ICEMODE_FULL,
     conn_role_,
     & local_fingerprint));
 
   remote_description_.reset(new cricket::TransportDescription(
     vector<string>(),
-    kIceUfrag,
-    kIcePwd,
+    tp.kIceUfrag,
+    tp.kIcePwd,
     cricket::ICEMODE_FULL,
     remote_conn_role,
     remote_fingerprint_.get()));

@@ -25,7 +25,8 @@
 #include "tincan_control.h"
 namespace tincan
 {
-BasicTunnel::BasicTunnel(
+  extern TincanParameters tp;
+  BasicTunnel::BasicTunnel(
   unique_ptr<TunnelDescriptor> descriptor,
   IpopControllerLink * ctrl_handle) :
   tdev_(nullptr),
@@ -130,7 +131,7 @@ BasicTunnel::VLinkDown(
 void
 BasicTunnel::StartIo()
 {
-  for(uint8_t i = 0; i < kLinkConcurrentAIO; i++)
+  for(uint8_t i = 0; i < tp.kLinkConcurrentAIO; i++)
   {
     unique_ptr<TapFrame> tf = make_unique<TapFrame>();
     tf->Initialize();
@@ -239,11 +240,11 @@ BasicTunnel::InjectFame(
 {
   unique_ptr<TapFrame> tf = make_unique<TapFrame>();
   tf->Initialize();
-  if(data.length() > 2 * kTapBufferSize)
+  if(data.length() > 2 * tp.kTapBufferSize)
   {
     stringstream oss;
     oss << "Inject Frame operation failed - frame size " << data.length() / 2
-      << " is larger than maximum accepted " << kTapBufferSize;
+      << " is larger than maximum accepted " << tp.kTapBufferSize;
     throw TCEXCEPT(oss.str().c_str());
   }
   size_t len = StringToByteArray(data, tf->Payload(), tf->End());

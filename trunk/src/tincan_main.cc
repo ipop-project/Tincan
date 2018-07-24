@@ -23,13 +23,12 @@
 #define TINCAN_MAIN 1
 #include "tincan_base.h"
 #include "tincan.h"
+namespace tincan
+{
+  TincanParameters tp;
+}
 using namespace tincan;
-
-bool TincanParameters::kVersionCheck = false;
-bool TincanParameters::kNeedsHelp = false;
-
 Tincan * Tincan::self_= NULL;
-TincanParameters tp;
 
 int main(int argc, char **argv)
 {
@@ -37,9 +36,9 @@ int main(int argc, char **argv)
   try {
     tp.ParseCmdlineArgs(argc, argv);
     if(tp.kVersionCheck) {
-      cout << kTincanVerMjr << "." 
-        << kTincanVerMnr << "." 
-        << kTincanVerRev << endl;
+      cout << tp.kTincanVerMjr << "." 
+        << tp.kTincanVerMnr << "." 
+        << tp.kTincanVerRev << endl;
     }
     else if(tp.kNeedsHelp) {
       std::cout << "-v         Version check.\n" <<

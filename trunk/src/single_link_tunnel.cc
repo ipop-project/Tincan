@@ -239,7 +239,7 @@ void SingleLinkTunnel::TapReadComplete(
   frame->PayloadLength(frame->BytesTransferred());
   frame->BufferToTransfer(frame->Begin()); //write frame header + PL to vlink
   frame->BytesToTransfer(frame->Length());
-  frame->Header(kDtfMagic);
+  frame->Header(tp.kDtfMagic);
   TransmitMsgData *md = new TransmitMsgData;
   md->frm.reset(frame);
   md->vl = vlink_;

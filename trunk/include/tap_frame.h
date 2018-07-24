@@ -26,13 +26,14 @@
 #include "async_io.h"
 namespace tincan
 {
+  extern TincanParameters tp;
 /*
 The TapFrameBuffer (TFB) is the byte container for a tincan frame's data. This
 includes the tincan specific headers as well as the payload data received from
 the TAP device or tincan link. A TFB facilitates
 decoupling of the raw data from the meta-data required to manage it.
 */
-using TapFrameBuffer = array<uint8_t, kTapBufferSize>;
+using TapFrameBuffer = array<uint8_t, tp.kTapBufferSize>;
 /*
 A TapFrame encapsulates a TapFrameBuffer and defines the control and access
 semantics for that type. A single TapFrame can own and manage multiple TFBs
@@ -149,18 +150,15 @@ public:
 
   bool IsIccMsg() const
   {
-    return memcmp(tf_.Begin(), &kIccMagic,
-      kTapHeaderSize) == 0;
+    return memcmp(tf_.Begin(), &tp.kIccMagic, tp.kTapHeaderSize) == 0;
   }
   bool IsFwdMsg() const
   {
-    return memcmp(tf_.Begin(), &kFwdMagic,
-      kTapHeaderSize) == 0;
+    return memcmp(tf_.Begin(), &tp.kFwdMagic, tp.kTapHeaderSize) == 0;
   }
   bool IsDtfMsg() const
   {
-    return memcmp(tf_.Begin(), &kDtfMagic,
-      kTapHeaderSize) == 0;
+    return memcmp(tf_.Begin(), &tp.kDtfMagic, tp.kTapHeaderSize) == 0;
   }
   bool IsIp4()
   {

@@ -63,9 +63,9 @@ sets up the frame for write IO.
 TapFrame::TapFrame(
   uint8_t * in_buf,
   uint32_t buf_len) :
-  pl_len_(buf_len - kTapHeaderSize)
+  pl_len_(buf_len - tp.kTapHeaderSize)
 {
-  if(buf_len > kTapBufferSize)
+  if(buf_len > tp.kTapBufferSize)
     throw TCEXCEPT("Input data is larger than the maximum allowed");
   tfb_ = new TapFrameBuffer;
   memcpy(tfb_->data(), in_buf, buf_len);
@@ -155,7 +155,7 @@ TapFrame & TapFrame::Initialize()
   {
     tfb_ = new TapFrameBuffer;
   }
-  AsyncIo::Initialize(tfb_->data(), kTapBufferSize, this, AIO_READ, 0);
+  AsyncIo::Initialize(tfb_->data(), tp.kTapBufferSize, this, AIO_READ, 0);
   return *this;
 }
 
@@ -193,12 +193,12 @@ uint8_t * TapFrame::End()
 
 uint32_t TapFrame::Length()
 {
-  return kTapHeaderSize + PayloadLength();
+  return tp.kTapHeaderSize + PayloadLength();
 }
 
 uint32_t TapFrame::PayloadLength()
 {
-  if(!tfb_ || AsyncIo::BytesTransferred() <= kTapHeaderSize)
+  if(!tfb_ || AsyncIo::BytesTransferred() <= tp.kTapHeaderSize)
     return 0;
   return pl_len_;
 }
@@ -212,14 +212,14 @@ uint32_t TapFrame::PayloadCapacity()
 {
   if(!tfb_)
     return 0;
-  return kEthernetSize;
+  return tp.kEthernetSize;
 }
 
 uint8_t * TapFrame::Payload()
 {
   if(!tfb_)
     return nullptr;
-  return &tfb_->data()[kTapHeaderSize];
+  return &tfb_->data()[tp.kTapHeaderSize];
 }
 
 uint8_t * TapFrame::PayloadEnd()
@@ -249,15 +249,15 @@ void IccMessage::Message(
   uint8_t * in_buf,
   uint32_t buf_len)
 {
-  if(buf_len > kEthernetSize)
+  if(buf_len > tp.kEthernetSize)
     throw TCEXCEPT("Input data is larger than the maximum allowed");
 
   if(!tfb_)
     tfb_ = new TapFrameBuffer;
   pl_len_ = buf_len;
-  uint32_t nb = pl_len_ + kTapHeaderSize;
+  uint32_t nb = pl_len_ + tp.kTapHeaderSize;
   AsyncIo::Initialize(tfb_->data(), nb, this, AIO_WRITE, nb);
-  memmove(Begin(), &kIccMagic, kTapHeaderSize);
+  memmove(Begin(), &tp.kIccMagic, tp.kTapHeaderSize);
   memmove(Payload(), in_buf, buf_len);
 }
 
@@ -265,15 +265,15 @@ void DtfMessage::Message(
   uint8_t * in_buf,
   uint32_t buf_len)
 {
-  if(buf_len > kEthernetSize)
+  if(buf_len > tp.kEthernetSize)
     throw TCEXCEPT("Input data is larger than the maximum allowed");
 
   if(!tfb_)
     tfb_ = new TapFrameBuffer;
   pl_len_ = buf_len;
-  uint32_t nb = pl_len_ + kTapHeaderSize;
+  uint32_t nb = pl_len_ + tp.kTapHeaderSize;
   AsyncIo::Initialize(tfb_->data(), nb, this, AIO_WRITE, nb);
-  memmove(Begin(), &kDtfMagic, kTapHeaderSize);
+  memmove(Begin(), &tp.kDtfMagic, tp.kTapHeaderSize);
   memmove(Payload(), in_buf, buf_len);
 
 }
@@ -282,14 +282,14 @@ void FwdMessage::Message(
   uint8_t * in_buf,
   uint32_t buf_len)
 {
-  if(buf_len > kEthernetSize)
+  if(buf_len > tp.kEthernetSize)
     throw TCEXCEPT("Input data is larger than the maximum allowed");
   if(!tfb_)
     tfb_ = new TapFrameBuffer;
   pl_len_ = buf_len;
-  uint32_t nb = pl_len_ + kTapHeaderSize;
+  uint32_t nb = pl_len_ + tp.kTapHeaderSize;
   AsyncIo::Initialize(tfb_->data(), nb, this, AIO_WRITE, nb);
-  memmove(Begin(), &kFwdMagic, kTapHeaderSize);
+  memmove(Begin(), &tp.kFwdMagic, tp.kTapHeaderSize);
   memmove(Payload(), in_buf, buf_len);
 
 }

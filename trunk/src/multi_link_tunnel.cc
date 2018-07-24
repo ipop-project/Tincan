@@ -25,7 +25,8 @@
 #include "tincan_control.h"
 namespace tincan
 {
-MultiLinkTunnel::MultiLinkTunnel(
+  extern TincanParameters tp;
+  MultiLinkTunnel::MultiLinkTunnel(
   unique_ptr<TunnelDescriptor> descriptor,
   IpopControllerLink * ctrl_handle) :
   BasicTunnel(move(descriptor), ctrl_handle)
@@ -291,7 +292,7 @@ MultiLinkTunnel::TapReadComplete(
   frame->BytesToTransfer(frame->Length());
   if(peer_network_->IsAdjacent(mac))
   {
-    frame->Header(kDtfMagic);
+    frame->Header(tp.kDtfMagic);
     //frame->Dump("Unicast");
     shared_ptr<VirtualLink> vl = peer_network_->GetVlink(mac);
     TransmitMsgData *md = new TransmitMsgData;
@@ -301,7 +302,7 @@ MultiLinkTunnel::TapReadComplete(
   }
   else if(peer_network_->IsRouteExists(mac))
   {
-    frame->Header(kFwdMagic);
+    frame->Header(tp.kFwdMagic);
     //frame->Dump("Frame FWD");
     TransmitMsgData *md = new TransmitMsgData;
     md->frm.reset(frame);
@@ -310,7 +311,7 @@ MultiLinkTunnel::TapReadComplete(
   }
   else
   {
-    frame->Header(kIccMagic);
+    frame->Header(tp.kIccMagic);
     //Send to IPOP Controller to find a route for this frame
     unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
     ctrl->SetControlType(TincanControl::CTTincanRequest);

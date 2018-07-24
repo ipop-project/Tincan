@@ -25,6 +25,7 @@
 #include "tincan_exception.h"
 namespace tincan
 {
+extern TincanParameters tp;
 const Json::StaticString TincanControl::Command("Command");
 const Json::StaticString TincanControl::CAS("CAS");
 const Json::StaticString TincanControl::ControlType("ControlType");
@@ -75,7 +76,7 @@ const Json::StaticString TincanControl::VnetDescription("VnetDescription");
 const Json::StaticString TincanControl::Vlinks("Vlinks");
 
 TincanControl::TincanControl() :
-  proto_ver_(kTincanControlVer),
+  proto_ver_(tp.kTincanControlVer),
   tag_(NextTagValue()),
   type_(CTTincanRequest),
   dict_req_(nullptr),
@@ -84,7 +85,7 @@ TincanControl::TincanControl() :
 
 TincanControl::TincanControl(
   unique_ptr<Json::Value> req) :
-  proto_ver_(kTincanControlVer),
+  proto_ver_(tp.kTincanControlVer),
   tag_(NextTagValue()),
   type_(CTTincanRequest),
   dict_req_(req.release()),
@@ -94,7 +95,7 @@ TincanControl::TincanControl(
 TincanControl::TincanControl(
   unique_ptr<Json::Value> req,
   unique_ptr<Json::Value> resp) :
-  proto_ver_(kTincanControlVer),
+  proto_ver_(tp.kTincanControlVer),
   tag_(NextTagValue()),
   type_(CTTincanRequest),
   dict_req_(req.release()),
@@ -124,7 +125,7 @@ TincanControl::TincanControl(
     throw TCEXCEPT(oss.str().c_str());
   }
   uint32_t ver = ctrl[IPOP][ProtocolVersion].asUInt();
-  if(ver != kTincanControlVer)
+  if(ver != tp.kTincanControlVer)
   {
     ostringstream oss;
     oss << "Invalid IPOP protocol version in control header (" << ver << ")";
