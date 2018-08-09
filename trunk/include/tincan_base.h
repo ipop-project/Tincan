@@ -82,7 +82,7 @@ struct TincanParameters
 {
 public:
   TincanParameters() :
-    kUdpPort(5800), kLinkConcurrentAIO(1), kVersionCheck(false), kNeedsHelp(false)
+    kVersionCheck(false), kNeedsHelp(false), kUdpPort(5800), kLinkConcurrentAIO(1)
   {}
   void ParseCmdlineArgs(
     int argc,
@@ -104,8 +104,6 @@ public:
       kNeedsHelp = true;
     }
   }
-  bool kVersionCheck;
-  bool kNeedsHelp;
   static const uint16_t kTincanVerMjr = 3;
   static const uint16_t kTincanVerMnr = 0;
   static const uint16_t kTincanVerRev = 0;
@@ -127,7 +125,9 @@ public:
   const char * const kIcePwd = "_00000001IPOPICEPASSWORD";
   const char * const kLocalHost = "127.0.0.1";
   const char * const kLocalHost6 = "::1";
-  uint16_t kUdpPort;
+  bool kVersionCheck;
+  bool kNeedsHelp;
+ uint16_t kUdpPort;
   uint8_t kLinkConcurrentAIO;
 };
 ///////////////////////////////////////////////////////////////////////////////
