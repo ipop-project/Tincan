@@ -82,7 +82,7 @@ struct TincanParameters
 {
 public:
   TincanParameters() :
-    kVersionCheck(false), kNeedsHelp(false), kUdpPort(5800), kLinkConcurrentAIO(1)
+    kVersionCheck(false), kNeedsHelp(false), kUdpPort(5800), kLinkConcurrentAIO(32)
   {}
   void ParseCmdlineArgs(
     int argc,
@@ -95,7 +95,7 @@ public:
       char * val = args[1] + 3;
       kLinkConcurrentAIO = (uint8_t)atoi(val);
       if (kLinkConcurrentAIO > 32)
-        kLinkConcurrentAIO = 1;
+        kLinkConcurrentAIO = 32;
     }
     if(argc == 2 && strncmp(args[1], "-v", 2) == 0) {
       kVersionCheck = true;
@@ -127,7 +127,7 @@ public:
   const char * const kLocalHost6 = "::1";
   bool kVersionCheck;
   bool kNeedsHelp;
- uint16_t kUdpPort;
+  uint16_t kUdpPort;
   uint8_t kLinkConcurrentAIO;
 };
 ///////////////////////////////////////////////////////////////////////////////
