@@ -150,15 +150,18 @@ public:
 
   bool IsIccMsg() const
   {
-    return memcmp(tf_.Begin(), &tp.kIccMagic, tp.kTapHeaderSize) == 0;
+    uint16_t magic = tp.kIccMagic;
+    return memcmp(tf_.Begin(), &magic, tp.kTapHeaderSize) == 0;
   }
   bool IsFwdMsg() const
   {
-    return memcmp(tf_.Begin(), &tp.kFwdMagic, tp.kTapHeaderSize) == 0;
+    uint16_t magic = tp.kFwdMagic;
+    return memcmp(tf_.Begin(), &magic, tp.kTapHeaderSize) == 0;
   }
   bool IsDtfMsg() const
   {
-    return memcmp(tf_.Begin(), &tp.kDtfMagic, tp.kTapHeaderSize) == 0;
+    uint16_t magic = tp.kDtfMagic;
+    return memcmp(tf_.Begin(), &magic, tp.kTapHeaderSize) == 0;
   }
   bool IsIp4()
   {
