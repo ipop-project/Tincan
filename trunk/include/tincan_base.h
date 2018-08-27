@@ -82,7 +82,7 @@ struct TincanParameters
 {
 public:
   TincanParameters() :
-    kVersionCheck(false), kNeedsHelp(false), kUdpPort(5800), kLinkConcurrentAIO(32)
+    kVersionCheck(false), kNeedsHelp(false), kUdpPort(5800), kLinkConcurrentAIO(2)
   {}
   void ParseCmdlineArgs(
     int argc,

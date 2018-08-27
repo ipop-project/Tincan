@@ -32,12 +32,6 @@ extern "C"
   #include "iproute2/utils.h"
   #include "iproute2/ip_common.h"
   #include "iproute2/ll_map.h"
-  struct iplink_req {
-    struct nlmsghdr n;
-    struct ifinfomsg i;
-    char   buf[1024];
-  };
-
 }
 
 namespace tincan
@@ -126,7 +120,7 @@ int TapDevLnx::DeleteTapDevice(
     rtnl_close(&rth);
     return -1;
   }
-  if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+  if (rtnl_talk(&rth, &req.n, NULL) < 0)
   {
     LOG(LS_ERROR) << "Failed to send NetLink msg to TAP device";
     rtnl_close(&rth);
