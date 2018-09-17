@@ -63,7 +63,6 @@ public:
   void Open(
     const TapDescriptor & tap_desc) override;
   void Close() override;
-  void Mtu(uint16_t);
   uint32_t Read(AsyncIo& aio_rd) override;
   uint32_t Write(AsyncIo& aio_wr) override;
   uint16_t Mtu() override;
@@ -80,12 +79,10 @@ private:
   rtc::Thread writer_;
   struct ifreq ifr_;
   int fd_;
-  int ip4_config_skt_;
   IP4AddressType ip4_;
   MacAddressType mac_;
   //uint16_t mtu4_;
   bool is_good_;
-  void SetIpv4Addr(const char* a, unsigned int b);
   void SetFlags(short a, short b);
   void PlenToIpv4Mask(unsigned int a, struct sockaddr *b);
 };

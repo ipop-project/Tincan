@@ -34,7 +34,7 @@ public:
   SingleLinkTunnel(
     unique_ptr<TunnelDescriptor> descriptor,
     IpopControllerLink * ctrl_handle);
-  //virtual ~SingleLinkTunnel() = default;
+  virtual ~SingleLinkTunnel() = default;
 
   shared_ptr<VirtualLink> CreateVlink(
     unique_ptr<VlinkDescriptor> vlink_desc,

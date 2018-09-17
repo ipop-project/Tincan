@@ -219,6 +219,7 @@ Tincan::RemoveTunnel(
     {
       (*tnl)->Shutdown();
       tunnels_.erase(tnl);
+      LOG(LS_INFO) << "RemoveTunnel: Instance erased from collection " << tnl_id;
       return;
     }
   }

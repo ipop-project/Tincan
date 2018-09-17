@@ -147,8 +147,8 @@ void SingleLinkTunnel::Shutdown()
     md.vl = vlink_;
     net_worker_.Post(RTC_FROM_HERE, this, MSGID_DISC_LINK, &md);
     md.msg_event.Wait(Event::kForever);
-    vlink_.reset();
   }
+  vlink_.reset();
   BasicTunnel::Shutdown();
 }
 
@@ -224,26 +224,36 @@ void SingleLinkTunnel::TapReadComplete(
   AsyncIo * aio_rd)
 {
   TapFrame * frame = static_cast<TapFrame*>(aio_rd->context_);
-  if(!aio_rd->good_ || !vlink_)
+  if (!aio_rd->good_ || (aio_rd->BytesTransferred() < 0))
   {
+    // TAP is most likely shutting down
+    delete frame;
+    LOG(LS_INFO) << "TAP read failure, cancelling IO";
+  }
+  else if(!vlink_)
+  {
+    // vlink is not yet created or has been destroyed, keep posting reads
     frame->Initialize();
     frame->BufferToTransfer(frame->Payload());
     frame->BytesToTransfer(frame->PayloadCapacity());
     if(0 != tdev_->Read(*frame))
     {
+      // TAP read msg queue has shut down
       delete frame;
-      //TODO: send a msg to control indicating tap needs to be reset
+      LOG(LS_INFO) << "TAP read post failed, no more attempts will be made";
     }
-    return;
   }
-  frame->PayloadLength(frame->BytesTransferred());
-  frame->BufferToTransfer(frame->Begin()); //write frame header + PL to vlink
-  frame->BytesToTransfer(frame->Length());
-  frame->Header(tp.kDtfMagic);
-  TransmitMsgData *md = new TransmitMsgData;
-  md->frm.reset(frame);
-  md->vl = vlink_;
-  net_worker_.Post(RTC_FROM_HERE, this, MSGID_TRANSMIT, md);
+  else
+  {
+    frame->PayloadLength(frame->BytesTransferred());
+    frame->BufferToTransfer(frame->Begin()); //write frame header + PL to vlink
+    frame->BytesToTransfer(frame->Length());
+    frame->Header(tp.kDtfMagic);
+    TransmitMsgData *md = new TransmitMsgData;
+    md->frm.reset(frame);
+    md->vl = vlink_;
+    net_worker_.Post(RTC_FROM_HERE, this, MSGID_TRANSMIT, md);
+  }
 }
 
 void SingleLinkTunnel::TapWriteComplete(

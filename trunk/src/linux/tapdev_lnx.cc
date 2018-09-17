@@ -43,14 +43,16 @@ static const char * const TUN_PATH = "/dev/net/tun";
 
 TapDevLnx::TapDevLnx() :
   fd_(-1),
-  ip4_config_skt_(-1),
   is_good_(false)
 {
   memset(&ifr_, 0x0, sizeof(ifr_));
 }
 
 TapDevLnx::~TapDevLnx()
-{}
+{
+  if (fd_ > -1)
+  close(fd_);
+}
 
 void TapDevLnx::Open(
   const TapDescriptor & tap_desc)
@@ -70,28 +72,24 @@ void TapDevLnx::Open(
   //create the device
   if(ioctl(fd_, TUNSETIFF, (void *)&ifr_) < 0)
   {
-    close(fd_);
     emsg.append("the device could not be created.");
     throw TCEXCEPT(emsg.c_str());
   }
-
-//create a socket to be used when retrieving mac address from the kernel
-  if((ip4_config_skt_ = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+  int cfg_skt;
+  if((cfg_skt = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
   {
     emsg.append("a socket bind failed.");
     throw TCEXCEPT(emsg.c_str());
   }
 
-  if((ioctl(ip4_config_skt_, SIOCGIFHWADDR, &ifr_)) < 0)
+  if((ioctl(cfg_skt, SIOCGIFHWADDR, &ifr_)) < 0)
   {
     emsg.append("retrieving the device mac address failed");
+    close(cfg_skt);
     throw TCEXCEPT(emsg.c_str());
   }
   memcpy(mac_.data(), ifr_.ifr_hwaddr.sa_data, 6);
-  if(!tap_desc.ip4.empty()  && tap_desc.prefix4)
-    SetIpv4Addr(tap_desc.ip4.c_str(), tap_desc.prefix4);
-  if(tap_desc.mtu4 > 575)
-    Mtu(tap_desc.mtu4);
+  close(cfg_skt);
 }
 
 int TapDevLnx::DeleteTapDevice(
@@ -133,51 +131,14 @@ int TapDevLnx::DeleteTapDevice(
 void TapDevLnx::Close()
 {
   close(fd_);
+  fd_ = -1;
   if (DeleteTapDevice(ifr_.ifr_name) < 0)
   {
-    string emsg = "The TAP delete operation failed. Please restart IPOP";
-    LOG(LS_ERROR) << emsg;
-    throw TCEXCEPT(emsg.c_str());
+    string emsg = "The TAP delete operation failed. ";
+    LOG(LS_ERROR) << emsg << "errorno (" << errno << ") - " << strerror(errno);
+    //throw TCEXCEPT(emsg.c_str());
   }
   LOG(LS_INFO) << "TAP device successfully removed";
-}
-
-void TapDevLnx::SetIpv4Addr(
-  const char* ipaddr,
-  unsigned int prefix_len)
-{
-  string emsg("The Tap device Set IP4 Address operation failed");
-  struct sockaddr_in socket_address = { .sin_family = AF_INET,.sin_port = 0 };
-  if(inet_pton(AF_INET, ipaddr, &socket_address.sin_addr) != 1)
-  {
-    emsg.append(" - the provided IP4 address could not be resolved.");
-    throw TCEXCEPT(emsg.c_str());
-  }
-
-  //wrap sockaddr_in struct to sockaddr struct, which is used conventionaly for system calls
-  memcpy(&ifr_.ifr_addr, &socket_address, sizeof(struct sockaddr));
-
-  //copies ipv4 address to my my_ipv4. ipv4 address starts at sa_data[2]
-  //and terminates at sa_data[5]
-  memcpy(ip4_.data(), &ifr_.ifr_addr.sa_data[2], 4);
-
-  //configure tap device with a ipv4 address
-  if(ioctl(ip4_config_skt_, SIOCSIFADDR, &ifr_) < 0)
-  {
-    throw TCEXCEPT(emsg.c_str());
-  }
-
-  //get subnet mask intoi network byte order from int representation
-  PlenToIpv4Mask(prefix_len, &ifr_.ifr_netmask);
-
-
-  //configure the tap device with a netmask
-  if(ioctl(ip4_config_skt_, SIOCSIFNETMASK, &ifr_) < 0)
-  {
-    LOG(LS_WARNING) << " The TAP device (" << ifr_.ifr_name <<
-      ") IOCTL to set the IP v4 netmask failed.";
-  }
-
 }
 
 void TapDevLnx::PlenToIpv4Mask(
@@ -210,17 +171,29 @@ void TapDevLnx::SetFlags(
   short enable,
   short disable)
 {
+  int cfg_skt;
   string emsg("The TAP device set flags operation failed");
-  if(ioctl(ip4_config_skt_, SIOCGIFFLAGS, &ifr_) < 0)
+  if ((cfg_skt = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
   {
+    emsg.append("a socket bind failed.");
+    throw TCEXCEPT(emsg.c_str());
+  }
+
+  if(ioctl(cfg_skt, SIOCGIFFLAGS, &ifr_) < 0)
+  {
+    close(cfg_skt);
     throw TCEXCEPT(emsg.c_str());
   }
   //set or unset the right flags
   ifr_.ifr_flags |= enable;
   ifr_.ifr_flags &= ~disable;
   //write back the modified flag states
-  if(ioctl(ip4_config_skt_, SIOCSIFFLAGS, &ifr_) < 0)
+  if (ioctl(cfg_skt, SIOCSIFFLAGS, &ifr_) < 0)
+  {
+    close(cfg_skt);
     throw TCEXCEPT(emsg.c_str());
+  }
+  close(cfg_skt);
 }
 
 uint32_t TapDevLnx::Read(AsyncIo& aio_rd)
@@ -241,15 +214,6 @@ uint32_t TapDevLnx::Write(AsyncIo& aio_wr)
   tp_->aio_ = &aio_wr;
   writer_.Post(RTC_FROM_HERE, this, MSGID_WRITE, tp_);
   return 0;
-}
-
-void TapDevLnx::Mtu(uint16_t mtu)
-{
-  ifr_.ifr_mtu = mtu;
-  if(ioctl(ip4_config_skt_, SIOCSIFMTU, &ifr_) < 0)
-  {
-    throw TCEXCEPT("The TAP Device set MTU operation failed.");
-  }
 }
 
 uint16_t TapDevLnx::TapDevLnx::Mtu()
@@ -294,17 +258,16 @@ void TapDevLnx::OnMessage(Message * msg)
   case MSGID_READ:
   {
     AsyncIo* aio_read = ((TapMessageData*)msg->pdata)->aio_;
-    int nread = read(fd_, aio_read->BufferToTransfer(), aio_read->BytesToTransfer());
-    if(nread < 0)
-    {
-      LOG(LS_WARNING) << "A TAP Read operation failed.";
-      aio_read->good_ = false;
+    if (is_good_) {
+      int nread = read(fd_, aio_read->BufferToTransfer(), aio_read->BytesToTransfer());
+      aio_read->good_ = (nread >= 0);
+      aio_read->BytesTransferred(nread);
+      read_completion_(aio_read);
     }
     else
     {
-      aio_read->good_ = true;
-      aio_read->BytesTransferred(nread);
-      read_completion_(aio_read);
+      LOG(LS_INFO) << "TAP shutting down, dropping IO.";
+      delete aio_read;
     }
   }
   break;
