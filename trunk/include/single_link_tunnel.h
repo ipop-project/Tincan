@@ -64,6 +64,8 @@ public:
 
   void StartIo() override;
 
+  void StopIo() override;
+
   void RemoveLink(
     const string & vlink_id) override;
 

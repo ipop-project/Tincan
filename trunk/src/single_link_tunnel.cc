@@ -159,6 +159,12 @@ SingleLinkTunnel::StartIo()
   BasicTunnel::StartIo();
 }
 
+void
+SingleLinkTunnel::StopIo()
+{
+  tdev_->Down();
+}
+
 void SingleLinkTunnel::RemoveLink(
   const string & vlink_id)
 {

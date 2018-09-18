@@ -133,6 +133,8 @@ public:
 
   virtual void StartIo();
 
+  virtual void StopIo() {}
+
   virtual void RemoveLink(
     const string & vlink_id) = 0;
 
