@@ -138,7 +138,7 @@ Tincan::CreateVlink(
   shared_ptr<VirtualLink> vlink =
     tnl.CreateVlink(move(vl_desc), move(peer_desc));
   unique_ptr<TincanControl> ctrl = make_unique<TincanControl>(control);
-  if(vlink->Candidates().empty())
+  if(!vlink->IsGatheringComplete())
   {
     ctrl->SetResponse(move(resp));
     std::lock_guard<std::mutex> lg(inprogess_controls_mutex_);

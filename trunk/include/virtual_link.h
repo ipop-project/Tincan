@@ -107,6 +107,11 @@ public:
     return ice_role_;
   }
 
+  bool IsGatheringComplete()
+  {
+    return gather_state_ == cricket::kIceGatheringComplete;
+  }
+
   sigslot::signal1<string, single_threaded> SignalLinkUp;
   sigslot::signal1<string, single_threaded> SignalLinkDown;
   sigslot::signal2<string, string> SignalLocalCasReady;
@@ -160,7 +165,7 @@ private:
   unique_ptr<cricket::BasicPortAllocator> port_allocator_;
   unique_ptr<cricket::TransportController> transport_ctlr_;
 
-  bool cas_ready_;
+  cricket::IceGatheringState gather_state_;
   bool is_valid_;
   rtc::Thread* signaling_thread_;
   rtc::Thread* network_thread_;

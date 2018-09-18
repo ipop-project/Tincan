@@ -39,7 +39,7 @@ VirtualLink::VirtualLink(
   channel_(nullptr),
   packet_options_(DSCP_DEFAULT),
   packet_factory_(network_thread),
-  cas_ready_(false),
+  gather_state_(cricket::kIceGatheringNew),
   is_valid_(false),
   signaling_thread_(signaling_thread),
   network_thread_(network_thread)
@@ -158,6 +158,7 @@ void VirtualLink::OnCandidatesGathered(
 void VirtualLink::OnGatheringState(
   cricket::IceGatheringState gather_state)
 {
+  gather_state_ = gather_state;
   if(gather_state == cricket::kIceGatheringComplete)
     SignalLocalCasReady(vlink_desc_->uid, Candidates());
   return;

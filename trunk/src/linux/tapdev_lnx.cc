@@ -283,9 +283,9 @@ void TapDevLnx::OnMessage(Message * msg)
     else
     {
       aio_write->good_ = true;
-      aio_write->BytesTransferred(nwrite);
-      write_completion_(aio_write);
     }
+    aio_write->BytesTransferred(nwrite);
+    write_completion_(aio_write);
   }
   break;
   }
