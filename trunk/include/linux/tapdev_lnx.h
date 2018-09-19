@@ -75,8 +75,8 @@ protected:
 private:
   int DeleteTapDevice(
     const string& TapName);
-  rtc::Thread reader_;
-  rtc::Thread writer_;
+  unique_ptr<rtc::Thread> reader_;
+  unique_ptr<rtc::Thread> writer_;
   struct ifreq ifr_;
   int fd_;
   IP4AddressType ip4_;

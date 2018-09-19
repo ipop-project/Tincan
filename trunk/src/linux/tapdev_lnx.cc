@@ -198,21 +198,21 @@ void TapDevLnx::SetFlags(
 
 uint32_t TapDevLnx::Read(AsyncIo& aio_rd)
 {
-  if(!is_good_ || reader_.IsQuitting())
+  if(!is_good_ || reader_->IsQuitting())
     return 1; //indicates a failure to setup async operation
   TapMessageData *tp_ = new TapMessageData;
   tp_->aio_ = &aio_rd;
-  reader_.Post(RTC_FROM_HERE, this, MSGID_READ, tp_);
+  reader_->Post(RTC_FROM_HERE, this, MSGID_READ, tp_);
   return 0;
 }
 
 uint32_t TapDevLnx::Write(AsyncIo& aio_wr)
 {
-  if(!is_good_ || writer_.IsQuitting())
+  if(!is_good_ || writer_->IsQuitting())
     return 1; //indicates a failure to setup async operation
   TapMessageData *tp_ = new TapMessageData;
   tp_->aio_ = &aio_wr;
-  writer_.Post(RTC_FROM_HERE, this, MSGID_WRITE, tp_);
+  writer_->Post(RTC_FROM_HERE, this, MSGID_WRITE, tp_);
   return 0;
 }
 
@@ -237,15 +237,29 @@ void TapDevLnx::Up()
 {
   is_good_ = true;
   SetFlags(IFF_UP | IFF_RUNNING, 0);
-  reader_.Start();
-  writer_.Start();
+  if (reader_)
+  {
+    reader_->Quit();
+    reader_.reset();
+  }
+  reader_ = make_unique<rtc::Thread>();
+  reader_->Start();
+  if (writer_)
+  {
+    writer_->Quit();
+    writer_.reset();
+  }
+  writer_ = make_unique<rtc::Thread>();
+  writer_->Start();
 }
 
 void TapDevLnx::Down()
 {
   is_good_ = false;
-  reader_.Quit();
-  writer_.Quit();
+  reader_->Quit();
+  writer_->Quit();
+  reader_.reset();
+  writer_.reset();
   SetFlags(0, IFF_UP);
   LOG(LS_INFO) << "TAP device state set to DOWN";
 }
