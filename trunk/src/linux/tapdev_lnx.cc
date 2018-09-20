@@ -256,8 +256,10 @@ void TapDevLnx::Up()
 void TapDevLnx::Down()
 {
   is_good_ = false;
-  reader_->Quit();
-  writer_->Quit();
+  if(reader_)
+    reader_->Quit();
+  if(writer_)
+    writer_->Quit();
   reader_.reset();
   writer_.reset();
   SetFlags(0, IFF_UP);
