@@ -73,7 +73,9 @@ struct AsyncIo
     ZeroMemory(this, sizeof(OVERLAPPED));
 #endif // defined(_IPOP_WIN)
   }
+#if !defined(_IPOP_WIN)
   virtual ~AsyncIo() = default;
+#endif // defined(_IPOP_WIN)
   void Initialize(
     uint8_t* buffer_to_transfer,
     uint32_t bytes_to_transfer,
