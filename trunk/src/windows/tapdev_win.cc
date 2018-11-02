@@ -146,7 +146,7 @@ TapDevWin::Open(
       CompletionPortHandle(), (ULONG_PTR)this, NumCpu());
     if(!cmpl_prt_handle_)
     {
-      string emsg("The TAP IO completetion thread failed to create a handle "
+      string emsg("The TAP IO completion thread failed to create a handle "
         "for the completion port.");
       throw WINEXCEPT(emsg.c_str());
     }

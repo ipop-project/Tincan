@@ -141,7 +141,7 @@ BasicTunnel::StartIo()
     if(0 == tdev_->Read(*tf))
       tf.release();
     else
-      LOG(LS_ERROR) << "A TAP read opertaion failed to start!";
+      LOG(LS_ERROR) << "A TAP read operation failed to start!";
   }
 }
 
