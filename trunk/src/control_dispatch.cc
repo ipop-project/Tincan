@@ -102,7 +102,8 @@ ControlDispatch::ConfigureLogging(
   try
   {
     ostringstream oss;
-    std::transform(log_lvl.begin(), log_lvl.end(), log_lvl.begin(), ::tolower);
+    std::transform(log_lvl.begin(), log_lvl.end(), log_lvl.begin(),
+                   [=](char c) {return static_cast<char>(::tolower(c));});
     oss << "tstamp " << "thread " << log_lvl.c_str();
     LogMessage::ConfigureLogging(oss.str().c_str());
     LogMessage::LogToDebug(LS_WARNING);
