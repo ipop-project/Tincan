@@ -150,8 +150,9 @@ TincanControl::TincanControl(
   {
     (*dict_req_) = ctrl[IPOP].removeMember(Request);
   }
-  if(ctrl[IPOP][IPOP].isMember(Response))
-    (*dict_resp_) = ctrl.removeMember(Response);
+  if(ctrl[IPOP].isMember(Response)) {
+    (*dict_resp_) = ctrl[IPOP].removeMember(Response);
+  }
 }
 
 TincanControl::TincanControl(
