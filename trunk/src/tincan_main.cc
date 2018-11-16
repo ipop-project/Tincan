@@ -42,9 +42,8 @@ int main(int argc, char **argv)
     }
     else if(tp.kNeedsHelp) {
       std::cout << "-v         Version check.\n" <<
-        "-p=[num]   Specify tincan control port" << endl <<
         "-i=COUNT   Specify concurrent I/Os" << endl <<
-        "-p=PORT    Specify control port" << endl;
+        "-p=PORT    Specify control port number" << endl;
     }
     else {
       Tincan tc;
