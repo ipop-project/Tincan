@@ -88,8 +88,7 @@ ControlListener::CreateIpopControllerLink(
 void
 ControlListener::Run(Thread* thread) {
   BasicPacketSocketFactory packet_factory;
-  in6_addr addr6;
-  if (rtc::inet_pton(AF_INET6, tp.kLocalHost6, &addr6) != 0) {
+  if (rtc::HasIPv6Enabled()) {
   rcv_socket_.reset(packet_factory.CreateUdpSocket(
     SocketAddress(tp.kLocalHost6, tp.kUdpPort), 0, 0));
     LOG(LS_INFO) << "Tincan listening on " << tp.kLocalHost6 << " UDP port " << tp.kUdpPort;

@@ -81,7 +81,7 @@ namespace tincan
   struct TincanParameters
   {
   public:
-    TincanParameters() 
+    TincanParameters()
       : kVersionCheck(false), kNeedsHelp(false), kUdpPort(5800), kLinkConcurrentAIO(2)
     {}
 
@@ -104,7 +104,15 @@ namespace tincan
           }
           else
           {
-            kUdpPort = port;
+            if (port >= 0 && port <= UINT16_MAX)
+            {
+              kUdpPort = static_cast<uint16_t>(port);
+            }
+            else
+            {
+              kNeedsHelp = true;
+              break;
+            }
           }
         }
         else if (strncmp(args[i], "-i=", 3) == 0)
@@ -120,10 +128,18 @@ namespace tincan
           }
           else
           {
-            kLinkConcurrentAIO = count;
-            if (kLinkConcurrentAIO > 32)
+            if (count > 32)
             {
               kLinkConcurrentAIO = 32;
+            }
+            else if (count < 0)
+            {
+              kNeedsHelp = true;
+              break;
+            }
+            else
+            {
+              kLinkConcurrentAIO = static_cast<uint8_t>(count);
             }
           }
         }

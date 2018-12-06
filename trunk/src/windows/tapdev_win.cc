@@ -94,13 +94,6 @@ TapDevWin::IoThreadDescriptor::IoCompletionThread(void * param)
   return rv;
 }
 
-uint8_t NumCpu()
-{
-  SYSTEM_INFO sysinfo;
-  GetSystemInfo(&sysinfo);
-  return (uint8_t)sysinfo.dwNumberOfProcessors;
-}
-
 TapDevWin::TapDevWin() :
   cmpl_prt_handle_(0),
   dev_handle_(INVALID_HANDLE_VALUE),
