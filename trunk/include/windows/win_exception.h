@@ -30,7 +30,7 @@
 ***************************************************************************/
 
 #ifndef TINCAN_WIN_EXCEPTION_H_
-#define TINCAN_TAPDEV_WIN_H_
+#define TINCAN_WIN_EXCEPTION_H_
 #if defined(_IPOP_WIN)
 #include "tincan_base.h"
 #include <Winsock2.h>
@@ -56,7 +56,8 @@ protected:
     if(ERROR_SUCCESS != mHostErrorCode)
     {
       LPSTR MsgBuf = NULL;
-      DWORD dw = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      DWORD dw = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         mHostErrorCode,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
