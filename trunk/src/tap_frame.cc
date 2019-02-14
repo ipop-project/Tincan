@@ -257,7 +257,8 @@ void IccMessage::Message(
   pl_len_ = buf_len;
   uint32_t nb = pl_len_ + tp.kTapHeaderSize;
   AsyncIo::Initialize(tfb_->data(), nb, this, AIO_WRITE, nb);
-  memmove(Begin(), &tp.kIccMagic, tp.kTapHeaderSize);
+  uint16_t magic = tp.kIccMagic;
+  memmove(Begin(), &magic, tp.kTapHeaderSize);
   memmove(Payload(), in_buf, buf_len);
 }
 
@@ -273,7 +274,8 @@ void DtfMessage::Message(
   pl_len_ = buf_len;
   uint32_t nb = pl_len_ + tp.kTapHeaderSize;
   AsyncIo::Initialize(tfb_->data(), nb, this, AIO_WRITE, nb);
-  memmove(Begin(), &tp.kDtfMagic, tp.kTapHeaderSize);
+  uint16_t magic = tp.kDtfMagic;
+  memmove(Begin(), &magic, tp.kTapHeaderSize);
   memmove(Payload(), in_buf, buf_len);
 
 }
@@ -289,7 +291,8 @@ void FwdMessage::Message(
   pl_len_ = buf_len;
   uint32_t nb = pl_len_ + tp.kTapHeaderSize;
   AsyncIo::Initialize(tfb_->data(), nb, this, AIO_WRITE, nb);
-  memmove(Begin(), &tp.kFwdMagic, tp.kTapHeaderSize);
+  uint16_t magic = tp.kFwdMagic;
+  memmove(Begin(), &magic, tp.kTapHeaderSize);
   memmove(Payload(), in_buf, buf_len);
 
 }
