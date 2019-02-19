@@ -105,8 +105,7 @@ VirtualLink::AddRemoteCandidates(
     size_t len = rtc::split(candidate_str, tp.kCandidateDelim, &fields);
     rtc::SocketAddress sa;
     if(len >= 10) {
-      char delim = tp.kCandidateDelim;
-      sa.FromString(fields[2].append(&delim).append(fields[3]));
+      sa.FromString(fields[2].append(":").append(fields[3]));
       cricket::Candidate candidate(
       atoi(fields[0].c_str()),  //component
       fields[1],                //protocol
