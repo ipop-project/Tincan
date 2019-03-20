@@ -86,18 +86,15 @@ ControlListener::CreateIpopControllerLink(
 }
 
 void
-ControlListener::Run(Thread* thread) {
+ControlListener::Run(
+  Thread* thread)
+{
   BasicPacketSocketFactory packet_factory;
-  if (rtc::HasIPv6Enabled()) {
   rcv_socket_.reset(packet_factory.CreateUdpSocket(
-    SocketAddress(tp.kLocalHost6, tp.kUdpPort), 0, 0));
-    LOG(LS_INFO) << "Tincan listening on " << tp.kLocalHost6 << " UDP port " << tp.kUdpPort;
-  }
-  else
-    rcv_socket_.reset(packet_factory.CreateUdpSocket(
-      SocketAddress(tp.kLocalHost, tp.kUdpPort), 0, 0));
+    SocketAddress(tp.kLocalHost, tp.kUdpPort), 0, 0));
   if (!rcv_socket_)
     throw TCEXCEPT("Failed to create control listener socket");
+  LOG(LS_INFO) << "Tincan listening on " << tp.kLocalHost << " UDP port " << tp.kUdpPort;
   rcv_socket_->SignalReadPacket.connect(this,
     &ControlListener::ReadPacketHandler);
   thread->ProcessMessages(-1); //run until stopped
