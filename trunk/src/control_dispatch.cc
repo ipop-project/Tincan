@@ -235,16 +235,18 @@ ControlDispatch::GetLogLevel(
 {
   LoggingSeverity lv = LS_WARNING;
   lock_guard<mutex> lg(disp_mutex_);
-  if(log_level == "NONE")
+  if (log_level == "NONE")
     lv = rtc::LS_NONE;
-  else if(log_level == "ERROR")
+  else if (log_level == "ERROR")
     lv = rtc::LS_ERROR;
-  else if(log_level == "WARNING")
+  else if (log_level == "WARNING")
     lv = rtc::LS_WARNING;
-  else if(log_level == "INFO" || log_level == "VERBOSE" || log_level == "DEBUG")
+  else if (log_level == "INFO" || log_level == "VERBOSE" || log_level == "DEBUG")
     lv = rtc::LS_INFO;
-  else if(log_level == "SENSITIVE")
+  else if (log_level == "SENSITIVE")
     lv = rtc::LS_SENSITIVE;
+  else if (log_level == "LS_VERBOSE")
+    lv = rtc::LS_VERBOSE;
   else
   {
     string msg = "An invalid log level was specified =  ";

@@ -89,6 +89,13 @@ void TapDevLnx::Open(
     throw TCEXCEPT(emsg.c_str());
   }
   memcpy(mac_.data(), ifr_.ifr_hwaddr.sa_data, 6);
+
+  if (ioctl(cfg_skt, SIOCGIFFLAGS, &ifr_) < 0)
+  {
+    close(cfg_skt);
+    throw TCEXCEPT(emsg.c_str());
+  }
+
   close(cfg_skt);
 }
 
@@ -176,14 +183,10 @@ void TapDevLnx::SetFlags(
   if ((cfg_skt = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
   {
     emsg.append("a socket bind failed.");
-    throw TCEXCEPT(emsg.c_str());
+    //throw TCEXCEPT(emsg.c_str());
+    LOG(LS_ERROR) << emsg;
   }
 
-  if(ioctl(cfg_skt, SIOCGIFFLAGS, &ifr_) < 0)
-  {
-    close(cfg_skt);
-    throw TCEXCEPT(emsg.c_str());
-  }
   //set or unset the right flags
   ifr_.ifr_flags |= enable;
   ifr_.ifr_flags &= ~disable;
@@ -191,7 +194,8 @@ void TapDevLnx::SetFlags(
   if (ioctl(cfg_skt, SIOCSIFFLAGS, &ifr_) < 0)
   {
     close(cfg_skt);
-    throw TCEXCEPT(emsg.c_str());
+    //throw TCEXCEPT(emsg.c_str());
+    LOG(LS_ERROR) << emsg;
   }
   close(cfg_skt);
 }
@@ -226,17 +230,17 @@ MacAddressType TapDevLnx::MacAddress()
   return mac_;
 }
 
-  /**
-  * Sets and unsets some common flags used on a TAP device, namely, it sets the
-  * IFF_NOARP flag, and unsets IFF_MULTICAST and IFF_BROADCAST. Notably, if
-  * IFF_NOARP is not set, when using an IPv6 TAP, applications will have trouble
-  * routing their data through the TAP device (Because they'd expect an ARP
-  * response, which we aren't really willing to provide).
-  */
 void TapDevLnx::Up()
 {
+  if (is_good_)
+    return;
   is_good_ = true;
-  SetFlags(IFF_UP | IFF_RUNNING, 0);
+  SetFlags(IFF_UP, 0);
+  if (writer_)
+  {
+    writer_->Quit();
+    writer_.reset();
+  }
   if (reader_)
   {
     reader_->Quit();
@@ -244,11 +248,6 @@ void TapDevLnx::Up()
   }
   reader_ = make_unique<rtc::Thread>();
   reader_->Start();
-  if (writer_)
-  {
-    writer_->Quit();
-    writer_.reset();
-  }
   writer_ = make_unique<rtc::Thread>();
   writer_->Start();
 }
@@ -256,13 +255,14 @@ void TapDevLnx::Up()
 void TapDevLnx::Down()
 {
   is_good_ = false;
-  if(reader_)
-    reader_->Quit();
   if(writer_)
     writer_->Quit();
+  if(reader_)
+    reader_->Quit();
   reader_.reset();
   writer_.reset();
   SetFlags(0, IFF_UP);
+
   LOG(LS_INFO) << "TAP device state set to DOWN";
 }
 

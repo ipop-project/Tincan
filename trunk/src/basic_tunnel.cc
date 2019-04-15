@@ -118,7 +118,7 @@ void
 BasicTunnel::VLinkDown(
   string vlink_id)
 {
-  StopIo();
+  //StopIo();
   unique_ptr<TincanControl> ctrl = make_unique<TincanControl>();
   ctrl->SetControlType(TincanControl::CTTincanRequest);
   Json::Value & req = ctrl->GetRequest();
