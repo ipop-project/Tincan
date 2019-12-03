@@ -80,6 +80,13 @@ ninja -C out/release/ -t clean
 ninja -C out/release/ protobuf_lite p2p base jsoncpp
 ```
 
+Note: Git may complain about existing files when switching to wolf_57 branch. To resolve delete the conflicting directories:
+
+```sh
+rm -rf gmock/include/gmock
+rm -rf gtest/include/gtest
+```
+
 #### Testing WebRTC
 
 ```sh
