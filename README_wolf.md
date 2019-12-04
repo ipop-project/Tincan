@@ -68,6 +68,7 @@ gclient sync
 git remote add wolf https://github.com/dgarske/webrtc.git
 git fetch wolf
 git checkout wolf_57
+gclient sync
 
 gn clean out/debug
 gn gen out/debug "--args=enable_iterator_debugging=false is_component_build=false rtc_build_wolfssl=true rtc_build_ssl=false rtc_ssl_root=\"/usr/local/include\""
