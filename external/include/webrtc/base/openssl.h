@@ -11,6 +11,7 @@
 #ifndef WEBRTC_BASE_OPENSSL_H_
 #define WEBRTC_BASE_OPENSSL_H_
 
+#include <wolfssl/options.h>
 #include <openssl/ssl.h>
 
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L)
