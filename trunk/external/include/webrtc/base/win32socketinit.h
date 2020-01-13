@@ -1,5 +1,5 @@
 /*
- *  Copyright 2013 The WebRTC Project Authors. All rights reserved.
+ *  Copyright 2009 The WebRTC Project Authors. All rights reserved.
  *
  *  Use of this source code is governed by a BSD-style license
  *  that can be found in the LICENSE file in the root of the source
@@ -8,14 +8,13 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#ifndef WEBRTC_BASE_OPENSSL_H_
-#define WEBRTC_BASE_OPENSSL_H_
+#ifndef WEBRTC_BASE_WIN32SOCKETINIT_H_
+#define WEBRTC_BASE_WIN32SOCKETINIT_H_
 
-#include <wolfssl/options.h>
-#include <openssl/ssl.h>
+namespace rtc {
 
-#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
-#error OpenSSL is older than 1.0.0, which is the minimum supported version.
-#endif
+void EnsureWinsockInit();
 
-#endif  // WEBRTC_BASE_OPENSSL_H_
+}  // namespace rtc
+
+#endif  // WEBRTC_BASE_WIN32SOCKETINIT_H_
