@@ -27,13 +27,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-// extern "C"
-// {
-//   #include "iproute2/utils.h"
-//   #include "iproute2/ip_common.h"
-//   #include "iproute2/ll_map.h"
-// }
-
 namespace tincan
 {
 namespace linux
@@ -99,53 +92,10 @@ void TapDevLnx::Open(
   close(cfg_skt);
 }
 
-int TapDevLnx::DeleteTapDevice(
-  const string& TapName)
-{
-  // struct rtnl_handle rth = { .fd = -1 };
-  // if (rtnl_open(&rth, 0) < 0)
-  // {
-  //   LOG(LS_ERROR) << "Failed to open the net link device";
-  //   return -1;
-  // }
-
-  // const char* dev = TapName.c_str();;
-  // iplink_req req;
-  // memset(&req, 0, sizeof(req));
-
-  // req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-  // req.n.nlmsg_flags = NLM_F_REQUEST;
-  // req.n.nlmsg_type = RTM_DELLINK;
-  // req.i.ifi_family = AF_PACKET;
-
-  // ll_init_map(&rth);
-  // req.i.ifi_index = ll_name_to_index(dev);
-  // if (req.i.ifi_index == 0) {
-  //   LOG(LS_ERROR) << "Cannot enumerate TAP device " << dev;
-  //   rtnl_close(&rth);
-  //   return -1;
-  // }
-  // if (rtnl_talk(&rth, &req.n, NULL) < 0)
-  // {
-  //   LOG(LS_ERROR) << "Failed to send NetLink msg to TAP device";
-  //   rtnl_close(&rth);
-  //   return -1;
-  // }
-  // rtnl_close(&rth);
-  return 0;
-}
-
 void TapDevLnx::Close()
 {
   close(fd_);
   fd_ = -1;
-  // if (DeleteTapDevice(ifr_.ifr_name) < 0)
-  // {
-  //   string emsg = "The TAP delete operation failed. ";
-  //   LOG(LS_ERROR) << emsg << "errorno (" << errno << ") - " << strerror(errno);
-  //   //throw TCEXCEPT(emsg.c_str());
-  // }
-  // LOG(LS_INFO) << "TAP device successfully removed";
 }
 
 void TapDevLnx::PlenToIpv4Mask(
